@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/IntlolaFeature_1.0.0.a.jar" id="IntlolaFeature" version="1.0.0.a">
+      <category name="intlola"/>
+   </feature>
+   <category-def name="intlola" label="Intlola"/>
+</site>
