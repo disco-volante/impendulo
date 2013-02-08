@@ -24,6 +24,7 @@ public class ReceiverThread extends Thread {
 					Receiver.listening = false;
 					break;
 				}
+				@SuppressWarnings("unused")
 				long fileSize = Long.valueOf(in.readLine());
 			}
 			in.close();
