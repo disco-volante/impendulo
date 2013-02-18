@@ -25,12 +25,12 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 	 */
 	private static final long serialVersionUID = 9102953580130214522L;
 
-	private String compilerCmd = null; // System.getProperty("java.compiler");
+	private String compilerCmd = null;// System.getProperty("java.compiler");
 
-	private String interpreterCmd = null; // System.getProperty("java.vm");
+	private String interpreterCmd = null;// System.getProperty("java.vm");
 
 	private String findbugsJar = null;
-	
+
 	private String findbugsSrc = null;
 
 	private boolean removeSrc = true;
@@ -66,15 +66,18 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 	private JFileChooser fileChooser = null;
 
 	public void loadProperties() {
-		compilerCmd = FMV.getDirectoryProperty("prefs.compilerCmd", compilerCmd);
-		interpreterCmd = FMV.getDirectoryProperty("prefs.interpreterCmd", interpreterCmd);
-		findbugsJar = FMV.getDirectoryProperty("prefs.findbugsJar", findbugsJar);
-		findbugsSrc = FMV.getDirectoryProperty("prefs.findbugsSrc", findbugsSrc);
+		compilerCmd = FMV
+				.getDirectoryProperty("prefs.compilerCmd", compilerCmd);
+		interpreterCmd = FMV.getDirectoryProperty("prefs.interpreterCmd",
+				interpreterCmd);
+		findbugsJar = FMV
+				.getDirectoryProperty("prefs.findbugsJar", findbugsJar);
+		findbugsSrc = FMV
+				.getDirectoryProperty("prefs.findbugsSrc", findbugsSrc);
 		if (removeSrc) {
 			String s = FMV.getDirectoryProperty("prefs.removeSrc", "true");
 			removeSrc = s.equals("true");
-		}
-		else {
+		} else {
 			String s = FMV.getDirectoryProperty("prefs.removeSrc", "false");
 			removeSrc = s.equals("true");
 		}
@@ -85,7 +88,8 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		FMV.setDirectoryProperty("prefs.interpreterCmd", interpreterCmd);
 		FMV.setDirectoryProperty("prefs.findbugsJar", findbugsJar);
 		FMV.setDirectoryProperty("prefs.findbugsSrc", findbugsSrc);
-		FMV.setDirectoryProperty("prefs.removeSrc", removeSrc ? "true" : "false");
+		FMV.setDirectoryProperty("prefs.removeSrc", removeSrc ? "true"
+				: "false");
 	}
 
 	/**
@@ -98,13 +102,13 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		super(parent, "Preferences", true);
 
 		if ((compilerCmd == null) || compilerCmd.isEmpty()) {
-			compilerCmd = "C:/Program Files/Java/jdk1.6.0_07/bin/javac.exe";
+			compilerCmd = "/usr/bin/javac";
 		}
 		if ((interpreterCmd == null) || interpreterCmd.isEmpty()) {
-			interpreterCmd = "C:/Program Files/Java/jdk1.6.0_07/bin/java.exe";
+			interpreterCmd = "/usr/bin/java";
 		}
 		if ((findbugsJar == null) || findbugsJar.isEmpty()) {
-			findbugsJar = "C:/Program Files/findbugs-1.3.9/lib/findbugs.jar";
+			findbugsJar = "~/findbugs/findbugs-2.0.2/lib/findbugs.jar";
 		}
 		if ((findbugsSrc == null) || findbugsSrc.isEmpty()) {
 			findbugsSrc = "program";

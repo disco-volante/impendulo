@@ -1,0 +1,4 @@
+/home/disco/rw334/au/com/bytecode/opencsv/CSVReader.java:1: Inequality comparison can be replaced with equality comparison.
+/home/disco/rw334/au/com/bytecode/opencsv/bean/HeaderColumnNameTranslateMappingStrategy.java:2: Component 'header' in class 'au/com/bytecode/opencsv/bean/HeaderColumnNameTranslateMappingStrategy' shadows one in base class 'au/com/bytecode/opencsv/bean/HeaderColumnNameMappingStrategy'.
+java/lang/String.java:3: equals() was overridden but not hashCode().
+Verification completed: 3 reported messages.

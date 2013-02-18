@@ -17,9 +17,14 @@ import java.util.zip.ZipFile;
 
 import javax.swing.SwingWorker;
 
+import fmv.tools.FindBugsRunner;
+import fmv.tools.ToolRunner;
+
 public class CompTest extends SwingWorker<Boolean, String> {
 
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss.SSS");
+
+	private static final String RT_LOC = "/usr/lib/jvm/java-7-openjdk/jre/lib/rt.jar;";
 
 	private Source root;
 
@@ -151,7 +156,6 @@ public class CompTest extends SwingWorker<Boolean, String> {
 					root.setStatus(d, Status.NOCOMPILE, p.s);
 					break;
 				}
-
 /*
 				publish(df + ": running findbugs");
 				c = FMV.prefs.getInterpreterCmd();
@@ -173,27 +177,29 @@ public class CompTest extends SwingWorker<Boolean, String> {
 				// p = execute(c, "-jar", fbj, "-textui", "-low", "-longBugCodes", "-sourcepath", sourceDir + File.separator + fbs, sourceDir + File.separator + fbs);
 				p = execute("C:/Program Files/jlint-3/jlint.exe", "-source", sourceDir + File.separator + fbs, classlist);
 */
-				publish(df + ": running tpgen");
+				/*publish(df + ": running tpgen");
 				c = FMV.prefs.getInterpreterCmd();
 				fbs = FMV.prefs.getFindbugsSrc();
 				p = execute(c, "-jar", sourceDir + File.separator + "tpgen.jar",
 						"-max-instr-recur", "10",
-						"-soot-classpath", "C:/Program Files/Java/jre6/lib/rt.jar;" + sourceDir,
+						"-soot-classpath", RT_LOC + sourceDir,
 						fbs);
 				int w = 0;
 				int z = p.s.indexOf("\n");
 				while (z != -1) {
 					w++;
 					z = p.s.indexOf("\n", z + 1);
-				}
+				}*/
 				/*
 				if (p.s.contains("Warnings generated:")) {
 					int v = p.s.indexOf("Warnings generated:");
 					w = Integer.parseInt(p.s.substring(v + 18));
 				}
 				*/
-				root.setReport(d, p.s, w);
-
+				//root.setReport(d, p.s, w);
+				ToolRunner fb = new FindBugsRunner();
+				fb.configure("/home/disco/impendulo/za.ac.sun.cs.FMV/src/fmv/fb.config");
+				fb.run("watersheds"+d.toString()+".html", false, sourceDir+ File.separator+"watersheds");
 				publish(df + ": running EasyTests");
 				c = FMV.prefs.getInterpreterCmd();
 				p = execute(c, "-cp", sourceDir, "org.junit.runner.JUnitCore",

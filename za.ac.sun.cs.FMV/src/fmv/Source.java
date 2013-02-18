@@ -2,6 +2,7 @@ package fmv;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -256,6 +257,20 @@ public class Source {
 				e.getValue().setOutput(FMV.getVersionProperty(archive, this, e.getKey(), "output", ""));
 				int wc = Integer.parseInt(FMV.getVersionProperty(archive, this, e.getKey(), "warningCount", "0"));
 				e.getValue().setReport(FMV.getVersionProperty(archive, this, e.getKey(), "report", ""), wc);
+				/*File fbOut = new File("watersheds"+e.getKey().toString()+".html");
+				FileInputStream fis;
+				try {
+					fis = new FileInputStream(fbOut);
+					byte[] b = new byte[(int) fbOut.length()];  
+				    fis.read(b);  
+				    e.getValue().setReport(new String(b), wc);
+				} catch (FileNotFoundException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}*/
 				e.getValue().setAnnotation(FMV.getVersionProperty(archive, this, e.getKey(), "note", ""));
 			}
 		}
