@@ -197,9 +197,6 @@ public class CompTest extends SwingWorker<Boolean, String> {
 				}
 				*/
 				//root.setReport(d, p.s, w);
-				ToolRunner fb = new FindBugsRunner();
-				fb.configure("/home/disco/impendulo/za.ac.sun.cs.FMV/src/fmv/fb.config");
-				fb.run("watersheds"+d.toString()+".html", false, sourceDir+ File.separator+"watersheds");
 				publish(df + ": running EasyTests");
 				c = FMV.prefs.getInterpreterCmd();
 				p = execute(c, "-cp", sourceDir, "org.junit.runner.JUnitCore",

@@ -1,20 +1,12 @@
 package fmv.tools;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
 public class JLintRunner extends ToolRunner {
 
-	private String command;
-
-	protected String[] getArgs(String output, String[] input) {
-		ArrayList<String> args = new ArrayList<String>();
-		args.add(command);
-		for (String in : input) {
-			args.add(in);
-		}
-		return args.toArray(new String[args.size()]);
-	}
+	private String command = "tools/jlint";
 
 	protected void process(String line) {
 		String[] pair = line.split(":");
@@ -29,10 +21,15 @@ public class JLintRunner extends ToolRunner {
 		ToolRunner fb = new JLintRunner();
 		fb.configure("config/jlint.config");
 		try {
-			fb.run("out.txt",true, "/home/disco/rw334/src");
+			System.out.println(fb.run("/home/disco/rw334/src"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	protected Collection<String> getCommand() {
+		return Arrays.asList(command);
 	}
 
 }

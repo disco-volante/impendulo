@@ -1,47 +1,23 @@
 package fmv.tools;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
 public class PMDRunner extends ToolRunner {
-	private String command;
-	private String lib;
-
-	@Override
-	protected String[] getArgs(String output, String[] input) {
-		ArrayList<String> args = new ArrayList<String>();
-		args.add(command);
-		args.add("pmd");
-		for (String cfg : config.values()) {
-			String[] params = cfg.split("!");
-			for (String param : params) {
-				args.add(param.trim());
-			}
-		}
-		for (String in : input) {
-			args.add(in);
-		}
-		return args.toArray(new String[args.size()]);
-	}
+	private String[] command = new String[] { "tools/pb.sh", "pmd" };
 
 	private String getConfig(String key, String value) {
 		String config = null;
 		if (!value.equals("none") && !value.equals("")) {
-			if (key.equals("outFormat") || key.equals("priority")) {
-				config = "-" + value;
-			} else if (key.equals("auxCP")) {
-				config = "-auxclasspath ! " + value;
-			} else if (key.equals("nested")) {
-				config = "-nested:" + value;
-			} else if (key.equals("relaxed")) {
-				if (value.equals("true")) {
-					config = "-relaxed";
-				}
-			} else {
-				throw new IllegalArgumentException(key + " : " + value);
-			}
+			config = "-"+key+" ! "+value;
 		}
 		return config;
+	}
+	@Override
+	public String run(String ... input) throws IOException{
+		config.put("dir", "-dir"+" ! "+input[0]);
+		return super.run();
 	}
 
 	@Override
@@ -50,23 +26,22 @@ public class PMDRunner extends ToolRunner {
 		if (pair.length == 2) {
 			String key = pair[0].trim();
 			String value = pair[1].trim();
-			if (key.equals("command")) {
-				command = value;
-			} else if (key.equals("toolLocation")) {
-				lib = value;
-			} else {
-				if ((value = getConfig(key, value)) != null) {
-					config.put(key, value);
-				}
+			if ((value = getConfig(key, value)) != null) {
+				config.put(key, value);
 			}
 		}
 	}
 
+	@Override
+	protected Collection<String> getCommand() {
+		return Arrays.asList(command);
+	}
+
 	public static void main(String[] args) {
-		ToolRunner fb = new FindBugsRunner();
-		fb.configure("config/pmd.config");
+		ToolRunner pmd = new PMDRunner();
+		pmd.configure("config/pmd.config");
 		try {
-			fb.run("out.html", true, "/home/disco/rw334/Parse.jar");
+			System.out.println(pmd.run("/home/disco/rw334/src"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

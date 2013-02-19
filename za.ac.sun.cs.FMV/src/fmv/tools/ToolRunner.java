@@ -1,14 +1,13 @@
 package fmv.tools;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,11 +16,25 @@ public abstract class ToolRunner {
 
 	protected abstract void process(String line);
 
-	protected abstract String[] getArgs(String output, String[] input);
+	protected abstract Collection<String> getCommand();
 
-	public void run(String output, boolean write, String... input)
-			throws IOException {
-		String[] args = getArgs(output, input);
+	protected String[] getArgs(String[] input) {
+		ArrayList<String> args = new ArrayList<String>();
+		args.addAll(getCommand());
+		for (String cfg : config.values()) {
+			String[] params = cfg.split("!");
+			for (String param : params) {
+				args.add(param.trim());
+			}
+		}
+		for (String in : input) {
+			args.add(in);
+		}
+		return args.toArray(new String[args.size()]);
+	}
+
+	public String run(String... input) throws IOException {
+		String[] args = getArgs(input);
 		ProcessBuilder pb = new ProcessBuilder(args);
 		Map<String, String> env = pb.environment();
 		env.clear();
@@ -32,16 +45,13 @@ public abstract class ToolRunner {
 		while ((line = errReader.readLine()) != null) {
 			System.err.println(line);
 		}
-		if (write) {
-			InputStream is = p.getInputStream();
-			OutputStream os = new FileOutputStream(new File(output));
-			int read = 0;
-			byte[] bytes = new byte[1024];
-			while ((read = is.read(bytes)) != -1) {
-				os.write(bytes, 0, read);
-			}
-			os.close();
+		StringBuilder sb = new StringBuilder();
+		InputStream is = p.getInputStream();
+		byte[] bytes = new byte[1024];
+		while ((is.read(bytes)) != -1) {
+			sb.append(new String(bytes));
 		}
+		return sb.toString();
 
 	}
 
