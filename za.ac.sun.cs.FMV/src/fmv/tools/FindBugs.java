@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class FindBugsRunner extends ToolRunner {
-	private static final String[] command = new String[] {"tools/fb.sh", "-textui" };
+public class FindBugs extends JarTool {
+	private static final String FB_HOME = "/home/disco/prog/findbugs";
+	private static final String[] command = new String[] {FB_HOME+"/lib/findbugs.jar", "-textui" };
 
-	private String getConfig(String key, String value) {
+	@Override
+	protected String getConfig(String key, String value) {
 		String config = null;
 		if (!value.equals("none") && !value.equals("")) {
 			if (key.equals("outFormat") || key.equals("priority")) {
@@ -27,24 +29,15 @@ public class FindBugsRunner extends ToolRunner {
 		return config;
 	}
 
-	@Override
-	protected void process(String line) {
-		String[] pair = line.split(":");
-		if (pair.length == 2) {
-			String key = pair[0].trim();
-			String value = pair[1].trim();
-			if ((value = getConfig(key, value)) != null) {
-				config.put(key, value);
-			}
-		}
-	}
-
 	public static void main(String[] args) {
-		ToolRunner fb = new FindBugsRunner();
+		BasicTool fb = new FindBugs();
 		fb.configure("config/fb.config");
 		try {
-			System.out.println(fb.run("/home/disco/rw334/src"));
+			System.out.println(fb.run(null, "src"));
 		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

@@ -236,15 +236,15 @@ public class Source {
 		}
 	}
 
-	public void setReport(Date date, String report, int warningCount) {
+	public void setReport(Date date, String tool, String report) {
 		if ((parent != null) && (children.size() == 0)) {
 			Version v = versions.get(date);
 			if (v != null) {
-				v.setReport(report, warningCount);
+				v.setReport(tool, report);
 			}
 		}
 		for (Source c : children) {
-			c.setReport(date, report, warningCount);
+			c.setReport(date, tool, report);
 		}
 	}
 
@@ -255,8 +255,8 @@ public class Source {
 			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions.higherEntry(e.getKey())) {
 				e.getValue().setStatus(FMV.getVersionProperty(archive, this, e.getKey(), "status", "unknown"));
 				e.getValue().setOutput(FMV.getVersionProperty(archive, this, e.getKey(), "output", ""));
-				int wc = Integer.parseInt(FMV.getVersionProperty(archive, this, e.getKey(), "warningCount", "0"));
-				e.getValue().setReport(FMV.getVersionProperty(archive, this, e.getKey(), "report", ""), wc);
+				//int wc = Integer.parseInt(FMV.getVersionProperty(archive, this, e.getKey(), "warningCount", "0"));
+				//e.getValue().setReport(FMV.getVersionProperty(archive, this, e.getKey(), "report", ""), wc);
 				/*File fbOut = new File("watersheds"+e.getKey().toString()+".html");
 				FileInputStream fis;
 				try {
@@ -285,7 +285,7 @@ public class Source {
 				e.getValue().getStatus().setData(data);
 				FMV.setVersionProperty(archive, this, e.getKey(), "status", e.getValue().getStatus().getName());
 				FMV.setVersionProperty(archive, this, e.getKey(), "output", e.getValue().getOutput());
-				FMV.setVersionProperty(archive, this, e.getKey(), "report", e.getValue().getReport());
+				//FMV.setVersionProperty(archive, this, e.getKey(), "report", e.getValue().getReport());
 				FMV.setVersionProperty(archive, this, e.getKey(), "warningCount", "" + e.getValue().getWarningCount());
 			}
 		}

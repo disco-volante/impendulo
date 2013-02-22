@@ -1,7 +1,5 @@
 package fmv;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,15 +8,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import javax.swing.SwingWorker;
 
-import fmv.tools.FindBugsRunner;
-import fmv.tools.ToolRunner;
+import fmv.tools.Compiler;
+import fmv.tools.Interpreter;
 
 public class CompTest extends SwingWorker<Boolean, String> {
 
@@ -91,43 +88,6 @@ public class CompTest extends SwingWorker<Boolean, String> {
 		}
 	}
 
-	private static class Pair {
-		int rv;
-		String s;
-
-		public Pair(int rv, String s) {
-			this.rv = rv;
-			this.s = s;
-		}
-	}
-
-	private Pair execute(String... args) {
-		try {
-			StringBuffer bbb = new StringBuffer();
-			for (String sss : args) { bbb.append(sss); bbb.append(" "); }
-			System.out.println("CMD: " + bbb);
-			ProcessBuilder b = new ProcessBuilder(args).directory(
-					new File(tempDir)).redirectErrorStream(true);
-			Map<String, String> env = b.environment();
-			env.clear();
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			byte[] buffer = new byte[65536];
-			int bytesRead;
-			Process p = b.start();
-			BufferedInputStream op = new BufferedInputStream(p.getInputStream());
-			while ((bytesRead = op.read(buffer)) != -1) {
-				os.write(buffer, 0, bytesRead);
-			}
-			int r = p.waitFor();
-			return new Pair(r, os.toString());
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return new Pair(1, "execution failure");
-	}
-
 	protected Boolean doInBackground() throws Exception {
 		prepareSrcdir();
 		Set<Date> dates = root.getKeys();
@@ -138,94 +98,51 @@ public class CompTest extends SwingWorker<Boolean, String> {
 			}
 			String df = "(" + i + "/" + n + ") " + dateFormat.format(d);
 			root.unpack(d, sourceDir);
-			String c, fbs;
 			Pair p;
+			File workDir = new File(tempDir);
+			Compiler compiler = new Compiler(FMV.prefs.getCompilerCmd());
+			Interpreter interpreter = new Interpreter(FMV.prefs.getInterpreterCmd());
 			while (true) {
 				publish(df + ": compiling");
-				c = FMV.prefs.getCompilerCmd();
-				p = execute(c, "-cp", sourceDir, sourceDir + File.separator
-						+ "testing" + File.separator + "EasyTests.java");
-				if (p.rv != 0) {
-					root.setStatus(d, Status.NOCOMPILE, p.s);
+				compiler.configure(new String[]{"-cp", sourceDir});
+				p = compiler.run(workDir, sourceDir + File.separator + "testing" + File.separator + "EasyTests.java");
+				if (p.hasError()) {
+					root.setStatus(d, Status.NOCOMPILE, p.outPut());
 					break;
 				}
-
-				p = execute(c, "-cp", sourceDir, sourceDir + File.separator
+				p = compiler.run(workDir, sourceDir + File.separator
 						+ "testing" + File.separator + "AllTests.java");
-				if (p.rv != 0) {
-					root.setStatus(d, Status.NOCOMPILE, p.s);
+				if (p.hasError()) {
+					root.setStatus(d, Status.NOCOMPILE, p.outPut());
 					break;
 				}
-/*
-				publish(df + ": running findbugs");
-				c = FMV.prefs.getInterpreterCmd();
-				fbj = FMV.prefs.getFindbugsJar();
-				fbs = FMV.prefs.getFindbugsSrc();
-				
-				String classlist = "";
-				File f = new File(sourceDir + File.separator + fbs);
-				String s[] = f.list();
-				for (int ii = 0; ii < s.length; ii++) {
-					String nn = s[ii];
-					if (nn.endsWith(".class")) {
-						classlist += " " + sourceDir + File.separator + fbs + File.separator + nn;
-					}
-				}
-				// p = execute(c, "-jar", fbj, "-textui", "-low", "-progress", "-sourcepath", sourceDir + File.separator + fbs, classlist);
-				
-				// p = execute(c, "-jar", fbj, "-textui", "-low", "-progress", "-longBugCodes", "-sourcepath", sourceDir + File.separator + fbs, sourceDir + File.separator + fbs);
-				// p = execute(c, "-jar", fbj, "-textui", "-low", "-longBugCodes", "-sourcepath", sourceDir + File.separator + fbs, sourceDir + File.separator + fbs);
-				p = execute("C:/Program Files/jlint-3/jlint.exe", "-source", sourceDir + File.separator + fbs, classlist);
-*/
-				/*publish(df + ": running tpgen");
-				c = FMV.prefs.getInterpreterCmd();
-				fbs = FMV.prefs.getFindbugsSrc();
-				p = execute(c, "-jar", sourceDir + File.separator + "tpgen.jar",
-						"-max-instr-recur", "10",
-						"-soot-classpath", RT_LOC + sourceDir,
-						fbs);
-				int w = 0;
-				int z = p.s.indexOf("\n");
-				while (z != -1) {
-					w++;
-					z = p.s.indexOf("\n", z + 1);
-				}*/
-				/*
-				if (p.s.contains("Warnings generated:")) {
-					int v = p.s.indexOf("Warnings generated:");
-					w = Integer.parseInt(p.s.substring(v + 18));
-				}
-				*/
-				//root.setReport(d, p.s, w);
 				publish(df + ": running EasyTests");
-				c = FMV.prefs.getInterpreterCmd();
-				p = execute(c, "-cp", sourceDir, "org.junit.runner.JUnitCore",
-						"testing.EasyTests");
-				if (p.rv != 0) {
-					if (p.s.contains("Out of time")) {
-						root.setStatus(d, Status.TIMEOUT, p.s);
-					} else if (p.s.contains("Errors: 0")) {
-							root.setStatus(d, Status.E_FAIL, p.s);
+				interpreter.configure(new String[]{"-cp", sourceDir, "org.junit.runner.JUnitCore"});
+				p = interpreter.run(workDir, "testing.EasyTests");
+				if (p.hasError()) {
+					if (p.outPut().contains("Out of time")) {
+						root.setStatus(d, Status.TIMEOUT, p.outPut());
+					} else if (p.outPut().contains("Errors: 0")) {
+							root.setStatus(d, Status.E_FAIL, p.outPut());
 					} else {
-						root.setStatus(d, Status.E_ERRS, p.s);
+						root.setStatus(d, Status.E_ERRS, p.outPut());
 					}
 					break;
 				}
 
 				publish(df + ": running AllTests");
-				p = execute(c, "-cp", sourceDir, "org.junit.runner.JUnitCore",
-						"testing.AllTests");
-				if (p.rv != 0) {
-					if (p.s.contains("Out of time")) {
-						root.setStatus(d, Status.TIMEOUT, p.s);
-					} else if (p.s.contains("Errors: 0")) {
-							root.setStatus(d, Status.E_FAIL, p.s);
+				p = interpreter.run(workDir, "testing.AllTests");
+				if (p.hasError()) {
+					if (p.outPut().contains("Out of time")) {
+						root.setStatus(d, Status.TIMEOUT, p.outPut());
+					} else if (p.outPut().contains("Errors: 0")) {
+						root.setStatus(d, Status.E_FAIL, p.outPut());
 					} else {
-						root.setStatus(d, Status.A_ERRS, p.s);
+						root.setStatus(d, Status.A_ERRS, p.outPut());
 					}
 					break;
 				}
-				root.setStatus(d, Status.OK, p.s);
+				root.setStatus(d, Status.OK, p.outPut());
 				break;
 			}
 			setProgress((i++ * 100) / n);

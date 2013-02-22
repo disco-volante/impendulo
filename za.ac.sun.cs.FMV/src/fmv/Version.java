@@ -1,5 +1,6 @@
 package fmv;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class Version {
@@ -12,7 +13,7 @@ public class Version {
 
 	private String output = "";
 
-	private String report = "";
+	private HashMap<String, String> reports;
 
 	private int warningCount = 0;
 	
@@ -42,13 +43,12 @@ public class Version {
 		return output;
 	}
 
-	public void setReport(String report, int warningCount) {
-		this.report = report;
-		this.warningCount = warningCount;
+	public void setReport(String tool, String report) {
+		reports.put(tool, report);
 	}
 
-	public String getReport() {
-		return report;
+	public String getReport(String tool) {
+		return reports.get(tool);
 	}
 
 	public int getWarningCount() {

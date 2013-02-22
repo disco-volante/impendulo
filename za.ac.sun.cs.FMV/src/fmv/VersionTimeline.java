@@ -16,6 +16,9 @@ import java.util.NavigableMap;
 
 import javax.swing.JComponent;
 
+import fmv.tools.ExternalTool;
+import fmv.tools.Tools;
+
 public class VersionTimeline extends JComponent implements ActionListener,
 		MouseListener {
 
@@ -322,17 +325,25 @@ public class VersionTimeline extends JComponent implements ActionListener,
 			if (leftVersion != null) {
 				FMV.output.activate(leftVersion.getValue().getOutput());
 			}
-		} else if ("leftfb".equals(e.getActionCommand())) {
+		} else if ("tool".equals(e.getActionCommand())) {
+			String tool = FMV.diffPane.getCurrentTool();
 			if (leftVersion != null) {
-				FMV.output.activate(leftVersion.getValue().getReport());
+				String out;
+				if ((out = leftVersion.getValue().getReport(tool)) != null) {
+					out = Tools.run(tool, leftVersion.getKey().toString()).outPut();
+				}
+				FMV.output.activate(out);
+			}
+			if (rightVersion != null) {
+				String out;
+				if ((out = leftVersion.getValue().getReport(tool)) != null) {
+					out = Tools.run(tool, leftVersion.getKey().toString()).outPut();
+				}
+				FMV.output.activate(out);
 			}
 		} else if ("rightshow".equals(e.getActionCommand())) {
 			if (rightVersion != null) {
 				FMV.output.activate(rightVersion.getValue().getOutput());
-			}
-		} else if ("rightfb".equals(e.getActionCommand())) {
-			if (rightVersion != null) {
-				FMV.output.activate(rightVersion.getValue().getReport());
 			}
 		} else if ("leftedit".equals(e.getActionCommand())) {
 			if (leftVersion != null) {

@@ -9,8 +9,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
@@ -29,6 +35,8 @@ public class DiffPane extends JPanel implements ActionListener {
 	 */
 	private static final long serialVersionUID = -2944488635268985223L;
 
+	private static final String TOOL_CONFIG = "config/tools.config";
+
 	/**
 	 * "Previous" button at the top of the difference pane.
 	 */
@@ -39,6 +47,9 @@ public class DiffPane extends JPanel implements ActionListener {
 	 */
 	private JButton nextButton;
 
+	private JButton toolButton;
+	private JComboBox<String> toolBox;
+
 	/**
 	 * "Show" button on the left.
 	 */
@@ -47,7 +58,7 @@ public class DiffPane extends JPanel implements ActionListener {
 	/**
 	 * "Findbugs" button on the left.
 	 */
-	private JButton leftFindbugsButton;
+	// private JButton leftFindbugsButton;
 
 	/**
 	 * "Annotation" button on the left.
@@ -62,7 +73,7 @@ public class DiffPane extends JPanel implements ActionListener {
 	/**
 	 * "Findbugs" button on the right.
 	 */
-	private JButton rightFindbugsButton;
+	// private JButton rightFindbugsButton;
 
 	/**
 	 * "Annotation" button on the right.
@@ -119,7 +130,7 @@ public class DiffPane extends JPanel implements ActionListener {
 		leftText.setUI(new TextRegionUI());
 		JScrollPane leftTextScrollPane = new JScrollPane(leftText);
 		leftBar = leftTextScrollPane.getVerticalScrollBar();
-		leftBar.addAdjustmentListener(new AdjustmentListener () {
+		leftBar.addAdjustmentListener(new AdjustmentListener() {
 			public void adjustmentValueChanged(AdjustmentEvent event) {
 				rightBar.setValue(leftBar.getValue());
 			}
@@ -133,12 +144,14 @@ public class DiffPane extends JPanel implements ActionListener {
 		leftOutputButton.addActionListener(timeline);
 		leftOutputButton.setPreferredSize(d);
 		leftTopPane.add(leftOutputButton);
-		leftFindbugsButton = new JButton(FMV.getMyImageIcon("findbugs.gif"));
-		leftFindbugsButton.setToolTipText("Show findbugs output");
-		leftFindbugsButton.setActionCommand("leftfb");
-		leftFindbugsButton.addActionListener(timeline);
-		leftFindbugsButton.setPreferredSize(d);
-		leftTopPane.add(leftFindbugsButton);
+		/*
+		 * leftFindbugsButton = new JButton(FMV.getMyImageIcon("findbugs.gif"));
+		 * leftFindbugsButton.setToolTipText("Show findbugs output");
+		 * leftFindbugsButton.setActionCommand("leftfb");
+		 * leftFindbugsButton.addActionListener(timeline);
+		 * leftFindbugsButton.setPreferredSize(d);
+		 * leftTopPane.add(leftFindbugsButton);
+		 */
 		leftAnnoteButton = new JButton(FMV.getMyImageIcon("annotate.gif"));
 		leftAnnoteButton.setToolTipText("Edit annotation");
 		leftAnnoteButton.setActionCommand("leftedit");
@@ -159,7 +172,7 @@ public class DiffPane extends JPanel implements ActionListener {
 		rightText.setUI(new TextRegionUI());
 		JScrollPane rightTextScrollPane = new JScrollPane(rightText);
 		rightBar = rightTextScrollPane.getVerticalScrollBar();
-		rightBar.addAdjustmentListener(new AdjustmentListener () {
+		rightBar.addAdjustmentListener(new AdjustmentListener() {
 			public void adjustmentValueChanged(AdjustmentEvent event) {
 				leftBar.setValue(rightBar.getValue());
 			}
@@ -173,12 +186,15 @@ public class DiffPane extends JPanel implements ActionListener {
 		rightOutputButton.addActionListener(timeline);
 		rightOutputButton.setPreferredSize(d);
 		rightTopPane.add(rightOutputButton);
-		rightFindbugsButton = new JButton(FMV.getMyImageIcon("findbugs.gif"));
-		rightFindbugsButton.setToolTipText("Show findbugs output");
-		rightFindbugsButton.setActionCommand("rightfb");
-		rightFindbugsButton.addActionListener(timeline);
-		rightFindbugsButton.setPreferredSize(d);
-		rightTopPane.add(rightFindbugsButton);
+		/*
+		 * rightFindbugsButton = new
+		 * JButton(FMV.getMyImageIcon("findbugs.gif"));
+		 * rightFindbugsButton.setToolTipText("Show findbugs output");
+		 * rightFindbugsButton.setActionCommand("rightfb");
+		 * rightFindbugsButton.addActionListener(timeline);
+		 * rightFindbugsButton.setPreferredSize(d);
+		 * rightTopPane.add(rightFindbugsButton);
+		 */
 		rightAnnoteButton = new JButton(FMV.getMyImageIcon("annotate.gif"));
 		rightAnnoteButton.setToolTipText("Edit annotation");
 		rightAnnoteButton.setActionCommand("rightedit");
@@ -208,6 +224,13 @@ public class DiffPane extends JPanel implements ActionListener {
 		nextButton.setActionCommand("shownext");
 		nextButton.addActionListener(this);
 		buttonPane.add(nextButton);
+		toolBox = new JComboBox<String>(getTools());
+		buttonPane.add(toolBox);
+		toolButton = new JButton("Run Tool");
+		toolButton.setToolTipText("Run static analysis tools.");
+		toolButton.setActionCommand("tool");
+		toolButton.addActionListener(timeline);
+		buttonPane.add(toolButton);
 
 		setOpaque(true);
 		add(textsPane, BorderLayout.CENTER);
@@ -215,13 +238,44 @@ public class DiffPane extends JPanel implements ActionListener {
 		add(timeline, BorderLayout.PAGE_END);
 	}
 
+	private String[] getTools() {
+		BufferedReader br = null;
+		ArrayList<String> config = null;
+		String[] ret;
+		try {
+			br = new BufferedReader(new FileReader(TOOL_CONFIG));
+			String line = br.readLine();
+			config = new ArrayList<String>();
+			while (line != null) {
+				config.add(line.trim());
+				line = br.readLine();
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			ret = config.toArray(new String[config.size()]);
+		}
+		return ret;
+	}
+
 	/**
 	 * Create styles for a document that display differences.
 	 * 
-	 * @param doc the document to apply the styles to
+	 * @param doc
+	 *            the document to apply the styles to
 	 */
 	private void createStyles(StyledDocument doc) {
-		Style def = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
+		Style def = StyleContext.getDefaultStyleContext().getStyle(
+				StyleContext.DEFAULT_STYLE);
 		Style normal = doc.addStyle("normal", def);
 		doc.addStyle("delta", normal);
 		doc.addStyle("changed", normal);
@@ -252,12 +306,12 @@ public class DiffPane extends JPanel implements ActionListener {
 		if (onLeft) {
 			prevButton.setEnabled(enabled);
 			leftOutputButton.setEnabled(enabled);
-			leftFindbugsButton.setEnabled(enabled);
+			// leftFindbugsButton.setEnabled(enabled);
 			leftAnnoteButton.setEnabled(enabled);
 		} else {
 			nextButton.setEnabled(enabled);
 			rightOutputButton.setEnabled(enabled);
-			rightFindbugsButton.setEnabled(enabled);
+			// rightFindbugsButton.setEnabled(enabled);
 			rightAnnoteButton.setEnabled(enabled);
 		}
 	}
@@ -281,6 +335,10 @@ public class DiffPane extends JPanel implements ActionListener {
 				timeline.showNext();
 			}
 		}
+	}
+
+	public String getCurrentTool() {
+		return (String) toolBox.getSelectedItem();
 	}
 
 }
