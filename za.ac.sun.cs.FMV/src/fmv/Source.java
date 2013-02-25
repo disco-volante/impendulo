@@ -2,7 +2,6 @@ package fmv;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,6 +24,7 @@ import javax.swing.TextRegion;
 import javax.swing.text.BadLocationException;
 
 import fmv.TablePane.ArchiveData;
+import fmv.tools.Tools;
 
 /**
  * An archive item represents one file or directory inside a ZIP file.
@@ -191,18 +191,19 @@ public class Source {
 		return keys;
 	}
 
-	public void unpack(Date date, String dir) {
+	public File unpack(Date date, String dir) {
+		File file = null;
 		if ((parent != null) && (children.size() == 0)) {
 			Map.Entry<Date, Version> e = versions.floorEntry(date);
 			if (e == null) {
-				return;
+				return file;
 			}
 			Version v = e.getValue();
 			List<Integer> lines = v.getLineList();
-			File file = new File(dir + getPath());
 			if (lines == null) {
-				return;
+				return file;
 			}
+			file = new File(dir + getPath());
 			try {
 				file.getParentFile().mkdirs();
 				file.createNewFile();
@@ -221,6 +222,7 @@ public class Source {
 		for (Source c : children) {
 			c.unpack(date, dir);
 		}
+		return file;
 	}
 
 	public void setStatus(Date date, Status status, String output) {
@@ -255,22 +257,9 @@ public class Source {
 			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions.higherEntry(e.getKey())) {
 				e.getValue().setStatus(FMV.getVersionProperty(archive, this, e.getKey(), "status", "unknown"));
 				e.getValue().setOutput(FMV.getVersionProperty(archive, this, e.getKey(), "output", ""));
-				//int wc = Integer.parseInt(FMV.getVersionProperty(archive, this, e.getKey(), "warningCount", "0"));
-				//e.getValue().setReport(FMV.getVersionProperty(archive, this, e.getKey(), "report", ""), wc);
-				/*File fbOut = new File("watersheds"+e.getKey().toString()+".html");
-				FileInputStream fis;
-				try {
-					fis = new FileInputStream(fbOut);
-					byte[] b = new byte[(int) fbOut.length()];  
-				    fis.read(b);  
-				    e.getValue().setReport(new String(b), wc);
-				} catch (FileNotFoundException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}*/
+				for(String tool: Tools.getTools()){
+					e.getValue().setReport(tool, FMV.getVersionProperty(archive, this, e.getKey(), tool+" report", ""));
+				}
 				e.getValue().setAnnotation(FMV.getVersionProperty(archive, this, e.getKey(), "note", ""));
 			}
 		}
@@ -285,8 +274,9 @@ public class Source {
 				e.getValue().getStatus().setData(data);
 				FMV.setVersionProperty(archive, this, e.getKey(), "status", e.getValue().getStatus().getName());
 				FMV.setVersionProperty(archive, this, e.getKey(), "output", e.getValue().getOutput());
-				//FMV.setVersionProperty(archive, this, e.getKey(), "report", e.getValue().getReport());
-				FMV.setVersionProperty(archive, this, e.getKey(), "warningCount", "" + e.getValue().getWarningCount());
+				for(Map.Entry<String, String> re : e.getValue().getReports().entrySet()){
+					FMV.setVersionProperty(archive, this, e.getKey(), re.getKey()+" report", re.getValue());
+				}
 			}
 		}
 		for (Source c : children) {
@@ -392,8 +382,7 @@ public class Source {
 		}
 		String s = version.getValue().getStatus().getMessage();
 		String d = dateFormat.format(version.getKey());
-		int wc = version.getValue().getWarningCount();
-		FMV.diffPane.setLabel(onLeft, d + " " + s + " (" + wc + " FB)");
+		FMV.diffPane.setLabel(onLeft, d + " " + s + " (FB)");
 		FMV.diffPane.setButton(onLeft, true);
 	}
 

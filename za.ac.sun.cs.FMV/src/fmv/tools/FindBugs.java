@@ -1,6 +1,5 @@
 package fmv.tools;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -32,14 +31,7 @@ public class FindBugs extends JarTool {
 	public static void main(String[] args) {
 		BasicTool fb = new FindBugs();
 		fb.configure("config/fb.config");
-		try {
-			System.out.println(fb.run(null, "src"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		System.out.println(fb.run(null, "src"));
 	}
 
 	@Override

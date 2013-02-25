@@ -93,7 +93,8 @@ public class Archive {
 		int last = components.length - 4;
 		int first = last;
 		for (int i = 0; i <= last; i++) {
-			if (components[i].equals("src") && !components[i + 1].equals("testing")) {
+			if (components[i].equals("src")
+					&& !components[i + 1].equals("testing")) {
 				first = i + 1;
 				break;
 			}
@@ -108,46 +109,52 @@ public class Archive {
 		r.addDetails(new Date(Long.parseLong(components[last + 1])), in);
 	}
 
+	public void extract() {
+		ZipFile z;
+		try {
+			z = new ZipFile(dir + File.separator + name);
+			Enumeration<? extends ZipEntry> zz = z.entries();
+			while (zz.hasMoreElements()) {
+				ZipEntry e = zz.nextElement();
+				if (e.isDirectory()) {
+					continue;
+				}
+				addItem(e.getName(), z.getInputStream(e));
+			}
+			rootItem.canonize();
+			listModel.clear();
+			rootItem.addToListModel(listModel, this);
+			isExtracted = true;
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+
+	public void runTool(String tool) {
+		ToolRunner  runner;
+		if(tool.equals("Tests")){
+			String t = dir + File.separator + "TESTING.zip";
+			runner = new ToolRunner(rootItem, FMV.toolrunner, "Tests", t);
+		} else {
+			runner = new ToolRunner(rootItem, FMV.toolrunner, tool);
+
+		}
+		runner.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent e) {
+				if ("progress".equals(e.getPropertyName())) {
+					FMV.toolrunner.setProgress((Integer) e.getNewValue());
+				} else if ("state".equals(e.getPropertyName())
+						&& SwingWorker.StateValue.DONE == e.getNewValue()) {
+					FMV.toolrunner.deactivate(false);
+				}
+			}
+		});
+		runner.execute();
+		FMV.toolrunner.activate(this, rootItem);		
+	}
+	
 	@SuppressWarnings("rawtypes")
 	public DefaultListModel getModel(Directory directory) {
-		if (!isExtracted) {
-			ZipFile z;
-			try {
-				z = new ZipFile(dir + File.separator + name);
-				Enumeration<? extends ZipEntry> zz = z.entries();
-				while (zz.hasMoreElements()) {
-					ZipEntry e = zz.nextElement();
-					if (e.isDirectory()) {
-						continue;
-					}
-					addItem(e.getName(), z.getInputStream(e));
-				}
-				rootItem.canonize();
-				listModel.clear();
-				rootItem.addToListModel(listModel, this);
-				isExtracted = true;
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-		}
-		if (!isCompiled) {
-			String t = dir + File.separator + "TESTING.zip";
-			CompTest ct = new CompTest(rootItem, t, FMV.comptest);
-			ct.addPropertyChangeListener(new PropertyChangeListener() {
-				public void propertyChange(PropertyChangeEvent e) {
-					if ("progress".equals(e.getPropertyName())) {
-						FMV.comptest.setProgress((Integer) e
-								.getNewValue());
-					} else if ("state".equals(e.getPropertyName())
-							&& SwingWorker.StateValue.DONE == e
-									.getNewValue()) {
-						FMV.comptest.deactivate(false);
-					}
-				}
-			});
-			ct.execute();
-			FMV.comptest.activate(this, rootItem);
-		}
 		return listModel;
 	}
 
@@ -156,5 +163,10 @@ public class Archive {
 		FMV.diffPane.setItem(this, s);
 		FMV.timeGraph.setSource(this, s);
 	}
+
+	public boolean isExtracted() {
+		return isExtracted;
+	}
+
 
 }

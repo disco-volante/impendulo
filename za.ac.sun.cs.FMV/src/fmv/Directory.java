@@ -133,4 +133,8 @@ public class Directory {
 		a.setDiff(j);
 	}
 
+	public Archive getArchive(int index) {
+		return (Archive) listModel.getElementAt(index);
+	}
+
 }

@@ -16,9 +16,6 @@ import java.util.NavigableMap;
 
 import javax.swing.JComponent;
 
-import fmv.tools.ExternalTool;
-import fmv.tools.Tools;
-
 public class VersionTimeline extends JComponent implements ActionListener,
 		MouseListener {
 
@@ -148,12 +145,12 @@ public class VersionTimeline extends JComponent implements ActionListener,
 					g.setColor(v.getStatus().getColor());
 					g.fillOval(x - RADIUS, midY - RADIUS, RADIUS * 2,
 							RADIUS * 2);
-					int wc = v.getWarningCount();
+					/*int wc = v.getWarningCount();
 					if (wc > 0) {
 						g.setColor(Color.black);
 						// g.drawLine(x - RADIUS, midY, x + RADIUS, midY);
 						g.drawLine(x, midY - RADIUS, x, midY + RADIUS);
-					}
+					}*/
 					Status s = v.getStatus();
 					if ((s == Status.E_ERRS) || (s == Status.A_ERRS)) {
 						g.setColor(Color.red);
@@ -323,27 +320,11 @@ public class VersionTimeline extends JComponent implements ActionListener,
 	public void actionPerformed(ActionEvent e) {
 		if ("leftshow".equals(e.getActionCommand())) {
 			if (leftVersion != null) {
-				FMV.output.activate(leftVersion.getValue().getOutput());
+				FMV.getDialog().activate(leftVersion.getValue().getOutput());
 			}
-		} else if ("tool".equals(e.getActionCommand())) {
-			String tool = FMV.diffPane.getCurrentTool();
-			if (leftVersion != null) {
-				String out;
-				if ((out = leftVersion.getValue().getReport(tool)) != null) {
-					out = Tools.run(tool, leftVersion.getKey().toString()).outPut();
-				}
-				FMV.output.activate(out);
-			}
+		}  else if ("rightshow".equals(e.getActionCommand())) {
 			if (rightVersion != null) {
-				String out;
-				if ((out = leftVersion.getValue().getReport(tool)) != null) {
-					out = Tools.run(tool, leftVersion.getKey().toString()).outPut();
-				}
-				FMV.output.activate(out);
-			}
-		} else if ("rightshow".equals(e.getActionCommand())) {
-			if (rightVersion != null) {
-				FMV.output.activate(rightVersion.getValue().getOutput());
+				FMV.getDialog().activate(rightVersion.getValue().getOutput());
 			}
 		} else if ("leftedit".equals(e.getActionCommand())) {
 			if (leftVersion != null) {
@@ -352,6 +333,20 @@ public class VersionTimeline extends JComponent implements ActionListener,
 		} else if ("rightedit".equals(e.getActionCommand())) {
 			if (rightVersion != null) {
 				FMV.annotateDialog.activate(archive, source, rightVersion);
+			}
+		}else if ("tool".equals(e.getActionCommand())) {
+			String tool = FMV.diffPane.getCurrentTool();
+			if (leftVersion != null) {
+				String out;
+				if ((out = leftVersion.getValue().getReport(tool)) != null) {
+					FMV.getDialog().activate(out);
+				}
+			}
+			if (rightVersion != null) {
+				String out;
+				if ((out = rightVersion.getValue().getReport(tool)) != null) {
+					FMV.getDialog().activate(out);
+				}
 			}
 		}
 	}

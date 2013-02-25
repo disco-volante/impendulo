@@ -31,7 +31,7 @@ public abstract class BasicTool {
 		return args.toArray(new String[args.size()]);
 	}
 
-	public abstract Pair run(File workDir, String... input) throws IOException, InterruptedException;
+	public abstract Pair run(File workDir, String... input);
 
 	public void configure(String configFile) {
 		BufferedReader br = null;

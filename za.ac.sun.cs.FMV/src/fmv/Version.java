@@ -15,7 +15,6 @@ public class Version {
 
 	private HashMap<String, String> reports;
 
-	private int warningCount = 0;
 	
 	private String annotation = "";
 
@@ -44,16 +43,13 @@ public class Version {
 	}
 
 	public void setReport(String tool, String report) {
-		reports.put(tool, report);
+		getReports().put(tool, report);
 	}
 
 	public String getReport(String tool) {
-		return reports.get(tool);
+		return getReports().get(tool);
 	}
 
-	public int getWarningCount() {
-		return warningCount;
-	}
 
 	public void setAnnotation(String annotation) {
 		this.annotation = annotation;
@@ -77,6 +73,13 @@ public class Version {
 
 	public List<DiffAction> getDiff() {
 		return diff;
+	}
+
+	public HashMap<String, String> getReports() {
+		if(reports == null){
+			reports = new HashMap<String, String>();
+		}
+		return reports;
 	}
 
 }

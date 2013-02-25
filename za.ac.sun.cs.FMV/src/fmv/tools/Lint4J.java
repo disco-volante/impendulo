@@ -1,6 +1,5 @@
 package fmv.tools;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -29,13 +28,7 @@ public class Lint4J extends JarTool {
 	public static void main(String[] args) {
 		BasicTool lj = new Lint4J();
 		lj.configure("config/lint4j.config");
-		try {
-			System.out.println(lj.run(null, "fmv"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		System.out.println(lj.run(null, "fmv"));
 	}
 
 	@Override

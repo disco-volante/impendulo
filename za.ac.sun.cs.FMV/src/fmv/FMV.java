@@ -11,10 +11,16 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
+import javax.swing.Box;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JList;
@@ -31,12 +37,15 @@ import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import fmv.tools.Tools;
+
 /**
  * Main class for the Fault Measurement Visualizer.
  * 
  * @author jaco
  */
 public class FMV {
+	private static Logger logger;
 
 	/**
 	 * The main frame that constitutes this application.
@@ -49,14 +58,9 @@ public class FMV {
 	public static PreferencesDialog prefs;
 
 	/**
-	 * Dialog for showing the compiler/tester output.
-	 */
-	public static OutputDialog output;
-
-	/**
 	 * Dialog for showing the compiler/tester progress.
 	 */
-	public static CompTestDialog comptest;
+	public static ToolRunnerDialog toolrunner;
 
 	/**
 	 * A container for a list of zip files inside a directory.
@@ -93,6 +97,8 @@ public class FMV {
 
 	private static HelpContents help;
 
+	private static JComboBox<String> toolBox;
+
 	public static String getArchiveProperty(Archive archive, String defualt) {
 		if (directory != null) {
 			return directory.getXArchiveProperty(archive, null, defualt);
@@ -101,7 +107,8 @@ public class FMV {
 		}
 	}
 
-	public static String getArchiveProperty(Archive archive, String key, String defualt) {
+	public static String getArchiveProperty(Archive archive, String key,
+			String defualt) {
 		if (directory != null) {
 			return directory.getXArchiveProperty(archive, key, defualt);
 		} else {
@@ -115,21 +122,25 @@ public class FMV {
 		}
 	}
 
-	public static void setArchiveProperty(Archive archive, String key, String value) {
+	public static void setArchiveProperty(Archive archive, String key,
+			String value) {
 		if (directory != null) {
 			directory.setXArchiveProperty(archive, key, value);
 		}
 	}
 
-	public static String getVersionProperty(Archive archive, Source source, Date date, String key, String defualt) {
+	public static String getVersionProperty(Archive archive, Source source,
+			Date date, String key, String defualt) {
 		if (directory != null) {
-			return directory.getXVersionProperty(archive, source, date, key, defualt);
+			return directory.getXVersionProperty(archive, source, date, key,
+					defualt);
 		} else {
 			return defualt;
 		}
 	}
 
-	public static void setVersionProperty(Archive archive, Source source, Date date, String key, String value) {
+	public static void setVersionProperty(Archive archive, Source source,
+			Date date, String key, String value) {
 		if (directory != null) {
 			directory.setXVersionProperty(archive, source, date, key, value);
 		}
@@ -157,9 +168,12 @@ public class FMV {
 	}
 
 	public static Image getMyImage(String imageName) {
-		URL imageUrl = Thread.currentThread().getContextClassLoader().getResource(imageName);
-                System.out.println("URL: " + imageUrl);
-		if (imageUrl == null) { return null; }
+		URL imageUrl = Thread.currentThread().getContextClassLoader()
+				.getResource(imageName);
+		System.out.println("URL: " + imageUrl);
+		if (imageUrl == null) {
+			return null;
+		}
 		Image image = null;
 		try {
 			image = ImageIO.read(imageUrl);
@@ -170,8 +184,11 @@ public class FMV {
 	}
 
 	public static ImageIcon getMyImageIcon(String imageName) {
-		URL imageUrl = Thread.currentThread().getContextClassLoader().getResource(imageName);
-		if (imageUrl == null) { return null; }
+		URL imageUrl = Thread.currentThread().getContextClassLoader()
+				.getResource(imageName);
+		if (imageUrl == null) {
+			return null;
+		}
 		ImageIcon imageIcon = null;
 		try {
 			imageIcon = new ImageIcon(ImageIO.read(imageUrl));
@@ -181,12 +198,14 @@ public class FMV {
 		return imageIcon;
 	}
 
-	private static JMenuItem createMenuItem(String name, String cmd, MenuAction action, int key) {
+	private static JMenuItem createMenuItem(String name, String cmd,
+			MenuAction action, int key) {
 		JMenuItem item = new JMenuItem(name, getMyImageIcon(cmd + ".gif"));
 		item.setActionCommand(cmd);
 		item.addActionListener(action);
 		if (key != -1) {
-			item.setAccelerator(KeyStroke.getKeyStroke(key, ActionEvent.CTRL_MASK));
+			item.setAccelerator(KeyStroke.getKeyStroke(key,
+					ActionEvent.CTRL_MASK));
 		}
 		return item;
 	}
@@ -203,7 +222,8 @@ public class FMV {
 		JMenu m = new JMenu("File");
 		m.add(createMenuItem("Open Directory", "file.open", a, KeyEvent.VK_O));
 		m.addSeparator();
-		m.add(createMenuItem("Compile/test all", "file.comptest", a, KeyEvent.VK_C));
+		m.add(createMenuItem("Compile/test all", "file.comptest", a,
+				KeyEvent.VK_C));
 		m.add(createMenuItem("Print", "file.print", a, KeyEvent.VK_P));
 		m.addSeparator();
 		m.add(createMenuItem("Preferences", "file.prefs", a, -1));
@@ -214,7 +234,8 @@ public class FMV {
 		m = new JMenu("View");
 		b.add(m);
 		m.add(createMenuItem("Summary table", "view.table", a, KeyEvent.VK_T));
-		m.add(createMenuItem("Progress graph", "view.progress", a, KeyEvent.VK_G));
+		m.add(createMenuItem("Progress graph", "view.progress", a,
+				KeyEvent.VK_G));
 		m.add(createMenuItem("Differences", "view.diffs", a, KeyEvent.VK_D));
 
 		m = new JMenu("Help");
@@ -245,7 +266,10 @@ public class FMV {
 					if (i != -1) {
 						sourceList.setModel(directory.getModel(i));
 						sourceList.setSelectedIndex(0);
-						directory.setDiff(i, 0);
+						Archive archive = directory.getArchive(i);
+						if (archive.isCompiled()) {
+							directory.setDiff(i, 0);
+						}
 					}
 				}
 			}
@@ -300,9 +324,50 @@ public class FMV {
 		mainSplitPane.setResizeWeight(0);
 		mainSplitPane.setDividerLocation(150);
 
+		JButton compileBtn = new JButton("Compile");
+		compileBtn.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int i = directoryList.getSelectedIndex();
+				if (i != -1) {
+					Archive archive = directory.getArchive(i);
+					if (!archive.isExtracted()) {
+						archive.extract();
+					}
+					if (!archive.isCompiled()) {
+						archive.runTool("Tests");
+					}
+					sourceList.setModel(directory.getModel(i));
+					sourceList.setSelectedIndex(0);
+					directory.setDiff(i, 0);
+				}
+			}
+		});
+		Box controls = Box.createHorizontalBox();
+		controls.add(compileBtn);
+		toolBox = new JComboBox<String>(Tools.getTools());
+		controls.add(toolBox);
+		JButton toolButton = new JButton("Run");
+		toolButton.setToolTipText("Run static analysis tools.");
+		toolButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				int i = directoryList.getSelectedIndex();
+				if (i != -1 && toolBox.getSelectedIndex() != -1) {
+					Archive archive = directory.getArchive(i);
+					if (archive.isExtracted() && archive.isCompiled()) {
+						archive.runTool((String) toolBox.getSelectedItem());
+					}
+				}
+			}
+		});
+		controls.add(toolButton);
+
 		// Finally, create the contents pane.
 		JPanel contentPane = new JPanel(new BorderLayout());
 		contentPane.setOpaque(true);
+		contentPane.add(controls, BorderLayout.NORTH);
 		contentPane.add(mainSplitPane, BorderLayout.CENTER);
 		return contentPane;
 	}
@@ -322,8 +387,7 @@ public class FMV {
 		fmvIcon = new ImageIcon(FMV.getMyImage("fmv.gif"));
 		fmvImage = fmvIcon.getImage();
 		mainFrame.setIconImage(fmvImage);
-		output = new OutputDialog(mainFrame);
-		comptest = new CompTestDialog(mainFrame);
+		toolrunner = new ToolRunnerDialog(mainFrame);
 		prefs = new PreferencesDialog(mainFrame);
 		help = new HelpContents(mainFrame);
 		annotateDialog = new AnnotateDialog(mainFrame);
@@ -331,11 +395,26 @@ public class FMV {
 	}
 
 	public static void main(String[] args) {
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				createAndShowGUI();
-			}
-		});
+		logger = Logger.getLogger(FMV.class.getName());
+		logger.setUseParentHandlers(false);
+		logger.setLevel(Level.ALL);
+		try {
+			logger.addHandler(new FileHandler("fmv.log"));
+			javax.swing.SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					createAndShowGUI();
+				}
+			});
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+	
+	public static void log(String className, String content){
+		logger.log(Level.SEVERE , className+"\n"+content);
 	}
 
 	/**
@@ -409,6 +488,11 @@ public class FMV {
 								fmvIcon);
 			}
 		}
+	}
+
+	public static OutputDialog getDialog() {
+		return new OutputDialog(mainFrame);
+
 	}
 
 }

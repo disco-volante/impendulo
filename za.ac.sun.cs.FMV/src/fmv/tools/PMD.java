@@ -1,7 +1,6 @@
 package fmv.tools;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -31,14 +30,7 @@ public class PMD extends ExternalTool {
 	public static void main(String[] args) {
 		BasicTool pmd = new PMD();
 		pmd.configure("config/pmd.config");
-		try {
-			System.out.println(pmd.run(null, "/home/disco/rw334/src"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		System.out.println(pmd.run(null, "/home/disco/rw334/src"));
 	}
 
 }

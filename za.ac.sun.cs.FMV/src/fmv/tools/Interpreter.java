@@ -1,6 +1,5 @@
 package fmv.tools;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
