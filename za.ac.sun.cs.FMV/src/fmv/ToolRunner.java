@@ -136,10 +136,9 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 		Set<Date> dates = root.getKeys();
 		int i = 1, n = dates.size();
 		Compiler compiler = new Compiler(FMV.prefs.getCompilerCmd());
-		compiler.configure(new String[] { "-cp", sourceDir });
+		compiler.configure(new String[] { "cp: " + sourceDir });
 		Interpreter interpreter = new Interpreter(FMV.prefs.getInterpreterCmd());
-		interpreter.configure(new String[] { "-cp", sourceDir,
-				"org.junit.runner.JUnitCore" });
+		interpreter.configure(new String[] { "cp: " + sourceDir + " org.junit.runner.JUnitCore" });
 		for (Date d : dates) {
 			if (isCancelled()) {
 				return false;

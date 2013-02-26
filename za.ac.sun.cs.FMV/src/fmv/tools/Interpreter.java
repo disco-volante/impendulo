@@ -20,8 +20,8 @@ public class Interpreter extends ExternalTool {
 	protected String getConfig(String key, String value) {
 		String config = null;
 		if (!value.equals("none") && !value.equals("")) {
-			if (key.equals("classpath")) {
-				config = "-classpath ! " + value.replaceAll(" ", " ! ");
+			if (key.equals("classpath") || key.equals("cp")) {
+				config = "-cp ! " + value.replaceAll(" ", " ! ");
 			} else if (key.equals("jar") && value.equals("true")) {
 				config = "-jar";
 			} else {
