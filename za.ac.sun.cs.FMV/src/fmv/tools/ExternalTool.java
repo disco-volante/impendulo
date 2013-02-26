@@ -2,6 +2,7 @@ package fmv.tools;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -30,14 +31,14 @@ public abstract class ExternalTool extends BasicTool {
 			while ((line = errReader.readLine()) != null) {
 				System.err.println(line);
 			}
-			StringBuilder sb = new StringBuilder();
 			BufferedInputStream is = new BufferedInputStream(p.getInputStream());
-			byte[] bytes = new byte[65536];
-			while ((is.read(bytes)) != -1) {
-				sb.append(new String(bytes));
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			int rb;
+			while ((rb = is.read()) != -1) {
+				os.write(rb);
 			}
 			int exit = p.waitFor();
-			ret = new Pair(exit, sb.toString());
+			ret = new Pair(exit, os.toString());
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			ret = new Pair(1, e.getMessage());

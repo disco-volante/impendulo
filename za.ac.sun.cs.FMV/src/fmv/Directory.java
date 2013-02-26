@@ -85,6 +85,9 @@ public class Directory {
 	public void saveXProperties() {
 		File f = new File(dir + File.separator + "fmv.xml");
 		try {
+			for(Object value : properties.values()){
+				FMV.log(Directory.class.getName(), value.toString());
+			}
 			properties.storeToXML(new FileOutputStream(f), "FMV properties (" + new Date() + ")");
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
