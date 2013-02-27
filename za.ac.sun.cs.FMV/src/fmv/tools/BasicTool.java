@@ -33,6 +33,8 @@ public abstract class BasicTool {
 
 	public abstract Pair run(File workDir, String... input);
 
+	protected abstract boolean needCompile();
+
 	public void configure(String configFile) {
 		BufferedReader br = null;
 		config.clear();
@@ -61,7 +63,7 @@ public abstract class BasicTool {
 
 	public void configure(String[] configs) {
 		config.clear();
-		for(String config : configs){
+		for (String config : configs) {
 			process(config);
 		}
 	}
@@ -78,6 +80,22 @@ public abstract class BasicTool {
 	}
 
 	protected abstract String getConfig(String key, String value);
-	
+
+	protected void compile(File current) {
+		if (current.isDirectory()) {
+			File[] files = current.listFiles();
+			for (File file : files) {
+				compile(file);
+			}
+		} else if (current.getAbsolutePath().endsWith("java")) {
+			compile(current.getParentFile(), current.getAbsolutePath());
+		}
+	}
+
+	private void compile(File sourceDir, String java) {
+		Compiler compiler = new Compiler();
+		compiler.configure(new String[] { "cp: " + sourceDir});
+		compiler.run(sourceDir, java);
+	}
 
 }

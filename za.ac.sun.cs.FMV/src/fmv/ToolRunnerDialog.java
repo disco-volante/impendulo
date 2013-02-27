@@ -51,27 +51,25 @@ public class ToolRunnerDialog extends JDialog {
 		super(parent, "Compiling and testing", true);
 		addWindowListener(new WindowCloser(this));
 		JPanel comptestPane = new JPanel();
-		comptestPane.setLayout(new BoxLayout(comptestPane, BoxLayout.PAGE_AXIS));
+		comptestPane
+				.setLayout(new BoxLayout(comptestPane, BoxLayout.PAGE_AXIS));
 		comptestPane.setBorder(BorderFactory.createEmptyBorder(10, 2, 2, 2));
 
-		// Create and add a label to the content pane.
-		JLabel comptestLabel = new JLabel("Unpacking, compiling, and testing... (may take a while)");
+		JLabel comptestLabel = new JLabel(
+				"Unpacking, compiling, and testing... (may take a while)");
 		comptestLabel.setAlignmentX(LEFT_ALIGNMENT);
 		comptestPane.add(comptestLabel);
-		comptestPane.add(Box.createRigidArea(new Dimension(0,5)));
+		comptestPane.add(Box.createRigidArea(new Dimension(0, 5)));
 
-		// Create and add a label to the content pane.
 		messageLabel = new JLabel("|");
 		messageLabel.setAlignmentX(LEFT_ALIGNMENT);
 		comptestPane.add(messageLabel);
-		comptestPane.add(Box.createRigidArea(new Dimension(0,5)));
+		comptestPane.add(Box.createRigidArea(new Dimension(0, 5)));
 
-		// Create and add the progress bar.
 		comptestBar = new JProgressBar(0, 100);
 		comptestPane.add(comptestBar);
-		comptestPane.add(Box.createRigidArea(new Dimension(0,5)));
+		comptestPane.add(Box.createRigidArea(new Dimension(0, 5)));
 
-		// Create and add the cancel buttom.
 		JPanel comptestButtons = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		JButton cancelButton = new JButton("Cancel");
 		cancelButton.setActionCommand("cancel");
@@ -84,7 +82,6 @@ public class ToolRunnerDialog extends JDialog {
 		comptestButtons.add(cancelButton);
 		comptestPane.add(comptestButtons);
 
-		// Add the pane to the dialog.
 		add(comptestPane, BorderLayout.CENTER);
 	}
 
@@ -107,31 +104,36 @@ public class ToolRunnerDialog extends JDialog {
 		setVisible(false);
 		dispose();
 		if (!isCancel) {
-		ArchiveData data = new ArchiveData();
-		rootItem.extractProperties(archive, data);
-		SortedSet<Date> dates = new TreeSet<Date>(rootItem.getKeys());
-		Date prev = null, first = null, second = null;
-		for (Date d : dates) {
-			if (first == null) {
-				first = d;
-			} else if (second == null) {
-				second = d;
-				data.minTime = (second.getTime() - first.getTime()) * 0.001;
+			ArchiveData data = new ArchiveData();
+			rootItem.extractProperties(archive, data);
+			SortedSet<Date> dates = new TreeSet<Date>(rootItem.getKeys());
+			Date prev = null, first = null, second = null;
+			for (Date d : dates) {
+				if (first == null) {
+					first = d;
+				} else if (second == null) {
+					second = d;
+					data.minTime = (second.getTime() - first.getTime()) * 0.001;
+				}
+				if (prev != null) {
+					double t = (d.getTime() - prev.getTime()) * 0.001;
+					if (t > data.maxTime) {
+						data.maxTime = t;
+					}
+					if (t < data.minTime) {
+						data.minTime = t;
+					}
+				}
+				prev = d;
 			}
-			if (prev != null) {
-				double t = (d.getTime() - prev.getTime()) * 0.001;
-				if (t > data.maxTime) { data.maxTime = t; }
-				if (t < data.minTime) { data.minTime = t; }
-			}
-			prev = d;
-		}
-		data.aveTime = (prev.getTime() - first.getTime()) * 0.001 / dates.size();
-		data.totTime = (prev.getTime() - first.getTime()) * 0.001;
-		data.writeProperties(archive);
-		FMV.tablePane.addData(archive.toString(), data);
-		FMV.setArchiveProperty(archive, "true");
-		FMV.saveProperties();
-		archive.setCompiled();
+			data.aveTime = (prev.getTime() - first.getTime()) * 0.001
+					/ dates.size();
+			data.totTime = (prev.getTime() - first.getTime()) * 0.001;
+			data.writeProperties(archive);
+			FMV.tablePane.addData(archive.toString(), data);
+			FMV.setArchiveProperty(archive, "true");
+			FMV.saveProperties();
+			archive.setCompiled();
 		}
 	}
 
@@ -152,7 +154,7 @@ public class ToolRunnerDialog extends JDialog {
 	private static class WindowCloser extends WindowAdapter {
 
 		private ToolRunnerDialog dialog = null;
-		
+
 		public WindowCloser(ToolRunnerDialog dialog) {
 			this.dialog = dialog;
 		}

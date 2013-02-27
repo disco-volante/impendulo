@@ -145,12 +145,6 @@ public class VersionTimeline extends JComponent implements ActionListener,
 					g.setColor(v.getStatus().getColor());
 					g.fillOval(x - RADIUS, midY - RADIUS, RADIUS * 2,
 							RADIUS * 2);
-					/*int wc = v.getWarningCount();
-					if (wc > 0) {
-						g.setColor(Color.black);
-						// g.drawLine(x - RADIUS, midY, x + RADIUS, midY);
-						g.drawLine(x, midY - RADIUS, x, midY + RADIUS);
-					}*/
 					Status s = v.getStatus();
 					if ((s == Status.E_ERRS) || (s == Status.A_ERRS)) {
 						g.setColor(Color.red);
@@ -181,7 +175,7 @@ public class VersionTimeline extends JComponent implements ActionListener,
 					g.drawString(s.getMessage(), 1, y - 1);
 				}
 				FontMetrics fm = g.getFontMetrics();
-				int dh = fm.getAscent(); // + fm.getDescent();
+				int dh = fm.getAscent();
 				String d = sdf.format(new Date(firstTime));
 				g.drawString(d, firstX, dh + 2);
 				d = sdf.format(new Date(finalTime));
@@ -322,7 +316,7 @@ public class VersionTimeline extends JComponent implements ActionListener,
 			if (leftVersion != null) {
 				FMV.getDialog().activate(leftVersion.getValue().getOutput());
 			}
-		}  else if ("rightshow".equals(e.getActionCommand())) {
+		} else if ("rightshow".equals(e.getActionCommand())) {
 			if (rightVersion != null) {
 				FMV.getDialog().activate(rightVersion.getValue().getOutput());
 			}
@@ -334,20 +328,21 @@ public class VersionTimeline extends JComponent implements ActionListener,
 			if (rightVersion != null) {
 				FMV.annotateDialog.activate(archive, source, rightVersion);
 			}
-		}else if ("tool".equals(e.getActionCommand())) {
+		} else if ("tool".equals(e.getActionCommand())) {
 			String tool = FMV.diffPane.getCurrentTool();
+			String left = "", right = "";
 			if (leftVersion != null) {
-				String out;
-				if ((out = leftVersion.getValue().getReport(tool)) != null) {
-					FMV.getDialog().activate(out);
-				}
+				left = leftVersion.getValue().getReport(tool);
 			}
 			if (rightVersion != null) {
-				String out;
-				if ((out = rightVersion.getValue().getReport(tool)) != null) {
-					FMV.getDialog().activate(out);
-				}
+				right = rightVersion.getValue().getReport(tool);
 			}
+			FMV.getSplitDialog()
+					.setContents(SplitDialog.LEFT,
+							leftVersion.getKey().toString(), left)
+					.setContents(SplitDialog.RIGHT,
+							rightVersion.getKey().toString(), right)
+					.activate(tool + " Report");
 		}
 	}
 

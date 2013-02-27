@@ -36,5 +36,9 @@ public class Interpreter extends ExternalTool {
 		java.configure("config/interpreter.config");
 		System.out.println(java.run(null, "fmv.tools.FindBugs"));
 	}
+	@Override
+	protected boolean needCompile() {
+		return false;
+	}
 
 }

@@ -13,6 +13,11 @@ import fmv.Pair;
 public abstract class ExternalTool extends BasicTool {
 	@Override
 	public Pair run(File workDir, String... input) {
+		if (needCompile()) {
+			for (String in : input) {
+				compile(new File(in));
+			}
+		}
 		Pair ret;
 		try {
 			String[] args = getArgs(input);
@@ -21,7 +26,6 @@ public abstract class ExternalTool extends BasicTool {
 			if (workDir != null && workDir.exists() && workDir.isDirectory()) {
 				pb.directory(workDir);
 			}
-			System.out.println(pb.command());
 			Map<String, String> env = pb.environment();
 			env.clear();
 			Process p = pb.start();
@@ -39,6 +43,10 @@ public abstract class ExternalTool extends BasicTool {
 			}
 			int exit = p.waitFor();
 			ret = new Pair(exit, os.toString());
+			if (ret.outPut().trim() == ""){
+				ret.setOutput("No problems detected.");
+			}
+			System.out.println(ret.outPut());
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			ret = new Pair(1, e.getMessage());

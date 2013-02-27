@@ -3,6 +3,7 @@ package fmv;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,7 +17,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
-import javax.swing.Box;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -256,7 +256,6 @@ public class FMV {
 	private static Container createContentPane() {
 		Dimension d = new Dimension(150, 400);
 
-		// Leftmost list of zip files.
 		directoryList = new JList();
 		directoryList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		directoryList.addListSelectionListener(new ListSelectionListener() {
@@ -280,7 +279,6 @@ public class FMV {
 		directoryListScrollPane.setMinimumSize(d);
 		directoryListScrollPane.setPreferredSize(d);
 
-		// Midle list of zip file entries.
 		sourceList = new JList();
 		sourceList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		sourceList.addListSelectionListener(new ListSelectionListener() {
@@ -300,24 +298,19 @@ public class FMV {
 		sourcceListScrollPane.setMinimumSize(d);
 		sourcceListScrollPane.setPreferredSize(d);
 
-		// Rightmost pane with table.
 		tablePane = new TablePane();
 
-		// Rightmost pane with differences.
 		diffPane = new DiffPane();
 
-		// Rightmost time graph.
 		timeGraph = new VersionTimeline(false);
 		timeGraph.setMinimumSize(new Dimension(650, 400));
 
-		// Create a split pane with file list and differences/timegraph.
 		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
 				sourcceListScrollPane, tablePane);
 		splitPane.setOneTouchExpandable(true);
 		splitPane.setResizeWeight(0);
 		splitPane.setDividerLocation(150);
 
-		// Create a split pane with zip list and above splitpane.
 		JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
 				directoryListScrollPane, splitPane);
 		mainSplitPane.setOneTouchExpandable(true);
@@ -344,7 +337,7 @@ public class FMV {
 				}
 			}
 		});
-		Box controls = Box.createHorizontalBox();
+		JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		controls.add(compileBtn);
 		toolBox = new JComboBox<String>(Tools.getTools());
 		controls.add(toolBox);
@@ -356,15 +349,14 @@ public class FMV {
 				int i = directoryList.getSelectedIndex();
 				if (i != -1 && toolBox.getSelectedIndex() != -1) {
 					Archive archive = directory.getArchive(i);
-					if (archive.isExtracted() && archive.isCompiled()) {
-						archive.runTool((String) toolBox.getSelectedItem());
+					if (!archive.isExtracted()) {
+						archive.extract();
 					}
+					archive.runTool((String) toolBox.getSelectedItem());
 				}
 			}
 		});
 		controls.add(toolButton);
-
-		// Finally, create the contents pane.
 		JPanel contentPane = new JPanel(new BorderLayout());
 		contentPane.setOpaque(true);
 		contentPane.add(controls, BorderLayout.NORTH);
@@ -412,9 +404,9 @@ public class FMV {
 		}
 
 	}
-	
-	public static void log(String className, String content){
-		logger.log(Level.SEVERE , className+"\n"+content);
+
+	public static void log(String className, String content) {
+		logger.log(Level.SEVERE, className + "\n" + content);
 	}
 
 	/**
@@ -492,7 +484,10 @@ public class FMV {
 
 	public static OutputDialog getDialog() {
 		return new OutputDialog(mainFrame);
+	}
 
+	public static SplitDialog getSplitDialog() {
+		return new SplitDialog(mainFrame);
 	}
 
 }

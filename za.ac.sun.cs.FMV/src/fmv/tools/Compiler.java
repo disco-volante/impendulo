@@ -34,6 +34,10 @@ public class Compiler extends ExternalTool {
 		javac.configure("config/compiler.config");
 		System.out.println(javac.run(null, "src/fmv/tools/FindBugs.java"));
 	}
+	@Override
+	protected boolean needCompile() {
+		return false;
+	}
 
 
 }

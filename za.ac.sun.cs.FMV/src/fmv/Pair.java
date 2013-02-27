@@ -14,11 +14,16 @@ public class Pair {
 	}
 
 	public boolean hasError() {
-		return  exit != 0;
+		return exit != 0;
 	}
 
 	public String outPut() {
 		return output;
+	}
+
+	public void setOutput(String out) {
+		output = out;
+
 	}
 
 }

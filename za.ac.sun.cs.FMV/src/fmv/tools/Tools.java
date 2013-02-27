@@ -43,7 +43,7 @@ public class Tools {
 
 	public static BasicTool getTool(String toolName) {
 		BasicTool tool = null;
-		if (toolName.equals("Findbugs")) {
+		if (toolName.equals("FindBugs")) {
 			tool = new FindBugs();
 			tool.configure("config/fb.config");
 		} else if (toolName.equals("JLint")) {
@@ -52,6 +52,9 @@ public class Tools {
 		} else if (toolName.equals("PMD")) {
 			tool = new PMD();
 			tool.configure("config/pmd.config");
+		} else if(toolName.equals("Lint4J")){
+			tool = new Lint4J();
+			tool.configure("config/lint4j.config");
 		}
 		return tool;
 	}

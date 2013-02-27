@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -49,7 +48,9 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 		}
 		sourceDir = tempDir + "src";
 	}
-	public ToolRunner(Source root, ToolRunnerDialog dialog, String toolName, String testZip) {
+
+	public ToolRunner(Source root, ToolRunnerDialog dialog, String toolName,
+			String testZip) {
 		this(root, dialog, toolName);
 		removeDirs(new File(sourceDir));
 		this.testZip = testZip;
@@ -60,7 +61,7 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 			for (File f : file.listFiles()) {
 				removeDirs(f);
 			}
-		} else if (!file.getName().equals("tpgen.jar")) {
+		} else {
 			file.delete();
 		}
 	}
@@ -118,13 +119,12 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 			}
 			String df = "(" + i + "/" + n + ") " + dateFormat.format(d);
 			File file = root.unpack(d, sourceDir);
-			if(file == null){
+			if (file == null) {
 				return false;
 			}
 			File workDir = new File(tempDir);
 			publish(df + ": running " + tool);
 			Pair p = tool.run(workDir, file.getParentFile().getAbsolutePath());
-			System.out.println(p.outPut());
 			root.setReport(d, toolName, p.outPut());
 			setProgress((i++ * 100) / n);
 		}
@@ -138,14 +138,14 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 		Compiler compiler = new Compiler(FMV.prefs.getCompilerCmd());
 		compiler.configure(new String[] { "cp: " + sourceDir });
 		Interpreter interpreter = new Interpreter(FMV.prefs.getInterpreterCmd());
-		interpreter.configure(new String[] { "cp: " + sourceDir + " org.junit.runner.JUnitCore" });
+		interpreter.configure(new String[] { "cp: " + sourceDir
+				+ " org.junit.runner.JUnitCore" });
 		for (Date d : dates) {
 			if (isCancelled()) {
 				return false;
 			}
 			String df = "(" + i + "/" + n + ") " + dateFormat.format(d);
 			root.unpack(d, sourceDir);
-			System.out.println(tempDir);
 			File workDir = new File(sourceDir);
 			runTests(d, df, compiler, interpreter, workDir);
 			setProgress((i++ * 100) / n);

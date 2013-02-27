@@ -31,7 +31,8 @@ import fmv.tools.Tools;
  */
 public class Source {
 
-	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss.SSS");
+	private static final SimpleDateFormat dateFormat = new SimpleDateFormat(
+			"HH:mm:ss.SSS");
 
 	private Source parent = null;
 
@@ -141,10 +142,14 @@ public class Source {
 			} else if (prevAct.getCount() != a.getCount()) {
 				finalacts.add(prevAct);
 				prevAct = a;
-			} else if ((prevAct.getOp() == DiffAction.Operation.ADD) && (a.getOp() == DiffAction.Operation.DEL)) {
-				prevAct = new DiffAction(DiffAction.Operation.CHANGE, a.getCount());
-			} else if ((prevAct.getOp() == DiffAction.Operation.DEL) && (a.getOp() == DiffAction.Operation.ADD)) {
-				prevAct = new DiffAction(DiffAction.Operation.CHANGE, a.getCount());
+			} else if ((prevAct.getOp() == DiffAction.Operation.ADD)
+					&& (a.getOp() == DiffAction.Operation.DEL)) {
+				prevAct = new DiffAction(DiffAction.Operation.CHANGE,
+						a.getCount());
+			} else if ((prevAct.getOp() == DiffAction.Operation.DEL)
+					&& (a.getOp() == DiffAction.Operation.ADD)) {
+				prevAct = new DiffAction(DiffAction.Operation.CHANGE,
+						a.getCount());
 			} else {
 				finalacts.add(prevAct);
 				prevAct = a;
@@ -163,8 +168,8 @@ public class Source {
 				Version prev = i.next();
 				while (i.hasNext()) {
 					Version next = i.next();
-					List<DiffAction> actions = diff(prev.getLineList(), next
-							.getLineList());
+					List<DiffAction> actions = diff(prev.getLineList(),
+							next.getLineList());
 					if ((actions.size() > 1)
 							|| (actions.get(0).getOp() != DiffAction.Operation.SKIP)) {
 						prev = next;
@@ -218,9 +223,14 @@ public class Source {
 			} catch (IOException e2) {
 				e2.printStackTrace();
 			}
-		}
-		for (Source c : children) {
-			c.unpack(date, dir);
+		} else {
+			for (Source c : children) {
+				File tfile = c.unpack(date, dir);
+				if(tfile != null){
+					file = tfile;
+					break;
+				}
+			}
 		}
 		return file;
 	}
@@ -254,13 +264,23 @@ public class Source {
 	public void addToListModel(DefaultListModel model, Archive archive) {
 		if ((parent != null) && (children.size() == 0)) {
 			model.addElement(this);
-			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions.higherEntry(e.getKey())) {
-				e.getValue().setStatus(FMV.getVersionProperty(archive, this, e.getKey(), "status", "unknown"));
-				e.getValue().setOutput(FMV.getVersionProperty(archive, this, e.getKey(), "output", ""));
-				for(String tool: Tools.getTools()){
-					e.getValue().setReport(tool, FMV.getVersionProperty(archive, this, e.getKey(), tool+" report", ""));
+			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions
+					.higherEntry(e.getKey())) {
+				e.getValue().setStatus(
+						FMV.getVersionProperty(archive, this, e.getKey(),
+								"status", "unknown"));
+				e.getValue().setOutput(
+						FMV.getVersionProperty(archive, this, e.getKey(),
+								"output", ""));
+				for (String tool : Tools.getTools()) {
+					e.getValue().setReport(
+							tool,
+							FMV.getVersionProperty(archive, this, e.getKey(),
+									tool + " report", ""));
 				}
-				e.getValue().setAnnotation(FMV.getVersionProperty(archive, this, e.getKey(), "note", ""));
+				e.getValue().setAnnotation(
+						FMV.getVersionProperty(archive, this, e.getKey(),
+								"note", ""));
 			}
 		}
 		for (Source c : children) {
@@ -270,12 +290,17 @@ public class Source {
 
 	public void extractProperties(Archive archive, ArchiveData data) {
 		if ((parent != null) && (children.size() == 0)) {
-			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions.higherEntry(e.getKey())) {
+			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions
+					.higherEntry(e.getKey())) {
 				e.getValue().getStatus().setData(data);
-				FMV.setVersionProperty(archive, this, e.getKey(), "status", e.getValue().getStatus().getName());
-				FMV.setVersionProperty(archive, this, e.getKey(), "output", e.getValue().getOutput());
-				for(Map.Entry<String, String> re : e.getValue().getReports().entrySet()){
-					FMV.setVersionProperty(archive, this, e.getKey(), re.getKey()+" report", re.getValue());
+				FMV.setVersionProperty(archive, this, e.getKey(), "status", e
+						.getValue().getStatus().getName());
+				FMV.setVersionProperty(archive, this, e.getKey(), "output", e
+						.getValue().getOutput());
+				for (Map.Entry<String, String> re : e.getValue().getReports()
+						.entrySet()) {
+					FMV.setVersionProperty(archive, this, e.getKey(),
+							re.getKey() + " report", re.getValue());
 				}
 			}
 		}
@@ -328,8 +353,8 @@ public class Source {
 		}
 	}
 
-	public void insertDiff(boolean onLeft, List<Integer> lines, List<DiffAction> diffs)
-			throws BadLocationException {
+	public void insertDiff(boolean onLeft, List<Integer> lines,
+			List<DiffAction> diffs) throws BadLocationException {
 		TextRegion text = FMV.diffPane.getText(onLeft);
 		text.clearDoc();
 		int n = 1;
@@ -338,7 +363,8 @@ public class Source {
 				text.append(formatLineNr(n++) + backward.get(l) + "\n", null);
 			}
 		} else {
-			DiffAction.Operation ch = onLeft ? DiffAction.Operation.ADD : DiffAction.Operation.DEL;
+			DiffAction.Operation ch = onLeft ? DiffAction.Operation.ADD
+					: DiffAction.Operation.DEL;
 			Iterator<Integer> liter = lines.iterator();
 			for (DiffAction d : diffs) {
 				int c = d.getCount();
@@ -346,21 +372,24 @@ public class Source {
 				if (o == DiffAction.Operation.SKIP) {
 					while (c-- > 0) {
 						int l = liter.next();
-						text.append(formatLineNr(n++) + backward.get(l) + "\n", null);						
+						text.append(formatLineNr(n++) + backward.get(l) + "\n",
+								null);
 					}
 				} else if (o == ch) {
 					while (c-- > 0) {
-						text.append("\n", null);						
+						text.append("\n", null);
 					}
 				} else if (o == DiffAction.Operation.CHANGE) {
 					while (c-- > 0) {
 						int l = liter.next();
-						text.append(formatLineNr(n++) + backward.get(l) + "\n", TextRegion.changed);						
+						text.append(formatLineNr(n++) + backward.get(l) + "\n",
+								TextRegion.changed);
 					}
 				} else {
 					while (c-- > 0) {
 						int l = liter.next();
-						text.append(formatLineNr(n++) + backward.get(l) + "\n", TextRegion.delta);						
+						text.append(formatLineNr(n++) + backward.get(l) + "\n",
+								TextRegion.delta);
 					}
 				}
 			}
@@ -374,7 +403,8 @@ public class Source {
 		FMV.diffPane.setButton(onLeft, false);
 	}
 
-	public void showItem(boolean onLeft, Map.Entry<Date, Version> version, List<DiffAction> diffs) {
+	public void showItem(boolean onLeft, Map.Entry<Date, Version> version,
+			List<DiffAction> diffs) {
 		try {
 			insertDiff(onLeft, version.getValue().getLineList(), diffs);
 		} catch (BadLocationException e) {

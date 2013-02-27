@@ -38,7 +38,6 @@ public class OutputDialog extends JDialog {
 	public OutputDialog(JFrame parent) {
 		super(parent, "Output", true);
 
-		// Create a pane with a text and OK button.
 		JPanel opane = new JPanel(new BorderLayout());
 		opane.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 		outputText = new JTextArea(20, 140);
@@ -58,7 +57,6 @@ public class OutputDialog extends JDialog {
 		obuttons.add(okButton, BorderLayout.PAGE_END);
 		opane.add(obuttons, BorderLayout.PAGE_END);
 
-		// Add the pane to the dialog.
 		add(opane, BorderLayout.CENTER);
 	}
 

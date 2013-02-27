@@ -43,7 +43,6 @@ public class HelpContents extends JFrame {
 
 		public HtmlPane() {
 			try {
-				// URL url = new URL("file:///" + new File("src/helpfiles/index.html").getAbsolutePath());
 				URL url = Thread.currentThread().getContextClassLoader().getResource("helpfiles/index.html");
 				html = new JEditorPane(url);
 				html.setEditable(false);

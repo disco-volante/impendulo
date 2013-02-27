@@ -35,4 +35,9 @@ public class Lint4J extends JarTool {
 	protected Collection<String> getCommand() {
 		return Arrays.asList(command);
 	}
+
+	@Override
+	protected boolean needCompile() {
+		return false;
+	}
 }

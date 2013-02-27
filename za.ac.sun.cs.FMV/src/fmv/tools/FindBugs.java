@@ -11,7 +11,7 @@ public class FindBugs extends JarTool {
 	protected String getConfig(String key, String value) {
 		String config = null;
 		if (!value.equals("none") && !value.equals("")) {
-			if (key.equals("outFormat") || key.equals("priority")) {
+			if (key.equals("outFormat") || key.equals("confidence")) {
 				config = "-" + value;
 			} else if (key.equals("auxclasspath")) {
 				config = "-auxclasspath ! " + value;
@@ -37,5 +37,10 @@ public class FindBugs extends JarTool {
 	@Override
 	protected Collection<String> getCommand() {
 		return Arrays.asList(command);
+	}
+
+	@Override
+	protected boolean needCompile() {
+		return true;
 	}
 }

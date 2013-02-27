@@ -32,5 +32,9 @@ public class PMD extends ExternalTool {
 		pmd.configure("config/pmd.config");
 		System.out.println(pmd.run(null, "/home/disco/rw334/src"));
 	}
+	@Override
+	protected boolean needCompile() {
+		return false;
+	}
 
 }

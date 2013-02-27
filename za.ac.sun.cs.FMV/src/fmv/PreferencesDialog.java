@@ -25,9 +25,9 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 	 */
 	private static final long serialVersionUID = 9102953580130214522L;
 
-	private String compilerCmd = null;// System.getProperty("java.compiler");
+	private String compilerCmd = null;
 
-	private String interpreterCmd = null;// System.getProperty("java.vm");
+	private String interpreterCmd = null;
 
 	private String findbugsJar = null;
 
@@ -114,7 +114,6 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 			findbugsSrc = "program";
 		}
 
-		// Compiler text field + browse button.
 		JPanel cfield = new JPanel(new FlowLayout(FlowLayout.LEADING));
 		compilerCmdText = new JTextField(compilerCmd, 60);
 		cfield.add(compilerCmdText);
@@ -123,7 +122,6 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		cbutton.addActionListener(this);
 		cfield.add(cbutton);
 
-		// Interpreter text field + browse button.
 		JPanel ifield = new JPanel(new FlowLayout(FlowLayout.LEADING));
 		interpreterCmdText = new JTextField(interpreterCmd, 60);
 		ifield.add(interpreterCmdText);
@@ -132,7 +130,6 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		ibutton.addActionListener(this);
 		ifield.add(ibutton);
 
-		// Findbugs text field + browse button.
 		JPanel fbjfield = new JPanel(new FlowLayout(FlowLayout.LEADING));
 		findbugsJarText = new JTextField(findbugsJar, 60);
 		fbjfield.add(findbugsJarText);
@@ -141,18 +138,15 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		fbjbutton.addActionListener(this);
 		fbjfield.add(fbjbutton);
 
-		// Findbugs text field + browse button.
 		JPanel fbsfield = new JPanel(new FlowLayout(FlowLayout.LEADING));
 		findbugsSrcText = new JTextField(findbugsSrc, 60);
 		fbsfield.add(findbugsSrcText);
 
-		// Remove source directory checkbox.
 		JPanel rfield = new JPanel(new FlowLayout(FlowLayout.LEADING));
 		removeSrcCheckBox = new JCheckBox("Remove source directory", removeSrc);
 		rfield.add(removeSrcCheckBox);
 		rfield.add(removeSrcCheckBox);
 
-		// Labels.
 		JLabel clabel = new JLabel("Compiler");
 		clabel.setLabelFor(cfield);
 		JLabel ilabel = new JLabel("Interpreter");
@@ -164,7 +158,6 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		JLabel rlabel = new JLabel("");
 		rlabel.setLabelFor(rfield);
 
-		// Place the labels and fields in a panel.
 		JPanel ppane = new JPanel();
 		GridBagLayout gridbag = new GridBagLayout();
 		ppane.setLayout(gridbag);
@@ -172,7 +165,6 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		JPanel[] fields = { cfield, ifield, fbjfield, fbsfield, rfield };
 		addLabelTextRows(labels, fields, gridbag, ppane);
 
-		// Create the "OK" and "Cancel" buttons.
 		JPanel bpane = new JPanel(new FlowLayout(FlowLayout.TRAILING));
 		bpane.setOpaque(true);
 		JButton okButton = new JButton("OK");
@@ -184,7 +176,6 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		cancelButton.addActionListener(this);
 		bpane.add(cancelButton);
 
-		// Add the labels, fields, and buttons to the dialog.
 		add(ppane, BorderLayout.CENTER);
 		add(bpane, BorderLayout.PAGE_END);
 	}

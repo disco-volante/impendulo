@@ -77,8 +77,6 @@ public class AnnotateDialog extends JDialog {
 		});
 		obuttons.add(cancelButton);
 		opane.add(obuttons, BorderLayout.PAGE_END);
-
-		// Add the pane to the dialog.
 		add(opane, BorderLayout.CENTER);
 	}
 
