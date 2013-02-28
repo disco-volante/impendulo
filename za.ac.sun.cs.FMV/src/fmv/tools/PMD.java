@@ -7,7 +7,7 @@ import java.util.Collection;
 import fmv.Pair;
 
 public class PMD extends ExternalTool {
-	private String[] command = new String[] { "tools/pb.sh", "pmd" };
+	private String[] command = new String[] { "/home/disco/prog/pmd/bin/run.sh", "pmd" };
 	@Override
 	protected String getConfig(String key, String value) {
 		String config = null;

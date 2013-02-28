@@ -23,6 +23,7 @@ public abstract class ExternalTool extends BasicTool {
 			String[] args = getArgs(input);
 			ProcessBuilder pb = new ProcessBuilder(args)
 					.redirectErrorStream(true);
+			System.out.println(pb.command());
 			if (workDir != null && workDir.exists() && workDir.isDirectory()) {
 				pb.directory(workDir);
 			}

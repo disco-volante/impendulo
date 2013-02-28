@@ -5,7 +5,7 @@ import java.util.Collection;
 
 public class JLint extends ExternalTool {
 
-	private String command = "tools/jlint";
+	private String command = "jlint";
 
 	public static void main(String[] args) {
 		ExternalTool fb = new JLint();

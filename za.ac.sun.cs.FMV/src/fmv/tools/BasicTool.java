@@ -85,7 +85,11 @@ public abstract class BasicTool {
 		if (current.isDirectory()) {
 			File[] files = current.listFiles();
 			for (File file : files) {
-				compile(file);
+				if (file.getName().endsWith("class")) {
+					file.delete();
+				} else {
+					compile(file);
+				}
 			}
 		} else if (current.getAbsolutePath().endsWith("java")) {
 			compile(current.getParentFile(), current.getAbsolutePath());
@@ -94,7 +98,7 @@ public abstract class BasicTool {
 
 	private void compile(File sourceDir, String java) {
 		Compiler compiler = new Compiler();
-		compiler.configure(new String[] { "cp: " + sourceDir});
+		compiler.configure(new String[] { "cp: " + sourceDir });
 		compiler.run(sourceDir, java);
 	}
 

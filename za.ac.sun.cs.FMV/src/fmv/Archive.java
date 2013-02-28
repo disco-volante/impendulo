@@ -155,6 +155,9 @@ public class Archive {
 	
 	@SuppressWarnings("rawtypes")
 	public DefaultListModel getModel(Directory directory) {
+		if(!isExtracted()){
+			extract();
+		}
 		return listModel;
 	}
 
