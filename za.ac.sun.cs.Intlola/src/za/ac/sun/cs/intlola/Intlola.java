@@ -6,6 +6,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.zip.ZipEntry;
@@ -19,6 +21,7 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -34,11 +37,14 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	public static final String PLUGIN_ID = "za.ac.sun.cs.goanna";
 
-	private static final QualifiedName RECORD_KEY = new QualifiedName("intlola", "record");
+	private static final QualifiedName RECORD_KEY = new QualifiedName(
+			"intlola", "record");
 
-	private static final QualifiedName LOCAL_KEY = new QualifiedName("intlola", "local");
+	private static final QualifiedName LOCAL_KEY = new QualifiedName("intlola",
+			"local");
 
-	private static final QualifiedName REMOTE_KEY = new QualifiedName("intlola", "remote");
+	private static final QualifiedName REMOTE_KEY = new QualifiedName(
+			"intlola", "remote");
 
 	private static final Boolean RECORD_ON = new Boolean(true);
 
@@ -50,15 +56,12 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private static final int ZIP_BUFFER_SIZE = 2048;
 
+	private static final String ADDRESS = "localhost";
+
+	private static final int PORT = 9998;
+
 	private static Intlola plugin;
 
-	/*
-	public static Socket requestSocket;
-	public static BufferedOutputStream out;
-
-	private ILaunchListener launchListener = null;
-	*/
-	
 	private IResourceChangeListener changeListener = null;
 
 	private boolean listenersAdded = false;
@@ -69,35 +72,17 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
-		// System.err.println("INTLOLA: plugin started");
 		if (!listenersAdded) {
 			changeListener = new IntlolaListener();
-			getWorkspace().addResourceChangeListener(changeListener, IResourceChangeEvent.POST_CHANGE);
+			getWorkspace().addResourceChangeListener(changeListener,
+					IResourceChangeEvent.POST_CHANGE);
 			listenersAdded = true;
-			/*
-			try{
-				requestSocket = new Socket("196.168.1.151", 2010);
-				// System.err.println("INTLOLA: Connected to server in port 2010");
-				out = new BufferedOutputStream(requestSocket.getOutputStream());
-				out.flush();
-				launchListener = new IntlolaMonitor();
-				DebugPlugin.getDefault().getLaunchManager().addLaunchListener(launchListener);
-				// System.err.println("INTLOLA: listeners started");
-			}
-			catch(UnknownHostException unknownHost){
-				System.err.println("You are trying to connect to an unknown host!");
-			}
-			catch(IOException ioException){
-				ioException.printStackTrace();
-			}
-		*/
 		}
 	}
 
 	public void stop(BundleContext context) throws Exception {
 		plugin = null;
 		super.stop(context);
-		// System.err.println("INTLOLA: plugin stopped");
 	}
 
 	public static Intlola getDefault() {
@@ -180,16 +165,25 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			filename = dialog.open();
 			if (filename == null) {
 				isDone = true;
-			}
-			else {
+			} else {
 				File file = new File(filename);
 				if (file.exists()) {
 					if (file.isFile()) {
-						isDone = MessageDialog.openQuestion(shell, "Replace?",
-							"File \"" + filename + "\" already exists.  Do you want to replace it?");
-					}
-					else {
-						MessageDialog.openInformation(shell, "Irregular file", "File \"" + filename + "\" exists, but it is not a regular file.  Please choose another file.");
+						isDone = MessageDialog
+								.openQuestion(
+										shell,
+										"Replace?",
+										"File \""
+												+ filename
+												+ "\" already exists.  Do you want to replace it?");
+					} else {
+						MessageDialog
+								.openInformation(
+										shell,
+										"Irregular file",
+										"File \""
+												+ filename
+												+ "\" exists, but it is not a regular file.  Please choose another file.");
 					}
 				} else {
 					isDone = true;
@@ -226,20 +220,29 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		while (!isDone) {
 			String filename = getFilename(shell);
 			if (filename == null) {
-				MessageDialog.openInformation(shell, "Unsaved data", "Intlola data not saved - still recording.");
+				MessageDialog.openInformation(shell, "Unsaved data",
+						"Intlola data not saved - still recording.");
 				return;
-			}
-			else if (filename.matches("([^/]*/)*[-a-zA-z0-9]+([.][-a-zA-z0-9]+)*[+][0-9]+")) {
-				String hostname = filename.replaceAll("([^/]*/)*([-a-zA-z0-9]+([.][-a-zA-z0-9]+)*)[+]([0-9]+)", "$2");
-				int port = Integer.parseInt(filename.replaceAll("([^/]*/)*([-a-zA-z0-9]+([.][-a-zA-z0-9]+)*)[+]([0-9]+)", "$4"));
-				try{
+			} else if (filename
+					.matches("([^/]*/)*[-a-zA-z0-9]+([.][-a-zA-z0-9]+)*[+][0-9]+")) {
+				String hostname = filename
+						.replaceAll(
+								"([^/]*/)*([-a-zA-z0-9]+([.][-a-zA-z0-9]+)*)[+]([0-9]+)",
+								"$2");
+				int port = Integer
+						.parseInt(filename
+								.replaceAll(
+										"([^/]*/)*([-a-zA-z0-9]+([.][-a-zA-z0-9]+)*)[+]([0-9]+)",
+										"$4"));
+				try {
 					Socket requestSocket = new Socket(hostname, port);
-					BufferedOutputStream out = new BufferedOutputStream(requestSocket.getOutputStream());
-			        ZipOutputStream outzip = new ZipOutputStream(out);
-			        zipDir(outzip, plugin.getStateLocation().toFile());
-			        outzip.close();
-			        out.flush();
-			        out.close();
+					BufferedOutputStream out = new BufferedOutputStream(
+							requestSocket.getOutputStream());
+					ZipOutputStream outzip = new ZipOutputStream(out);
+					zipDir(outzip, plugin.getStateLocation().toFile());
+					outzip.close();
+					out.flush();
+					out.close();
 					requestSocket.close();
 					project.setSessionProperty(RECORD_KEY, null);
 					project.setSessionProperty(LOCAL_KEY, null);
@@ -247,34 +250,95 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 					isDone = true;
 				} catch (CoreException e) {
 					// do nothing
-				} catch(UnknownHostException e){
-					MessageDialog.openError(shell, "Problem", "Could not connect to \"" + hostname + ":" + port + "\".");
-				} catch(IOException e){
-					MessageDialog.openError(shell, "Problem", "IO error during zip file transmission (" + e.getMessage() + ")");
+				} catch (UnknownHostException e) {
+					MessageDialog.openError(shell, "Problem",
+							"Could not connect to \"" + hostname + ":" + port
+									+ "\".");
+				} catch (IOException e) {
+					MessageDialog.openError(
+							shell,
+							"Problem",
+							"IO error during zip file transmission ("
+									+ e.getMessage() + ")");
 				}
-			}
-			else {
+			} else {
 				try {
-			        FileOutputStream outfile = new FileOutputStream(filename);
-			        BufferedOutputStream out = new BufferedOutputStream(outfile);
-			        ZipOutputStream outzip = new ZipOutputStream(out);
-			        zipDir(outzip, plugin.getStateLocation().toFile());
-			        outzip.close();
-			        out.flush();
-			        out.close();
+					FileOutputStream outfile = new FileOutputStream(filename);
+					BufferedOutputStream out = new BufferedOutputStream(outfile);
+					ZipOutputStream outzip = new ZipOutputStream(out);
+					zipDir(outzip, plugin.getStateLocation().toFile());
+					outzip.close();
+					out.flush();
+					out.close();
 					project.setSessionProperty(RECORD_KEY, null);
 					project.setSessionProperty(LOCAL_KEY, null);
 					project.setSessionProperty(REMOTE_KEY, null);
 					isDone = true;
+					sendFile(filename);
 				} catch (CoreException e) {
 					// do nothing
 				} catch (FileNotFoundException e) {
-					MessageDialog.openError(shell, "Problem", "Could not open file \"" + filename + "\".");
+					MessageDialog.openError(shell, "Problem",
+							"Could not open file \"" + filename + "\".");
 				} catch (IOException e) {
-					MessageDialog.openError(shell, "Problem", "IO error during zip file creation (" + e.getMessage() + ")");
+					MessageDialog.openError(
+							shell,
+							"Problem",
+							"IO error during zip file creation ("
+									+ e.getMessage() + ")");
 				}
 			}
 		}
+	}
+
+	private static void sendFile(String filename) throws UnknownHostException,
+			IOException {
+		String fname = filename;
+		byte[] fbytes = new byte[1024], sbytes = new byte[1024];
+		OutputStream snd = null;
+		FileInputStream fis = null;
+		Socket sock = null;
+		InputStream rcv = null;
+		try {
+			sock = new Socket(ADDRESS, PORT);
+			snd = sock.getOutputStream();
+			snd.write("CONNECT".getBytes());
+			 log("Sent: "+new String ("CONNECT".getBytes()));
+			rcv = sock.getInputStream();
+			rcv.read(sbytes);
+			 log( "Received: "+new String (sbytes));
+			snd.write(("files.zip").getBytes());
+			 log("Sent: "+new String ("files.zip".getBytes()));
+			int count;
+			fis = new FileInputStream(fname);
+			while ((count = fis.read(fbytes)) >= 0) {
+				snd.write(fbytes, 0, count);
+				 log("Sent: "+new String (fbytes));
+
+			}
+			log("COMPLETE");
+			snd.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				fis.close();
+				snd.close();
+				rcv.close();
+				sock.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+	}
+
+	private static void log(String msg) {
+		plugin.log(msg, null);
+	}
+
+	private void log(String msg, Exception e) {
+		getLog().log(new Status(Status.INFO, PLUGIN_ID, Status.OK, msg, e));
 	}
 
 	public static void stopRemoteRecord(IProject project) {
@@ -298,7 +362,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	public static IProject getSelectedProject(ExecutionEvent event) {
-		IStructuredSelection selection = (IStructuredSelection) HandlerUtil.getActiveMenuSelection(event);
+		IStructuredSelection selection = (IStructuredSelection) HandlerUtil
+				.getActiveMenuSelection(event);
 		Object element = selection.getFirstElement();
 		if (element instanceof IProject) {
 			return (IProject) element;
