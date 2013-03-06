@@ -15,6 +15,7 @@ import java.util.zip.ZipOutputStream;
 
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IWorkspace;
@@ -32,6 +33,8 @@ import org.eclipse.ui.IStartup;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
+
+import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
 public class Intlola extends AbstractUIPlugin implements IStartup {
 
@@ -66,6 +69,24 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private boolean listenersAdded = false;
 
+	private enum SendMode {
+		ONSAVE, ONSTOP;
+
+		public static SendMode getMode(String mpref) {
+			SendMode ret = null;
+			if (mpref.equals(PreferenceConstants.SAVE)) {
+				ret = ONSAVE;
+			} else if (mpref.equals(PreferenceConstants.STOP)) {
+				ret = ONSTOP;
+			}
+			return ret;
+		}
+	}
+
+	private SendMode send;
+
+	private String uname;
+
 	public Intlola() {
 		plugin = this;
 	}
@@ -78,6 +99,15 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 					IResourceChangeEvent.POST_CHANGE);
 			listenersAdded = true;
 		}
+		getPreferences();
+
+	}
+
+	private void getPreferences() {
+		String mpref = getPreferenceStore().getString(
+				PreferenceConstants.P_SEND);
+		send = SendMode.getMode(mpref);
+		uname = getPreferenceStore().getString(PreferenceConstants.P_UNAME);
 	}
 
 	public void stop(BundleContext context) throws Exception {
@@ -126,7 +156,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			project.setSessionProperty(RECORD_KEY, RECORD_ON);
 			project.setSessionProperty(LOCAL_KEY, LOCAL_ON);
 		} catch (CoreException e) {
-			// do nothing
 		}
 	}
 
@@ -135,7 +164,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			project.setSessionProperty(RECORD_KEY, RECORD_ON);
 			project.setSessionProperty(REMOTE_KEY, REMOTE_ON);
 		} catch (CoreException e) {
-			// do nothing
 		}
 	}
 
@@ -210,7 +238,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 				outzip.closeEntry();
 				origin.close();
 			} catch (IOException e) {
-				// do nothing
 			}
 		}
 	}
@@ -274,9 +301,10 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 					project.setSessionProperty(LOCAL_KEY, null);
 					project.setSessionProperty(REMOTE_KEY, null);
 					isDone = true;
-					sendFile(filename);
+					if (plugin.send.equals(SendMode.ONSTOP)) {
+						sendFile(filename);
+					}
 				} catch (CoreException e) {
-					// do nothing
 				} catch (FileNotFoundException e) {
 					MessageDialog.openError(shell, "Problem",
 							"Could not open file \"" + filename + "\".");
@@ -293,8 +321,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private static void sendFile(String filename) throws UnknownHostException,
 			IOException {
-		String fname = filename;
-		byte[] fbytes = new byte[1024], sbytes = new byte[1024];
+		byte[] buffer = new byte[1024];
 		OutputStream snd = null;
 		FileInputStream fis = null;
 		Socket sock = null;
@@ -302,42 +329,44 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		try {
 			sock = new Socket(ADDRESS, PORT);
 			snd = sock.getOutputStream();
-			snd.write("CONNECT".getBytes());
-			 log("Sent: "+new String ("CONNECT".getBytes()));
+			String name = filename.substring(filename
+					.lastIndexOf(File.separator) + 1);
+			snd.write(("CONNECT:"+ plugin.uname + ":" + name).getBytes());
 			rcv = sock.getInputStream();
-			rcv.read(sbytes);
-			 log( "Received: "+new String (sbytes));
-			snd.write(("files.zip").getBytes());
-			 log("Sent: "+new String ("files.zip".getBytes()));
-			int count;
-			fis = new FileInputStream(fname);
-			while ((count = fis.read(fbytes)) >= 0) {
-				snd.write(fbytes, 0, count);
-				 log("Sent: "+new String (fbytes));
-
+			rcv.read(buffer);
+			if (!new String(buffer).startsWith("ACCEPT")) {
+				rcv.close();
+				snd.close();
+				sock.close();
+				return;
 			}
-			log("COMPLETE");
+			int count;
+			fis = new FileInputStream(filename);
+			while ((count = fis.read(buffer)) >= 0) {
+				snd.write(buffer, 0, count);
+			}
 			snd.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
 			try {
+				rcv.close();
 				fis.close();
 				snd.close();
-				rcv.close();
 				sock.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 
 		}
+
 	}
 
-	private static void log(String msg) {
+	public static void log(String msg) {
 		plugin.log(msg, null);
 	}
 
-	private void log(String msg, Exception e) {
+	public void log(String msg, Exception e) {
 		getLog().log(new Status(Status.INFO, PLUGIN_ID, Status.OK, msg, e));
 	}
 
