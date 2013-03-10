@@ -8,18 +8,11 @@ import org.eclipse.ui.handlers.HandlerUtil;
 
 public class IntlolaRecordStop extends AbstractHandler {
 
+	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		IProject project = Intlola.getSelectedProject(event);
 		if (Intlola.getRecordStatus(project)) {
-			if (Intlola.getLocalStatus(project)) {
-				Intlola.stopLocalRecord(project, HandlerUtil.getActiveShell(event));
-			}
-			else if (Intlola.getRemoteStatus(project)) {
-				Intlola.stopRemoteRecord(project);
-			}
-			else {
-				Intlola.stopRecord(project);
-			}
+				Intlola.stopRecord(project, HandlerUtil.getActiveShell(event));
 		}
 		return null;
 	}

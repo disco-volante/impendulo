@@ -18,15 +18,20 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 	}
 
 	public void createFieldEditors() {
+		StringFieldEditor pasword = new StringFieldEditor(PreferenceConstants.P_PASSWD,
+				"Password:", getFieldEditorParent());
+		pasword.getTextControl(null).setEchoChar('*');
 		addField(new StringFieldEditor(PreferenceConstants.P_UNAME,
 				"Username:", getFieldEditorParent()));
+		addField(pasword);
 		addField(new RadioGroupFieldEditor(
 				PreferenceConstants.P_SEND,
 				"Send data to server:",
 				1,
 				new String[][] {
 						{ "After every save", PreferenceConstants.SAVE },
-						{ "When recording is stopped", PreferenceConstants.STOP } },
+						{ "When recording is stopped", PreferenceConstants.STOP },
+						{"Never", PreferenceConstants.NEVER}},
 				getFieldEditorParent()));
 	}
 

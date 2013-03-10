@@ -27,7 +27,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 
 	private static int counter = 0;
 
-	public static void copyFileLocal(String fromName, String toName) {
+	public static void copyFile(String fromName, String toName) {
 		try {
 			File fromFile = new File(fromName);
 			File toFile = new File(toName);
@@ -53,11 +53,10 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 			from.close();
 			to.close();
 		} catch (IOException e) {
-			// do nothing
 		}
 	}
 
-	public static void touchFileLocal(String toName) {
+	public static void touchFile(String toName) {
 		try {
 			File toFile = new File(toName);
 			if (toFile.exists()) {
@@ -66,12 +65,12 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 			FileOutputStream to = new FileOutputStream(toFile);
 			to.write(0);
 			to.close();
+			Intlola.sender.send(SendMode.ONSAVE, toName);
 		} catch (IOException e) {
-			// do nothing
 		}
 	}
 
-	public static void copyLocal(IResource resource, char kindSuffix) {
+	public static void copy(IResource resource, char kindSuffix) {
 		String l = resource.getLocation().toString();
 		String f = resource.getFullPath().toString();
 		StringBuffer d = new StringBuffer(storePath);
@@ -84,11 +83,11 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 		d.append(counter++);
 		d.append(COMPONENT_SEP);
 		d.append(kindSuffix);
-		copyFileLocal(l, d.toString());
-//		System.out.println("COPY \"" + l + "\" -> \"" + d.toString() + "\"");
+		copyFile(l, d.toString());
+		Intlola.sender.send(SendMode.ONSAVE, d.toString());
 	}
 
-	public static void touchLocal(IResource resource, char kindSuffix) {
+	public static void touch(IResource resource, char kindSuffix) {
 		String f = resource.getFullPath().toString();
 		StringBuffer d = new StringBuffer(storePath);
 		d.append(DIRECTORY_SEP);
@@ -100,52 +99,52 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 		d.append(counter++);
 		d.append(COMPONENT_SEP);
 		d.append(kindSuffix);
-		touchFileLocal(d.toString());
-//		System.out.println("TOUCH \"" + d.toString() + "\"");
+		touchFile(d.toString());
 	}
 
-	public static void copyOrTouchLocal(IResource resource, int kind) {
+	public static void copyOrTouch(IResource resource, int kind) {
 		if (resource.getType() == IResource.FILE) {
 			switch (kind) {
 			case IResourceDelta.ADDED:
-				copyLocal(resource, 'a');
+				copy(resource, 'a');
 				break;
 			case IResourceDelta.CHANGED:
-				copyLocal(resource, 'c');
+				copy(resource, 'c');
 				break;
 			case IResourceDelta.REMOVED:
-				copyLocal(resource, 'r');
+				copy(resource, 'r');
 				break;
 			case Intlola.LAUNCHED:
-				copyLocal(resource, 'l');
+				copy(resource, 'l');
 				break;
 			}
 		} else {
 			switch (kind) {
 			case IResourceDelta.ADDED:
-				touchLocal(resource, 'a');
+				touch(resource, 'a');
 				break;
 			case IResourceDelta.CHANGED:
-				touchLocal(resource, 'c');
+				touch(resource, 'c');
 				break;
 			case IResourceDelta.REMOVED:
-				touchLocal(resource, 'r');
+				touch(resource, 'r');
 				break;
 			case Intlola.LAUNCHED:
-				touchLocal(resource, 'l');
+				touch(resource, 'l');
 				break;
 			}
 		}
 	}
 
+	@Override
 	public boolean visit(IResourceDelta delta) throws CoreException {
 		IResource resource = delta.getResource();
 		IProject project = resource.getProject();
 		if (project == null) {
 			return true;
 		}
-		if (Intlola.getLocalStatus(project)) {
-			copyOrTouchLocal(resource, delta.getKind());
+		if (Intlola.getRecordStatus(project)) {
+			copyOrTouch(resource, delta.getKind());
 			return true;
 		}
 		return false;

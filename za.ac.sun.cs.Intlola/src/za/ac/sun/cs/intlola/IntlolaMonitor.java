@@ -10,9 +10,11 @@ import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 
 public class IntlolaMonitor implements ILaunchListener {
 
+	@Override
 	public void launchAdded(ILaunch launch) {
 	}
 
+	@Override
 	public void launchChanged(ILaunch launch) {
 		ILaunchConfiguration config = launch.getLaunchConfiguration();
 		String projectName = "";
@@ -23,16 +25,14 @@ public class IntlolaMonitor implements ILaunchListener {
 		if (projectName != "") {
 			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
 			if (project != null) {
-				if (Intlola.getLocalStatus(project)) {
-					IntlolaVisitor.copyOrTouchLocal(project, Intlola.LAUNCHED);
+				if (Intlola.getRecordStatus(project)) {
+					IntlolaVisitor.copyOrTouch(project, Intlola.LAUNCHED);
 				}
-//				else if (Intlola.getRemoteStatus(project)) {
-//					IntlolaRemoteVistor.copyOrTouch);
-//				}
 			}
 		}
 	}
 
+	@Override
 	public void launchRemoved(ILaunch launch) {
 	}
 

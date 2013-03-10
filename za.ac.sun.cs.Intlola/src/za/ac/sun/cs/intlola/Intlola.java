@@ -6,8 +6,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.zip.ZipEntry;
@@ -15,12 +13,12 @@ import java.util.zip.ZipOutputStream;
 
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -43,25 +41,13 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	private static final QualifiedName RECORD_KEY = new QualifiedName(
 			"intlola", "record");
 
-	private static final QualifiedName LOCAL_KEY = new QualifiedName("intlola",
-			"local");
-
-	private static final QualifiedName REMOTE_KEY = new QualifiedName(
-			"intlola", "remote");
-
 	private static final Boolean RECORD_ON = new Boolean(true);
-
-	private static final Boolean LOCAL_ON = new Boolean(true);
-
-	private static final Boolean REMOTE_ON = new Boolean(true);
 
 	public static final int LAUNCHED = -6666;
 
 	private static final int ZIP_BUFFER_SIZE = 2048;
 
-	private static final String ADDRESS = "localhost";
-
-	private static final int PORT = 9998;
+	private static final String PATTERN = "([^/]*/)*[-a-zA-z0-9]+([.][-a-zA-z0-9]+)*[+][0-9]+";
 
 	private static Intlola plugin;
 
@@ -69,28 +55,13 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private boolean listenersAdded = false;
 
-	private enum SendMode {
-		ONSAVE, ONSTOP;
-
-		public static SendMode getMode(String mpref) {
-			SendMode ret = null;
-			if (mpref.equals(PreferenceConstants.SAVE)) {
-				ret = ONSAVE;
-			} else if (mpref.equals(PreferenceConstants.STOP)) {
-				ret = ONSTOP;
-			}
-			return ret;
-		}
-	}
-
-	private SendMode send;
-
-	private String uname;
+	protected static IntlolaSender sender;
 
 	public Intlola() {
 		plugin = this;
 	}
 
+	@Override
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		if (!listenersAdded) {
@@ -99,6 +70,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 					IResourceChangeEvent.POST_CHANGE);
 			listenersAdded = true;
 		}
+		sender = new IntlolaSender();
 		getPreferences();
 
 	}
@@ -106,10 +78,14 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	private void getPreferences() {
 		String mpref = getPreferenceStore().getString(
 				PreferenceConstants.P_SEND);
-		send = SendMode.getMode(mpref);
-		uname = getPreferenceStore().getString(PreferenceConstants.P_UNAME);
+		sender.mode = SendMode.getMode(mpref);
+		sender.uname = getPreferenceStore().getString(
+				PreferenceConstants.P_UNAME);
+		sender.passwd = getPreferenceStore().getString(
+				PreferenceConstants.P_PASSWD);
 	}
 
+	@Override
 	public void stop(BundleContext context) throws Exception {
 		plugin = null;
 		super.stop(context);
@@ -132,37 +108,10 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
-	public static boolean getLocalStatus(IProject project) {
-		try {
-			Boolean record = (Boolean) project.getSessionProperty(LOCAL_KEY);
-			return record == LOCAL_ON;
-		} catch (CoreException e) {
-			return false;
-		}
-	}
-
-	public static boolean getRemoteStatus(IProject project) {
-		try {
-			Boolean record = (Boolean) project.getSessionProperty(REMOTE_KEY);
-			return record == REMOTE_ON;
-		} catch (CoreException e) {
-			return false;
-		}
-	}
-
-	public static void startLocalRecord(IProject project) {
+	public static void startRecord(IProject project) {
 		try {
 			removeDir(plugin.getStateLocation().toString(), false);
 			project.setSessionProperty(RECORD_KEY, RECORD_ON);
-			project.setSessionProperty(LOCAL_KEY, LOCAL_ON);
-		} catch (CoreException e) {
-		}
-	}
-
-	public static void startRemoteRecord(IProject project) {
-		try {
-			project.setSessionProperty(RECORD_KEY, RECORD_ON);
-			project.setSessionProperty(REMOTE_KEY, REMOTE_ON);
 		} catch (CoreException e) {
 		}
 	}
@@ -186,7 +135,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private static String getFilename(Shell shell) {
 		FileDialog dialog = new FileDialog(shell, SWT.SAVE);
-		dialog.setFileName("intlola.zip");
+		dialog.setFileName(sender.project+".zip");
 		String filename = null;
 		boolean isDone = false;
 		while (!isDone) {
@@ -242,7 +191,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
-	public static void stopLocalRecord(IProject project, Shell shell) {
+	public static void stopRecord(IProject project, Shell shell) {
 		boolean isDone = false;
 		while (!isDone) {
 			String filename = getFilename(shell);
@@ -250,17 +199,9 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 				MessageDialog.openInformation(shell, "Unsaved data",
 						"Intlola data not saved - still recording.");
 				return;
-			} else if (filename
-					.matches("([^/]*/)*[-a-zA-z0-9]+([.][-a-zA-z0-9]+)*[+][0-9]+")) {
-				String hostname = filename
-						.replaceAll(
-								"([^/]*/)*([-a-zA-z0-9]+([.][-a-zA-z0-9]+)*)[+]([0-9]+)",
-								"$2");
-				int port = Integer
-						.parseInt(filename
-								.replaceAll(
-										"([^/]*/)*([-a-zA-z0-9]+([.][-a-zA-z0-9]+)*)[+]([0-9]+)",
-										"$4"));
+			} else if (filename.matches(PATTERN)) {
+				String hostname = filename.replaceAll(PATTERN, "$2");
+				int port = Integer.parseInt(filename.replaceAll(PATTERN, "$4"));
 				try {
 					Socket requestSocket = new Socket(hostname, port);
 					BufferedOutputStream out = new BufferedOutputStream(
@@ -272,11 +213,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 					out.close();
 					requestSocket.close();
 					project.setSessionProperty(RECORD_KEY, null);
-					project.setSessionProperty(LOCAL_KEY, null);
-					project.setSessionProperty(REMOTE_KEY, null);
 					isDone = true;
 				} catch (CoreException e) {
-					// do nothing
 				} catch (UnknownHostException e) {
 					MessageDialog.openError(shell, "Problem",
 							"Could not connect to \"" + hostname + ":" + port
@@ -298,12 +236,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 					out.flush();
 					out.close();
 					project.setSessionProperty(RECORD_KEY, null);
-					project.setSessionProperty(LOCAL_KEY, null);
-					project.setSessionProperty(REMOTE_KEY, null);
 					isDone = true;
-					if (plugin.send.equals(SendMode.ONSTOP)) {
-						sendFile(filename);
-					}
+					sender.send(SendMode.ONSTOP, filename);
 				} catch (CoreException e) {
 				} catch (FileNotFoundException e) {
 					MessageDialog.openError(shell, "Problem",
@@ -319,96 +253,43 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
-	private static void sendFile(String filename) throws UnknownHostException,
-			IOException {
-		byte[] buffer = new byte[1024];
-		OutputStream snd = null;
-		FileInputStream fis = null;
-		Socket sock = null;
-		InputStream rcv = null;
-		try {
-			sock = new Socket(ADDRESS, PORT);
-			snd = sock.getOutputStream();
-			String name = filename.substring(filename
-					.lastIndexOf(File.separator) + 1);
-			snd.write(("CONNECT:"+ plugin.uname + ":" + name).getBytes());
-			rcv = sock.getInputStream();
-			rcv.read(buffer);
-			if (!new String(buffer).startsWith("ACCEPT")) {
-				rcv.close();
-				snd.close();
-				sock.close();
-				return;
-			}
-			int count;
-			fis = new FileInputStream(filename);
-			while ((count = fis.read(buffer)) >= 0) {
-				snd.write(buffer, 0, count);
-			}
-			snd.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				rcv.close();
-				fis.close();
-				snd.close();
-				sock.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-		}
-
-	}
-
-	public static void log(String msg) {
+	public static void log(Object msg) {
 		plugin.log(msg, null);
 	}
 
-	public void log(String msg, Exception e) {
-		getLog().log(new Status(Status.INFO, PLUGIN_ID, Status.OK, msg, e));
-	}
-
-	public static void stopRemoteRecord(IProject project) {
-		try {
-			project.setSessionProperty(RECORD_KEY, null);
-			project.setSessionProperty(LOCAL_KEY, null);
-			project.setSessionProperty(REMOTE_KEY, null);
-		} catch (CoreException e) {
-			// do nothing
+	public void log(Object msg, Exception e) {
+		if (msg == null) {
+			msg = "NULL";
 		}
-	}
-
-	public static void stopRecord(IProject project) {
-		try {
-			project.setSessionProperty(RECORD_KEY, null);
-			project.setSessionProperty(LOCAL_KEY, null);
-			project.setSessionProperty(REMOTE_KEY, null);
-		} catch (CoreException e) {
-			// do nothing
-		}
+		getLog().log(
+				new Status(IStatus.INFO, PLUGIN_ID, IStatus.OK, msg.toString(),
+						e));
 	}
 
 	public static IProject getSelectedProject(ExecutionEvent event) {
 		IStructuredSelection selection = (IStructuredSelection) HandlerUtil
 				.getActiveMenuSelection(event);
 		Object element = selection.getFirstElement();
+		IProject ret = null;
 		if (element instanceof IProject) {
-			return (IProject) element;
+			ret = (IProject) element;
 		}
-		if (!(element instanceof IAdaptable)) {
-			return null;
+		if (element instanceof IAdaptable) {
+			IAdaptable adaptable = (IAdaptable) element;
+			Object adapter = adaptable.getAdapter(IProject.class);
+			ret = (IProject) adapter;
 		}
-		IAdaptable adaptable = (IAdaptable) element;
-		Object adapter = adaptable.getAdapter(IProject.class);
-		return (IProject) adapter;
+		if (ret != null) {
+			sender.project = ret.getName();
+		}
+		return ret;
 	}
 
 	public static ImageDescriptor getImageDescriptor(String path) {
 		return imageDescriptorFromPlugin(PLUGIN_ID, path);
 	}
 
+	@Override
 	public void earlyStartup() {
 	}
 
