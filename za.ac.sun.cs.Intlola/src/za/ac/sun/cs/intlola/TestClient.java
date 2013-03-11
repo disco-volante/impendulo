@@ -1,15 +1,28 @@
 package za.ac.sun.cs.intlola;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
 public class TestClient {
 	static class SendThread implements Runnable {
+		private String pword;
+		private String user;
+
+		public SendThread(String user, String pword) {
+			this.user = user;
+			this.pword = pword;
+		}
+
 		@Override
 		public void run() {
-			IntlolaSender sender = new IntlolaSender(randString(),
-					randString(), "Default", SendMode.ONSAVE);
+			IntlolaSender sender = new IntlolaSender(user,
+					pword, "Default", SendMode.ONSAVE);
 			for (int i = 0; i < 20; i++) {
 				sender.send(SendMode.ONSAVE,"plugin.xml", randString());
 			}
@@ -40,9 +53,26 @@ public class TestClient {
 	}
 	
 	public static void main(String argv[]) {
+		String[][] users = new String[100][2];
+		
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(new File("users")));
+			String line;
+			int i = 0;
+			while((line = reader.readLine()) != null){
+				String[] vals = line.split(":");
+				users[i][0] = vals[0];
+				users[i++][1] = vals[1];
+			}
+			reader.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		ArrayList<Thread> threads = new ArrayList<Thread>();
-		for (int i = 0; i < 10; i++) {
-			threads.add(new Thread(new SendThread()));
+		for (int j = 0; j < 100; j++) {
+			threads.add(new Thread(new SendThread(users[j][0], users[j][1])));
 		}
 		for (Thread th : threads) {
 			th.start();
