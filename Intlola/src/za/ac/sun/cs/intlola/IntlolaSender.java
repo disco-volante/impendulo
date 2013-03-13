@@ -13,9 +13,10 @@ import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 import com.google.gson.JsonObject;
 
 public class IntlolaSender {
-	private static final String ADDRESS = "localhost";
-
-	private static final int PORT = 9998;
+	private static final String REMOTE_ADDRESS = "ec2-23-22-216-19.compute-1.amazonaws.com";
+	private static final String LOCAL_ADDRESS = "localhost";
+	private static final int PORT = 9999;
+	private static final boolean LOCAL = true;
 
 	protected SendMode mode;
 
@@ -27,6 +28,9 @@ public class IntlolaSender {
 
 	private String token;
 
+	private OutputStream snd = null;
+	private Socket sock = null;
+	private InputStream rcv = null;
 	public IntlolaSender(String uname, String passwd, String project,
 			SendMode mode) {
 		this.uname = uname;
@@ -35,33 +39,27 @@ public class IntlolaSender {
 		this.mode = mode;
 	}
 
-	public IntlolaSender() {
-	}
+	public IntlolaSender(){}
 
 	private void login() {
-		OutputStream snd = null;
-		Socket sock = null;
-		InputStream rcv = null;
 		byte[] buffer = new byte[1024];
 		int read = 0;
 		try {
-			sock = new Socket(ADDRESS, PORT);
-			snd = sock.getOutputStream();
+			openConnection();
 			JsonObject params = new JsonObject();
 			params.addProperty("TYPE", "LOGIN");
 			params.addProperty("USERNAME", uname);
 			params.addProperty("PASSWORD", passwd);
 			params.addProperty("PROJECT", project);
+			params.addProperty("MODE", mode.toString());
 			snd.write(params.toString().getBytes());
-			rcv = sock.getInputStream();
 			read = rcv.read(buffer);
 			snd.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
 			try {
-				snd.close();
-				sock.close();
+				closeConnection();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -75,16 +73,31 @@ public class IntlolaSender {
 		}
 	}
 
-	public void send(SendMode check, String filename, String sendName) {
+	private void closeConnection() throws IOException {
+		if( snd != null) snd.close();
+		if( rcv != null) rcv.close();
+		if( sock != null) sock.close();		
+	}
+
+	private void openConnection() throws IOException {
+		String address = LOCAL ? LOCAL_ADDRESS : REMOTE_ADDRESS;
+		sock = new Socket(address, PORT);
+		snd = sock.getOutputStream();		
+		rcv = sock.getInputStream();
+	}
+	
+	
+
+	public void send(SendMode check, String filename) {
 		if (token == null) {
 			login();
 		}
 		if (token != null) {
 			if (check.equals(SendMode.ONSTOP) && mode.equals(SendMode.ONSAVE)) {
-				zipDir(filename);
+				zipDir();
 				logout();
 			} else if (check.equals(mode)) {
-				sendFile(filename, sendName);
+				sendFile(filename);
 				if(mode.equals(SendMode.ONSTOP)){
 					logout();
 				}
@@ -93,34 +106,21 @@ public class IntlolaSender {
 
 	}
 	
-	public void send(SendMode check, String filename) {
-		send(check, filename, null);
-	}
-
-	private void sendFile(String filename, String sendName) {
+	private void sendFile(String filename) {
 		byte[] buffer = new byte[1024];
-		OutputStream snd = null;
 		FileInputStream fis = null;
-		Socket sock = null;
-		InputStream rcv = null;
 		try {
-			sock = new Socket(ADDRESS, PORT);
-			snd = sock.getOutputStream();
-			if (sendName == null) {
-				sendName = filename.substring(filename
+			openConnection();
+			String sendName = filename.substring(filename
 						.lastIndexOf(File.separator) + 1);
-			}
 			JsonObject params = new JsonObject();
 			params.addProperty("TYPE", "SEND");
 			params.addProperty("TOKEN", token);
 			params.addProperty("FILENAME", sendName);
 			snd.write(params.toString().getBytes());
-			rcv = sock.getInputStream();
 			rcv.read(buffer);
 			if (!new String(buffer).startsWith("ACCEPT")) {
-				rcv.close();
-				snd.close();
-				sock.close();
+				closeConnection();
 				return;
 			}
 			int count;
@@ -133,10 +133,8 @@ public class IntlolaSender {
 			e.printStackTrace();
 		} finally {
 			try {
-				rcv.close();
+				closeConnection();
 				fis.close();
-				snd.close();
-				sock.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -145,32 +143,21 @@ public class IntlolaSender {
 
 	}
 
-	private void zipDir(String sendName) {
+	private void zipDir() {
 		byte[] buffer = new byte[1024];
-		OutputStream snd = null;
-		Socket sock = null;
-		InputStream rcv = null;
 		try {
-			sock = new Socket(ADDRESS, PORT);
-			snd = sock.getOutputStream();
-			if (sendName.contains(File.separator)) {
-				sendName = sendName.substring(sendName
-						.lastIndexOf(File.separator) + 1);
-			}
+			openConnection();
 			JsonObject params = new JsonObject();
 			params.addProperty("TYPE", "ZIP");
 			params.addProperty("TOKEN", token);
-			params.addProperty("FILENAME", sendName);
 			snd.write(params.toString().getBytes());
-			rcv = sock.getInputStream();
 			rcv.read(buffer);
 			snd.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
 			try {
-				snd.close();
-				sock.close();
+				closeConnection();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -179,11 +166,8 @@ public class IntlolaSender {
 	}
 	
 	private void logout() {
-		OutputStream snd = null;
-		Socket sock = null;
 		try {
-			sock = new Socket(ADDRESS, PORT);
-			snd = sock.getOutputStream();
+			openConnection();
 			JsonObject params = new JsonObject();
 			params.addProperty("TYPE", "LOGOUT");
 			params.addProperty("TOKEN", token);
@@ -193,8 +177,7 @@ public class IntlolaSender {
 			e.printStackTrace();
 		} finally {
 			try {
-				snd.close();
-				sock.close();
+				closeConnection();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

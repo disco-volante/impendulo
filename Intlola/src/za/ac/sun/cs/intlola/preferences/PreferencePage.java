@@ -13,17 +13,17 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 
 	public PreferencePage() {
 		super(GRID);
+		Intlola.log(Intlola.getDefault());
+		Intlola.log(Intlola.getDefault().getPreferenceStore());
 		setPreferenceStore(Intlola.getDefault().getPreferenceStore());
 		setDescription("Intlola configuration");
 	}
 
 	public void createFieldEditors() {
-		StringFieldEditor pasword = new StringFieldEditor(PreferenceConstants.P_PASSWD,
-				"Password:", getFieldEditorParent());
-		pasword.getTextControl(null).setEchoChar('*');
 		addField(new StringFieldEditor(PreferenceConstants.P_UNAME,
 				"Username:", getFieldEditorParent()));
-		addField(pasword);
+		addField(new StringFieldEditor(PreferenceConstants.P_PASSWD,
+				"Password:", getFieldEditorParent()));
 		addField(new RadioGroupFieldEditor(
 				PreferenceConstants.P_SEND,
 				"Send data to server:",

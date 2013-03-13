@@ -6,5 +6,5 @@
 *.ear
 *.zip
 *.html
-*.xml
 *.log
+data/

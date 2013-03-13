@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="za.ac.sun.cs.IntlolaFeature"
+      label="IntlolaFeature"
+      version="1.0.0.1"
+      provider-name="Computer Science, Stellenbosch University"
+      plugin="Intlola">
+
+   <description url="http://www.cs.sun.ac.za/~jaco/IMPENDULO">
+      This feature provides the Intlola plug-in, which is part of the
+Impendulo system.  Read more on the website &lt;http://www.cs.sun.ac.za/~jaco/IMPENDULO&gt;.
+   </description>
+
+   <copyright>
+      Copyright (C) 2010 Jaco Geldenhuys, Willem Visser, Computer Science,
+Stellenbosch University
+   </copyright>
+
+   <license>
+      This program is free software: you can redistribute it and/or
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 3 of
+the License, or (at your option) any later version.
+---
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+---
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+   </license>
+
+   <requires>
+      <import plugin="org.eclipse.core.commands"/>
+      <import plugin="org.eclipse.core.resources"/>
+      <import plugin="org.eclipse.core.runtime"/>
+      <import plugin="org.eclipse.equinox.preferences"/>
+      <import plugin="org.eclipse.debug.core"/>
+      <import plugin="org.eclipse.jdt.launching"/>
+      <import plugin="org.eclipse.jface"/>
+      <import plugin="org.eclipse.swt"/>
+      <import plugin="org.eclipse.ui.ide"/>
+      <import plugin="org.eclipse.ui.workbench"/>
+      <import plugin="org.eclipse.osgi"/>
+   </requires>
+
+   <plugin
+         id="Intlola"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>

@@ -24,7 +24,7 @@ public class TestClient {
 			IntlolaSender sender = new IntlolaSender(user,
 					pword, "Default", SendMode.ONSAVE);
 			for (int i = 0; i < 20; i++) {
-				sender.send(SendMode.ONSAVE,"plugin.xml", randString());
+				sender.send(SendMode.ONSAVE,"plugin.xml");
 			}
 			sender.send(SendMode.ONSTOP, randString() + ".zip");
 		}
