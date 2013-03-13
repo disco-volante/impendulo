@@ -13,10 +13,6 @@ import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 import com.google.gson.JsonObject;
 
 public class IntlolaSender {
-	private static final String REMOTE_ADDRESS = "ec2-23-22-216-19.compute-1.amazonaws.com";
-	private static final String LOCAL_ADDRESS = "localhost";
-	private static final int PORT = 9999;
-	private static final boolean LOCAL = true;
 
 	protected SendMode mode;
 
@@ -31,12 +27,18 @@ public class IntlolaSender {
 	private OutputStream snd = null;
 	private Socket sock = null;
 	private InputStream rcv = null;
+
+	protected String address;
+
+	protected int port;
 	public IntlolaSender(String uname, String passwd, String project,
-			SendMode mode) {
+			SendMode mode, String address, int port) {
 		this.uname = uname;
 		this.passwd = passwd;
 		this.project = project;
 		this.mode = mode;
+		this.address = address;
+		this.port = port;
 	}
 
 	public IntlolaSender(){}
@@ -80,8 +82,7 @@ public class IntlolaSender {
 	}
 
 	private void openConnection() throws IOException {
-		String address = LOCAL ? LOCAL_ADDRESS : REMOTE_ADDRESS;
-		sock = new Socket(address, PORT);
+		sock = new Socket(address, port);
 		snd = sock.getOutputStream();		
 		rcv = sock.getInputStream();
 	}

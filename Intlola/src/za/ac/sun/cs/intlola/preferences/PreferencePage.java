@@ -1,6 +1,7 @@
 package za.ac.sun.cs.intlola.preferences;
 
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
+import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
 import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.ui.IWorkbench;
@@ -13,8 +14,6 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 
 	public PreferencePage() {
 		super(GRID);
-		Intlola.log(Intlola.getDefault());
-		Intlola.log(Intlola.getDefault().getPreferenceStore());
 		setPreferenceStore(Intlola.getDefault().getPreferenceStore());
 		setDescription("Intlola configuration");
 	}
@@ -24,6 +23,10 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 				"Username:", getFieldEditorParent()));
 		addField(new StringFieldEditor(PreferenceConstants.P_PASSWD,
 				"Password:", getFieldEditorParent()));
+		addField(new StringFieldEditor(PreferenceConstants.P_ADDRESS,
+				"Server address:", getFieldEditorParent()));
+		addField(new IntegerFieldEditor(PreferenceConstants.P_PORT,
+				"Server port:", getFieldEditorParent()));
 		addField(new RadioGroupFieldEditor(
 				PreferenceConstants.P_SEND,
 				"Send data to server:",
@@ -31,7 +34,7 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 				new String[][] {
 						{ "After every save", PreferenceConstants.SAVE },
 						{ "When recording is stopped", PreferenceConstants.STOP },
-						{"Never", PreferenceConstants.NEVER}},
+						{ "Never", PreferenceConstants.NEVER } },
 				getFieldEditorParent()));
 	}
 

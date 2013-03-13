@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
+import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
+
 public class TestClient {
 	static class SendThread implements Runnable {
 		private String pword;
@@ -21,17 +23,16 @@ public class TestClient {
 
 		@Override
 		public void run() {
-			IntlolaSender sender = new IntlolaSender(user,
-					pword, "Default", SendMode.ONSAVE);
+			IntlolaSender sender = new IntlolaSender(user, pword, "Default",
+					SendMode.ONSAVE, PreferenceConstants.LOCAL_ADDRESS,
+					PreferenceConstants.PORT);
 			for (int i = 0; i < 20; i++) {
-				sender.send(SendMode.ONSAVE,"plugin.xml");
+				sender.send(SendMode.ONSAVE, "plugin.xml");
 			}
 			sender.send(SendMode.ONSTOP, randString() + ".zip");
 		}
 
 	}
-
-
 
 	private static Random rand = new Random();
 	private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -51,15 +52,16 @@ public class TestClient {
 		strings.put(gen, true);
 		return gen;
 	}
-	
+
 	public static void main(String argv[]) {
 		String[][] users = new String[100][2];
-		
+
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader(new File("users")));
+			BufferedReader reader = new BufferedReader(new FileReader(new File(
+					"users")));
 			String line;
 			int i = 0;
-			while((line = reader.readLine()) != null){
+			while ((line = reader.readLine()) != null) {
 				String[] vals = line.split(":");
 				users[i][0] = vals[0];
 				users[i++][1] = vals[1];

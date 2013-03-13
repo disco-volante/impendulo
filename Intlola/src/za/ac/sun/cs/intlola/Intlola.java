@@ -70,19 +70,21 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 					IResourceChangeEvent.POST_CHANGE);
 			listenersAdded = true;
 		}
-		sender = new IntlolaSender();
-		getPreferences();
-
 	}
 
-	private void getPreferences() {
-		String mpref = getPreferenceStore().getString(
-				PreferenceConstants.P_SEND);
-		sender.mode = SendMode.getMode(mpref);
-		sender.uname = getPreferenceStore().getString(
+	private static IntlolaSender getSender(String project) {
+		log(getSelectedProject(new ExecutionEvent()));
+		SendMode mode = SendMode.getMode(getDefault().getPreferenceStore()
+				.getString(PreferenceConstants.P_SEND));
+		String uname = getDefault().getPreferenceStore().getString(
 				PreferenceConstants.P_UNAME);
-		sender.passwd = getPreferenceStore().getString(
+		String passwd = getDefault().getPreferenceStore().getString(
 				PreferenceConstants.P_PASSWD);
+		String address = getDefault().getPreferenceStore().getString(
+				PreferenceConstants.P_ADDRESS);
+		int port = getDefault().getPreferenceStore().getInt(
+				PreferenceConstants.P_PORT);
+		return new IntlolaSender(uname, passwd, project, mode, address, port);
 	}
 
 	@Override
@@ -92,6 +94,9 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	public static Intlola getDefault() {
+		if (plugin == null) {
+			plugin = new Intlola();
+		}
 		return plugin;
 	}
 
@@ -112,6 +117,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		try {
 			removeDir(plugin.getStateLocation().toString(), false);
 			project.setSessionProperty(RECORD_KEY, RECORD_ON);
+			sender = getSender(project.getName());
 		} catch (CoreException e) {
 		}
 	}
@@ -135,7 +141,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private static String getFilename(Shell shell) {
 		FileDialog dialog = new FileDialog(shell, SWT.SAVE);
-		dialog.setFileName(sender.project+".zip");
+		dialog.setFileName(sender.project + ".zip");
 		String filename = null;
 		boolean isDone = false;
 		while (!isDone) {
@@ -254,7 +260,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	public static void log(Object msg) {
-		plugin.log(msg, null);
+		getDefault().log(msg, null);
 	}
 
 	public void log(Object msg, Exception e) {
@@ -278,9 +284,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			IAdaptable adaptable = (IAdaptable) element;
 			Object adapter = adaptable.getAdapter(IProject.class);
 			ret = (IProject) adapter;
-		}
-		if (ret != null) {
-			sender.project = ret.getName();
 		}
 		return ret;
 	}
