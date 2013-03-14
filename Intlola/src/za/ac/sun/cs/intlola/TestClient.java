@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
@@ -15,19 +16,21 @@ public class TestClient {
 	static class SendThread implements Runnable {
 		private String pword;
 		private String user;
+		private ArrayList<String> files;
 
-		public SendThread(String user, String pword) {
+		public SendThread(String user, String pword, ArrayList<String> files) {
 			this.user = user;
 			this.pword = pword;
+			this.files = files;
 		}
 
 		@Override
 		public void run() {
-			IntlolaSender sender = new IntlolaSender(user, pword, "Default",
-					SendMode.ONSAVE, PreferenceConstants.LOCAL_ADDRESS,
+			IntlolaSender sender = new IntlolaSender(user, pword, "Data",
+					SendMode.ONSAVE, PreferenceConstants.REMOTE_ADDRESS,
 					PreferenceConstants.PORT);
-			for (int i = 0; i < 20; i++) {
-				sender.send(SendMode.ONSAVE, "plugin.xml");
+			for (String file : files) {
+				sender.send(SendMode.ONSAVE, file);
 			}
 			sender.send(SendMode.ONSTOP, randString() + ".zip");
 		}
@@ -53,18 +56,16 @@ public class TestClient {
 		return gen;
 	}
 
-	public static void main(String argv[]) {
-		String[][] users = new String[100][2];
+	public static Map<String, String> getUsers(String fname) {
+		Map<String, String> users = new HashMap<String, String>();
 
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader(new File(
-					"users")));
+					fname)));
 			String line;
-			int i = 0;
 			while ((line = reader.readLine()) != null) {
 				String[] vals = line.split(":");
-				users[i][0] = vals[0];
-				users[i++][1] = vals[1];
+				users.put(vals[0], vals[1]);
 			}
 			reader.close();
 		} catch (FileNotFoundException e) {
@@ -72,9 +73,25 @@ public class TestClient {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return users;
+	}
+	
+	public static ArrayList<String> getFiles(File dir){
+		ArrayList<String> files = new ArrayList<String>();
+		for(File f : dir.listFiles()){
+			if(f.isFile()){
+				files.add(f.getAbsolutePath());
+			}
+		}
+		return files;
+	}
+
+	public static void main(String argv[]) {
+		Map<String, String> users = getUsers("users");
+		ArrayList<String> files = getFiles(new File("data"));
 		ArrayList<Thread> threads = new ArrayList<Thread>();
-		for (int j = 0; j < 100; j++) {
-			threads.add(new Thread(new SendThread(users[j][0], users[j][1])));
+		for (Map.Entry<String, String> e : users.entrySet()) {
+			threads.add(new Thread(new SendThread(e.getKey(), e.getValue(), files)));
 		}
 		for (Thread th : threads) {
 			th.start();

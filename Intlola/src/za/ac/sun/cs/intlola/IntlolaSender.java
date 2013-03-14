@@ -31,6 +31,7 @@ public class IntlolaSender {
 	protected String address;
 
 	protected int port;
+
 	public IntlolaSender(String uname, String passwd, String project,
 			SendMode mode, String address, int port) {
 		this.uname = uname;
@@ -41,7 +42,8 @@ public class IntlolaSender {
 		this.port = port;
 	}
 
-	public IntlolaSender(){}
+	public IntlolaSender() {
+	}
 
 	private void login() {
 		byte[] buffer = new byte[1024];
@@ -76,18 +78,19 @@ public class IntlolaSender {
 	}
 
 	private void closeConnection() throws IOException {
-		if( snd != null) snd.close();
-		if( rcv != null) rcv.close();
-		if( sock != null) sock.close();		
+		if (snd != null)
+			snd.close();
+		if (rcv != null)
+			rcv.close();
+		if (sock != null)
+			sock.close();
 	}
 
 	private void openConnection() throws IOException {
 		sock = new Socket(address, port);
-		snd = sock.getOutputStream();		
+		snd = sock.getOutputStream();
 		rcv = sock.getInputStream();
 	}
-	
-	
 
 	public void send(SendMode check, String filename) {
 		if (token == null) {
@@ -99,21 +102,26 @@ public class IntlolaSender {
 				logout();
 			} else if (check.equals(mode)) {
 				sendFile(filename);
-				if(mode.equals(SendMode.ONSTOP)){
+				if (mode.equals(SendMode.ONSTOP)) {
 					logout();
 				}
 			}
 		}
 
 	}
-	
-	private void sendFile(String filename) {
+
+	private void sendFile(String fileName) {
 		byte[] buffer = new byte[1024];
 		FileInputStream fis = null;
 		try {
 			openConnection();
-			String sendName = filename.substring(filename
+			String sendName;
+			if (fileName.contains(File.separator)) {
+				sendName = fileName.substring(fileName
 						.lastIndexOf(File.separator) + 1);
+			} else {
+				sendName = fileName;
+			}
 			JsonObject params = new JsonObject();
 			params.addProperty("TYPE", "SEND");
 			params.addProperty("TOKEN", token);
@@ -125,7 +133,7 @@ public class IntlolaSender {
 				return;
 			}
 			int count;
-			fis = new FileInputStream(filename);
+			fis = new FileInputStream(fileName);
 			while ((count = fis.read(buffer)) >= 0) {
 				snd.write(buffer, 0, count);
 			}
@@ -135,7 +143,9 @@ public class IntlolaSender {
 		} finally {
 			try {
 				closeConnection();
-				fis.close();
+				if (fis != null) {
+					fis.close();
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -165,7 +175,7 @@ public class IntlolaSender {
 
 		}
 	}
-	
+
 	private void logout() {
 		try {
 			openConnection();

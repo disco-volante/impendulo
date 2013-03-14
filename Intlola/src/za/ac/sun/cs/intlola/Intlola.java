@@ -49,7 +49,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private static final String PATTERN = "([^/]*/)*[-a-zA-z0-9]+([.][-a-zA-z0-9]+)*[+][0-9]+";
 
-	private static Intlola plugin;
+	private static Intlola plugin = new Intlola();
 
 	private IResourceChangeListener changeListener = null;
 
@@ -57,9 +57,9 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	protected static IntlolaSender sender;
 
-	public Intlola() {
+	/*public Intlola() {
 		plugin = this;
-	}
+	}*/
 
 	@Override
 	public void start(BundleContext context) throws Exception {
@@ -73,7 +73,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	private static IntlolaSender getSender(String project) {
-		log(getSelectedProject(new ExecutionEvent()));
 		SendMode mode = SendMode.getMode(getDefault().getPreferenceStore()
 				.getString(PreferenceConstants.P_SEND));
 		String uname = getDefault().getPreferenceStore().getString(
@@ -94,10 +93,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	public static Intlola getDefault() {
-		if (plugin == null) {
-			plugin = new Intlola();
-		}
-		return plugin;
+			return plugin;
 	}
 
 	public static IWorkspace getWorkspace() {
