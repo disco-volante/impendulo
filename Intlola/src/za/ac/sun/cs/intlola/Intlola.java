@@ -49,7 +49,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private static final String PATTERN = "([^/]*/)*[-a-zA-z0-9]+([.][-a-zA-z0-9]+)*[+][0-9]+";
 
-	private static Intlola plugin = new Intlola();
+	private static Intlola plugin;
 
 	private IResourceChangeListener changeListener = null;
 
@@ -57,13 +57,14 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	protected static IntlolaSender sender;
 
-	/*public Intlola() {
+	public Intlola() {
 		plugin = this;
-	}*/
+	}
 
 	@Override
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
+		log(null, "Intlola started");
 		if (!listenersAdded) {
 			changeListener = new IntlolaListener();
 			getWorkspace().addResourceChangeListener(changeListener,
@@ -72,28 +73,15 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
-	private static IntlolaSender getSender(String project) {
-		SendMode mode = SendMode.getMode(getDefault().getPreferenceStore()
-				.getString(PreferenceConstants.P_SEND));
-		String uname = getDefault().getPreferenceStore().getString(
-				PreferenceConstants.P_UNAME);
-		String passwd = getDefault().getPreferenceStore().getString(
-				PreferenceConstants.P_PASSWD);
-		String address = getDefault().getPreferenceStore().getString(
-				PreferenceConstants.P_ADDRESS);
-		int port = getDefault().getPreferenceStore().getInt(
-				PreferenceConstants.P_PORT);
-		return new IntlolaSender(uname, passwd, project, mode, address, port);
-	}
-
 	@Override
 	public void stop(BundleContext context) throws Exception {
+		log(null, "Intlola stopped");
 		plugin = null;
 		super.stop(context);
 	}
 
 	public static Intlola getDefault() {
-			return plugin;
+		return plugin;
 	}
 
 	public static IWorkspace getWorkspace() {
@@ -110,11 +98,13 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	public static void startRecord(IProject project) {
+		log(null, "Intlola recording ", project.getName());
 		try {
 			removeDir(plugin.getStateLocation().toString(), false);
 			project.setSessionProperty(RECORD_KEY, RECORD_ON);
 			sender = getSender(project.getName());
 		} catch (CoreException e) {
+			log(e);
 		}
 	}
 
@@ -189,11 +179,13 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 				outzip.closeEntry();
 				origin.close();
 			} catch (IOException e) {
+				log(e);
 			}
 		}
 	}
 
 	public static void stopRecord(IProject project, Shell shell) {
+		log(null, "Intlola record stopping", project.getName());
 		boolean isDone = false;
 		while (!isDone) {
 			String filename = getFilename(shell);
@@ -217,16 +209,19 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 					project.setSessionProperty(RECORD_KEY, null);
 					isDone = true;
 				} catch (CoreException e) {
+					log(e);
 				} catch (UnknownHostException e) {
 					MessageDialog.openError(shell, "Problem",
 							"Could not connect to \"" + hostname + ":" + port
 									+ "\".");
+					log(e);
 				} catch (IOException e) {
 					MessageDialog.openError(
 							shell,
 							"Problem",
 							"IO error during zip file transmission ("
 									+ e.getMessage() + ")");
+					log(e);
 				}
 			} else {
 				try {
@@ -241,31 +236,21 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 					isDone = true;
 					sender.send(SendMode.ONSTOP, filename);
 				} catch (CoreException e) {
+					log(e);
 				} catch (FileNotFoundException e) {
 					MessageDialog.openError(shell, "Problem",
 							"Could not open file \"" + filename + "\".");
+					log(e);
 				} catch (IOException e) {
 					MessageDialog.openError(
 							shell,
 							"Problem",
 							"IO error during zip file creation ("
 									+ e.getMessage() + ")");
+					log(e);
 				}
 			}
 		}
-	}
-
-	public static void log(Object msg) {
-		getDefault().log(msg, null);
-	}
-
-	public void log(Object msg, Exception e) {
-		if (msg == null) {
-			msg = "NULL";
-		}
-		getLog().log(
-				new Status(IStatus.INFO, PLUGIN_ID, IStatus.OK, msg.toString(),
-						e));
 	}
 
 	public static IProject getSelectedProject(ExecutionEvent event) {
@@ -292,4 +277,32 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	public void earlyStartup() {
 	}
 
+	private static IntlolaSender getSender(String project) {
+		SendMode mode = SendMode.getMode(getDefault().getPreferenceStore()
+				.getString(PreferenceConstants.P_SEND));
+		String uname = getDefault().getPreferenceStore().getString(
+				PreferenceConstants.P_UNAME);
+		String passwd = getDefault().getPreferenceStore().getString(
+				PreferenceConstants.P_PASSWD);
+		String address = getDefault().getPreferenceStore().getString(
+				PreferenceConstants.P_ADDRESS);
+		int port = getDefault().getPreferenceStore().getInt(
+				PreferenceConstants.P_PORT);
+		return new IntlolaSender(uname, passwd, project, mode, address, port);
+	}
+
+	public static void log(Exception e, Object... msgs) {
+		getDefault()._log(e, msgs);
+	}
+
+	public void _log(Exception e, Object... msgs) {
+		String logMsg = "";
+		for (Object msg : msgs) {
+			if (msg == null) {
+				msg = "NULL";
+			}
+			logMsg += " " + msg.toString();
+		}
+		getLog().log(new Status(IStatus.INFO, PLUGIN_ID, IStatus.OK, logMsg, e));
+	}
 }

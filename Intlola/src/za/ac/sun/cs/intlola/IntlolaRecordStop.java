@@ -12,7 +12,7 @@ public class IntlolaRecordStop extends AbstractHandler {
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		IProject project = Intlola.getSelectedProject(event);
 		if (Intlola.getRecordStatus(project)) {
-				Intlola.stopRecord(project, HandlerUtil.getActiveShell(event));
+			Intlola.stopRecord(project, HandlerUtil.getActiveShell(event));
 		}
 		return null;
 	}

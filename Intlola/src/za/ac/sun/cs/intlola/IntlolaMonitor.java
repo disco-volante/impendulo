@@ -16,11 +16,13 @@ public class IntlolaMonitor implements ILaunchListener {
 
 	@Override
 	public void launchChanged(ILaunch launch) {
+		Intlola.log(null, "Intlola - project launched: ", launch);
 		ILaunchConfiguration config = launch.getLaunchConfiguration();
 		String projectName = "";
 		try {
 			projectName = config.getAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, "");
 		} catch (CoreException e) {
+			Intlola.log(e);
 		}
 		if (projectName != "") {
 			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);

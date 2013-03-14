@@ -23,6 +23,8 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 
 	private static final String COMPONENT_SEP = "_";
 
+	private static final String FORMAT = "%1$tY%1$tm%1$td%1$tH%1$tM%1$tS%1$tL";
+
 	private static String storePath = Intlola.getDefault().getStateLocation().toOSString();
 
 	private static int counter = 0;
@@ -53,6 +55,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 			from.close();
 			to.close();
 		} catch (IOException e) {
+			Intlola.log(e);
 		}
 	}
 
@@ -65,19 +68,20 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 			FileOutputStream to = new FileOutputStream(toFile);
 			to.write(0);
 			to.close();
-			Intlola.sender.send(SendMode.ONSAVE, toName);
 		} catch (IOException e) {
+			Intlola.log(e);
 		}
 	}
 
 	public static void copy(IResource resource, char kindSuffix) {
+		Intlola.log(null, "Intlola copied file", resource, kindSuffix);
 		String l = resource.getLocation().toString();
 		String f = resource.getFullPath().toString();
 		StringBuffer d = new StringBuffer(storePath);
 		d.append(DIRECTORY_SEP);
 		d.append(f.replace(ECLIPSE_SEP, COMPONENT_SEP));
 		d.append(COMPONENT_SEP);
-		d.append(String.format("%1$tY%1$tm%1$td%1$tH%1$tM%1$tS%1$tL", Calendar
+		d.append(String.format(FORMAT, Calendar
 				.getInstance()));
 		d.append(COMPONENT_SEP);
 		d.append(counter++);
@@ -88,21 +92,24 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 	}
 
 	public static void touch(IResource resource, char kindSuffix) {
+		Intlola.log(null, "Intlola touched file", resource, kindSuffix);
 		String f = resource.getFullPath().toString();
 		StringBuffer d = new StringBuffer(storePath);
 		d.append(DIRECTORY_SEP);
 		d.append(f.replace(ECLIPSE_SEP, COMPONENT_SEP));
 		d.append(COMPONENT_SEP);
-		d.append(String.format("%1$tY%1$tm%1$td%1$tH%1$tM%1$tS%1$tL", Calendar
+		d.append(String.format(FORMAT, Calendar
 				.getInstance()));
 		d.append(COMPONENT_SEP);
 		d.append(counter++);
 		d.append(COMPONENT_SEP);
 		d.append(kindSuffix);
 		touchFile(d.toString());
+		Intlola.sender.send(SendMode.ONSAVE, d.toString());
 	}
 
 	public static void copyOrTouch(IResource resource, int kind) {
+		Intlola.log(null, "Intlola processing resource", resource, kind);
 		if (resource.getType() == IResource.FILE) {
 			switch (kind) {
 			case IResourceDelta.ADDED:
@@ -138,6 +145,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 
 	@Override
 	public boolean visit(IResourceDelta delta) throws CoreException {
+		Intlola.log(null, "Intlola visited ", delta);
 		IResource resource = delta.getResource();
 		IProject project = resource.getProject();
 		if (project == null) {

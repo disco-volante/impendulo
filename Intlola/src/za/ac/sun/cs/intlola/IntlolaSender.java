@@ -60,12 +60,12 @@ public class IntlolaSender {
 			read = rcv.read(buffer);
 			snd.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			Intlola.log(e);
 		} finally {
 			try {
 				closeConnection();
 			} catch (IOException e) {
-				e.printStackTrace();
+				Intlola.log(e);
 			}
 
 		}
@@ -93,6 +93,7 @@ public class IntlolaSender {
 	}
 
 	public void send(SendMode check, String filename) {
+		Intlola.log(null, "Intlola sending ", check, filename);
 		if (token == null) {
 			login();
 		}
@@ -111,6 +112,7 @@ public class IntlolaSender {
 	}
 
 	private void sendFile(String fileName) {
+		Intlola.log(null, "Sending: "+fileName);
 		byte[] buffer = new byte[1024];
 		FileInputStream fis = null;
 		try {
@@ -139,7 +141,7 @@ public class IntlolaSender {
 			}
 			snd.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			Intlola.log(e);
 		} finally {
 			try {
 				closeConnection();
@@ -147,7 +149,7 @@ public class IntlolaSender {
 					fis.close();
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				Intlola.log(e);
 			}
 
 		}
@@ -170,7 +172,7 @@ public class IntlolaSender {
 			try {
 				closeConnection();
 			} catch (IOException e) {
-				e.printStackTrace();
+				Intlola.log(e);
 			}
 
 		}
@@ -190,7 +192,7 @@ public class IntlolaSender {
 			try {
 				closeConnection();
 			} catch (IOException e) {
-				e.printStackTrace();
+				Intlola.log(e);
 			}
 
 		}
