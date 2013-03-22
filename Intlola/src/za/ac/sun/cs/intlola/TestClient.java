@@ -27,7 +27,7 @@ public class TestClient {
 		@Override
 		public void run() {
 			IntlolaSender sender = new IntlolaSender(user, pword, "Data",
-					SendMode.ONSAVE, PreferenceConstants.REMOTE_ADDRESS,
+					SendMode.ONSAVE, PreferenceConstants.LOCAL_ADDRESS,
 					PreferenceConstants.PORT);
 			for (String file : files) {
 				sender.send(SendMode.ONSAVE, file);

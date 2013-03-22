@@ -25,7 +25,6 @@ public class DirectoryEntry extends JLabel implements ListCellRenderer {
 
 	public Component getListCellRendererComponent(JList list, Object value,
 			int index, boolean isSelected, boolean cellHasFocus) {
-		Archive a = (Archive) value;
 		if (isSelected) {
 			setBackground(list.getSelectionBackground());
 			setForeground(list.getSelectionForeground());
@@ -35,8 +34,15 @@ public class DirectoryEntry extends JLabel implements ListCellRenderer {
 		}
 		setHorizontalAlignment(SwingConstants.LEFT);
 		setFont(list.getFont());
-		setText(a.toString());
-		setIcon(a.isCompiled() ? openIcon : closedIcon);
+		if (value instanceof Archive) {
+			Archive a = (Archive) value;
+			setText(a.toString());
+			setIcon(a.isCompiled() ? openIcon : closedIcon);
+		}else if(value instanceof String){
+			String s = (String) value;
+			setText(s);
+			setIcon(closedIcon);
+		}
 		return this;
 	}
 

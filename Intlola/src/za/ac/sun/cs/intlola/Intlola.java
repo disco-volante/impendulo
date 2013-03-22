@@ -292,7 +292,9 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	public static void log(Exception e, Object... msgs) {
-		getDefault()._log(e, msgs);
+		if (getDefault() != null) {
+			getDefault()._log(e, msgs);
+		}
 	}
 
 	public void _log(Exception e, Object... msgs) {

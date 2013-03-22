@@ -11,7 +11,9 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,6 +39,7 @@ import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import fmv.db.DataRetriever;
 import fmv.tools.Tools;
 
 /**
@@ -45,6 +48,7 @@ import fmv.tools.Tools;
  * @author jaco
  */
 public class FMV {
+
 	private static Logger logger;
 
 	/**
@@ -67,20 +71,6 @@ public class FMV {
 	 */
 	private static Directory directory;
 
-	/**
-	 * List box for the list of zip files.
-	 */
-	@SuppressWarnings("rawtypes")
-	private static JList directoryList;
-
-	private static DirectoryEntry directoryEntry;
-
-	/**
-	 * List box for the list of source files inside a single archive.
-	 */
-	@SuppressWarnings("rawtypes")
-	private static JList sourceList;
-
 	private static JSplitPane splitPane;
 
 	public static VersionTimeline timeGraph;
@@ -98,6 +88,11 @@ public class FMV {
 	private static HelpContents help;
 
 	private static JComboBox<String> toolBox;
+
+	public static DataRetriever retriever;
+
+	private static DirectoryPane directoryPane;
+	private static DBPane dbPane;
 
 	public static String getArchiveProperty(Archive archive, String defualt) {
 		if (directory != null) {
@@ -222,6 +217,9 @@ public class FMV {
 		JMenu m = new JMenu("File");
 		m.add(createMenuItem("Open Directory", "file.open", a, KeyEvent.VK_O));
 		m.addSeparator();
+		m.add(createMenuItem("Get Server Projects", "server.open", a,
+				KeyEvent.VK_U));
+		m.addSeparator();
 		m.add(createMenuItem("Compile/test all", "file.comptest", a,
 				KeyEvent.VK_C));
 		m.add(createMenuItem("Print", "file.print", a, KeyEvent.VK_P));
@@ -252,51 +250,8 @@ public class FMV {
 		return classString.substring(dotIndex + 1);
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({ "unchecked" })
 	private static Container createContentPane() {
-		Dimension d = new Dimension(150, 400);
-
-		directoryList = new JList();
-		directoryList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		directoryList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e) {
-				if (!e.getValueIsAdjusting()) {
-					int i = directoryList.getSelectedIndex();
-					if (i != -1) {
-						sourceList.setModel(directory.getModel(i));
-						sourceList.setSelectedIndex(0);
-						Archive archive = directory.getArchive(i);
-						if (archive.isCompiled()) {
-							directory.setDiff(i, 0);
-						}
-					}
-				}
-			}
-		});
-		directoryEntry = new DirectoryEntry();
-		directoryList.setCellRenderer(directoryEntry);
-		JScrollPane directoryListScrollPane = new JScrollPane(directoryList);
-		directoryListScrollPane.setMinimumSize(d);
-		directoryListScrollPane.setPreferredSize(d);
-
-		sourceList = new JList();
-		sourceList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		sourceList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e) {
-				if (!e.getValueIsAdjusting()) {
-					int i = directoryList.getSelectedIndex();
-					if (i != -1) {
-						int j = sourceList.getSelectedIndex();
-						if (j != -1) {
-							directory.setDiff(i, j);
-						}
-					}
-				}
-			}
-		});
-		JScrollPane sourcceListScrollPane = new JScrollPane(sourceList);
-		sourcceListScrollPane.setMinimumSize(d);
-		sourcceListScrollPane.setPreferredSize(d);
 
 		tablePane = new TablePane();
 
@@ -305,63 +260,33 @@ public class FMV {
 		timeGraph = new VersionTimeline(false);
 		timeGraph.setMinimumSize(new Dimension(650, 400));
 
-		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-				sourcceListScrollPane, tablePane);
+		directoryPane = new DirectoryPane();
+
+		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, directoryPane,
+				tablePane);
 		splitPane.setOneTouchExpandable(true);
 		splitPane.setResizeWeight(0);
 		splitPane.setDividerLocation(150);
 
-		JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-				directoryListScrollPane, splitPane);
-		mainSplitPane.setOneTouchExpandable(true);
-		mainSplitPane.setResizeWeight(0);
-		mainSplitPane.setDividerLocation(150);
-
 		JButton compileBtn = new JButton("Compile");
-		compileBtn.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int i = directoryList.getSelectedIndex();
-				if (i != -1) {
-					Archive archive = directory.getArchive(i);
-					if (!archive.isExtracted()) {
-						archive.extract();
-					}
-					if (!archive.isCompiled()) {
-						archive.runTool("Tests");
-					}
-					sourceList.setModel(directory.getModel(i));
-					sourceList.setSelectedIndex(0);
-					directory.setDiff(i, 0);
-				}
-			}
-		});
+		compileBtn.addActionListener(new CompileListener());
 		JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		controls.add(compileBtn);
 		toolBox = new JComboBox<String>(Tools.getTools());
 		controls.add(toolBox);
 		JButton toolButton = new JButton("Run");
 		toolButton.setToolTipText("Run static analysis tools.");
-		toolButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				int i = directoryList.getSelectedIndex();
-				if (i != -1 && toolBox.getSelectedIndex() != -1) {
-					Archive archive = directory.getArchive(i);
-					if (!archive.isExtracted()) {
-						archive.extract();
-					}
-					archive.runTool((String) toolBox.getSelectedItem());
-				}
-			}
-		});
+		toolButton.addActionListener(new ToolListener());
 		controls.add(toolButton);
 		JPanel contentPane = new JPanel(new BorderLayout());
 		contentPane.setOpaque(true);
 		contentPane.add(controls, BorderLayout.NORTH);
-		contentPane.add(mainSplitPane, BorderLayout.CENTER);
+		contentPane.add(splitPane, BorderLayout.CENTER);
 		return contentPane;
+	}
+
+	protected static void retrieveProjectDates(String project) {
+		List<Date> dates = retriever.getProjectDates(project);
 	}
 
 	private static void createAndShowGUI() {
@@ -452,10 +377,13 @@ public class FMV {
 						}
 					}
 					prefs.loadProperties();
-					directoryList.setModel(directory.getModel());
-					sourceList.setModel(new DefaultListModel());
+					directoryPane.directoryList.setModel(directory.getModel());
+					directoryPane.sourceList.setModel(new DefaultListModel());
 					splitPane.setRightComponent(tablePane);
 				}
+			} else if ("server.open".equals(event.getActionCommand())) {
+				saveProperties();
+				showProjects();
 			} else if ("file.prefs".equals(event.getActionCommand())) {
 				prefs.activate();
 			} else if ("file.quit".equals(event.getActionCommand())) {
@@ -488,6 +416,65 @@ public class FMV {
 
 	public static SplitDialog getSplitDialog() {
 		return new SplitDialog(mainFrame);
+	}
+
+	public static void showProjects() {
+		if (retriever == null) {
+			try {
+				retriever = new DataRetriever(prefs.getDBHost());
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			}
+		}
+		DefaultListModel<String> model = new DefaultListModel<String>();
+		List<String> found = retriever.getProjects();
+		for (String f : found) {
+			model.addElement(f);
+		}
+	}
+
+	public static class ToolListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if (directoryPane.isVisible()) {
+				int i = directoryPane.directoryList.getSelectedIndex();
+				if (i != -1 && toolBox.getSelectedIndex() != -1) {
+					Archive archive = directory.getArchive(i);
+					if (!archive.isExtracted()) {
+						archive.extract();
+					}
+					archive.runTool((String) toolBox.getSelectedItem());
+				}
+			} else if (dbPane.isVisible()) {
+
+			}
+		}
+	}
+
+	public static class CompileListener implements ActionListener {
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if (directoryPane.isVisible()) {
+				int i = directoryPane.directoryList.getSelectedIndex();
+				if (i != -1) {
+					Archive archive = directory.getArchive(i);
+					if (!archive.isExtracted()) {
+						archive.extract();
+					}
+					if (!archive.isCompiled()) {
+						archive.runTool("Tests");
+					}
+					directoryPane.sourceList.setModel(directory.getModel(i));
+					directoryPane.sourceList.setSelectedIndex(0);
+					directory.setDiff(i, 0);
+				}
+			} else if (dbPane.isVisible()) {
+
+			}
+		}
 	}
 
 }

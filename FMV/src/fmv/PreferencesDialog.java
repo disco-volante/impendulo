@@ -25,35 +25,13 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 	 */
 	private static final long serialVersionUID = 9102953580130214522L;
 
-	private String compilerCmd = null;
-
-	private String interpreterCmd = null;
-
-	private String findbugsJar = null;
-
-	private String findbugsSrc = null;
+	private String compilerCmd, interpreterCmd, findbugsJar, findbugsSrc,
+			dbHost;
 
 	private boolean removeSrc = true;
 
-	/**
-	 * Text field for the compiler command.
-	 */
-	private JTextField compilerCmdText;
-
-	/**
-	 * Text field for the interpreter command.
-	 */
-	private JTextField interpreterCmdText;
-
-	/**
-	 * Text field for the findbugs command.
-	 */
-	private JTextField findbugsJarText;
-
-	/**
-	 * Text field for the class we want findbugs to check.
-	 */
-	private JTextField findbugsSrcText;
+	private JTextField compilerCmdText, interpreterCmdText, findbugsJarText,
+			findbugsSrcText, dbHostText;
 
 	/**
 	 * Check box for removing the source directory.
@@ -81,6 +59,8 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 			String s = FMV.getDirectoryProperty("prefs.removeSrc", "false");
 			removeSrc = s.equals("true");
 		}
+
+		dbHost = FMV.getDirectoryProperty("prefs.dbhost", "http://localhost");
 	}
 
 	public void saveProperties() {
@@ -90,6 +70,7 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		FMV.setDirectoryProperty("prefs.findbugsSrc", findbugsSrc);
 		FMV.setDirectoryProperty("prefs.removeSrc", removeSrc ? "true"
 				: "false");
+		FMV.setDirectoryProperty("prefs.dbhost", dbHost);
 	}
 
 	/**
@@ -112,6 +93,9 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		}
 		if ((findbugsSrc == null) || findbugsSrc.isEmpty()) {
 			findbugsSrc = "program";
+		}
+		if (dbHost == null || dbHost.isEmpty()) {
+			dbHost = "http://localhost";
 		}
 
 		JPanel cfield = new JPanel(new FlowLayout(FlowLayout.LEADING));
@@ -147,6 +131,10 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		rfield.add(removeSrcCheckBox);
 		rfield.add(removeSrcCheckBox);
 
+		JPanel dbfield = new JPanel(new FlowLayout(FlowLayout.LEADING));
+		dbHostText = new JTextField(dbHost, 60);
+		dbfield.add(dbHostText);
+
 		JLabel clabel = new JLabel("Compiler");
 		clabel.setLabelFor(cfield);
 		JLabel ilabel = new JLabel("Interpreter");
@@ -157,12 +145,14 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		fbslabel.setLabelFor(fbsfield);
 		JLabel rlabel = new JLabel("");
 		rlabel.setLabelFor(rfield);
+		JLabel dblabel = new JLabel("Database host url");
+		dblabel.setLabelFor(dbfield);
 
 		JPanel ppane = new JPanel();
 		GridBagLayout gridbag = new GridBagLayout();
 		ppane.setLayout(gridbag);
-		JLabel[] labels = { clabel, ilabel, fbjlabel, fbslabel, rlabel };
-		JPanel[] fields = { cfield, ifield, fbjfield, fbsfield, rfield };
+		JLabel[] labels = { clabel, ilabel, fbjlabel, fbslabel, rlabel, dblabel };
+		JPanel[] fields = { cfield, ifield, fbjfield, fbsfield, rfield, dbfield };
 		addLabelTextRows(labels, fields, gridbag, ppane);
 
 		JPanel bpane = new JPanel(new FlowLayout(FlowLayout.TRAILING));
@@ -257,6 +247,10 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		return removeSrc;
 	}
 
+	public String getDBHost() {
+		return dbHost;
+	}
+
 	/**
 	 * Activate the dialog by making it visible.
 	 */
@@ -266,6 +260,7 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		findbugsJarText.setText(findbugsJar);
 		findbugsSrcText.setText(findbugsSrc);
 		removeSrcCheckBox.setSelected(removeSrc);
+		dbHostText.setText(dbHost);
 		setLocationRelativeTo(getParent());
 		pack();
 		setVisible(true);
@@ -293,6 +288,7 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 			findbugsJar = findbugsJarText.getText();
 			findbugsSrc = findbugsSrcText.getText();
 			removeSrc = removeSrcCheckBox.isSelected();
+			dbHost = dbHostText.getText();
 			deactivate();
 		} else if ("cancel".equals(event.getActionCommand())) {
 			deactivate();
