@@ -52,7 +52,7 @@ public class Source {
 		name = "ROOT";
 	}
 
-	public Source(Source parent, String name) {
+	public Source(final Source parent, final String name) {
 		this.parent = parent;
 		children = new ArrayList<Source>();
 		this.name = name;
@@ -62,38 +62,108 @@ public class Source {
 		backward = new HashMap<Integer, String>();
 	}
 
-	public String getPath() {
-		return path;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public NavigableMap<Date, Version> getVersions() {
-		return versions;
-	}
-
-	public String toString() {
-		return path;
-	}
-
-	public Source addChild(String child) {
-		for (Source c : children) {
+	public Source addChild(final String child) {
+		for (final Source c : children) {
 			if (c.getName().equals(child)) {
 				return c;
 			}
 		}
-		Source c = new Source(this, child);
+		final Source c = new Source(this, child);
 		children.add(c);
 		return c;
 	}
 
-	public List<DiffAction> diff(List<Integer> x, List<Integer> y) {
-		List<DiffAction.Operation> ops = new ArrayList<DiffAction.Operation>();
-		int M = x.size();
-		int N = y.size();
-		int[][] opt = new int[M + 1][N + 1];
+	public void addDetails(final Date date, final InputStream in) {
+		final List<Integer> lineList = new ArrayList<Integer>();
+		try {
+			boolean prevEmpty = false;
+			final BufferedReader bin = new BufferedReader(
+					new InputStreamReader(in));
+			while (true) {
+				final String s = bin.readLine();
+				if (s == null) {
+					break;
+				}
+				if (s.matches("[ \t]*")) {
+					if (prevEmpty) {
+						continue;
+					}
+					prevEmpty = true;
+				} else {
+					prevEmpty = false;
+				}
+				if (!forward.containsKey(s)) {
+					final int n = forward.size();
+					forward.put(s, n);
+					backward.put(n, s);
+				}
+				final int mapping = forward.get(s);
+				lineList.add(mapping);
+			}
+		} catch (final IOException e) {
+			FMV.log(Source.class.getName(), e.getMessage());
+		}
+		versions.put(date, new Version(lineList));
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public void addToListModel(final DefaultListModel model,
+			final Archive archive) {
+		if (parent != null && children.size() == 0) {
+			model.addElement(this);
+			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions
+					.higherEntry(e.getKey())) {
+				e.getValue().setStatus(
+						FMV.getVersionProperty(archive, this, e.getKey(),
+								"status", "unknown"));
+				e.getValue().setOutput(
+						FMV.getVersionProperty(archive, this, e.getKey(),
+								"output", ""));
+				for (final String tool : Tools.getTools()) {
+					e.getValue().setReport(
+							tool,
+							FMV.getVersionProperty(archive, this, e.getKey(),
+									tool + " report", ""));
+				}
+				e.getValue().setAnnotation(
+						FMV.getVersionProperty(archive, this, e.getKey(),
+								"note", ""));
+			}
+		}
+		for (final Source c : children) {
+			c.addToListModel(model, archive);
+		}
+	}
+
+	public void canonize() {
+		if (parent != null && children.size() == 0) {
+			final Iterator<Version> i = versions.values().iterator();
+			if (i.hasNext()) {
+				Version prev = i.next();
+				while (i.hasNext()) {
+					final Version next = i.next();
+					final List<DiffAction> actions = diff(prev.getLineList(),
+							next.getLineList());
+					if (actions.size() > 1
+							|| actions.get(0).getOp() != DiffAction.Operation.SKIP) {
+						prev = next;
+						next.setDiff(actions);
+					} else {
+						i.remove();
+					}
+				}
+			}
+		}
+		for (final Source c : children) {
+			c.canonize();
+		}
+	}
+
+	public List<DiffAction> diff(final List<Integer> x, final List<Integer> y) {
+		final List<DiffAction.Operation> ops = new ArrayList<DiffAction.Operation>();
+		final int M = x.size();
+		final int N = y.size();
+		final int[][] opt = new int[M + 1][N + 1];
 		for (int i = M - 1; i >= 0; i--) {
 			for (int j = N - 1; j >= 0; j--) {
 				if (x.get(i).equals(y.get(j))) {
@@ -104,7 +174,7 @@ public class Source {
 			}
 		}
 		int i = 0, j = 0;
-		while ((i < M) && (j < N)) {
+		while (i < M && j < N) {
 			if (x.get(i).equals(y.get(j))) {
 				i++;
 				j++;
@@ -117,10 +187,10 @@ public class Source {
 				ops.add(DiffAction.Operation.ADD);
 			}
 		}
-		List<DiffAction> acts = new ArrayList<DiffAction>();
+		final List<DiffAction> acts = new ArrayList<DiffAction>();
 		DiffAction.Operation prev = DiffAction.Operation.NADA;
 		int count = 0;
-		for (DiffAction.Operation op : ops) {
+		for (final DiffAction.Operation op : ops) {
 			if (op == prev) {
 				count++;
 			} else {
@@ -134,20 +204,20 @@ public class Source {
 		if (prev != DiffAction.Operation.NADA) {
 			acts.add(new DiffAction(prev, count));
 		}
-		List<DiffAction> finalacts = new ArrayList<DiffAction>();
+		final List<DiffAction> finalacts = new ArrayList<DiffAction>();
 		DiffAction prevAct = null;
-		for (DiffAction a : acts) {
+		for (final DiffAction a : acts) {
 			if (prevAct == null) {
 				prevAct = a;
 			} else if (prevAct.getCount() != a.getCount()) {
 				finalacts.add(prevAct);
 				prevAct = a;
-			} else if ((prevAct.getOp() == DiffAction.Operation.ADD)
-					&& (a.getOp() == DiffAction.Operation.DEL)) {
+			} else if (prevAct.getOp() == DiffAction.Operation.ADD
+					&& a.getOp() == DiffAction.Operation.DEL) {
 				prevAct = new DiffAction(DiffAction.Operation.CHANGE,
 						a.getCount());
-			} else if ((prevAct.getOp() == DiffAction.Operation.DEL)
-					&& (a.getOp() == DiffAction.Operation.ADD)) {
+			} else if (prevAct.getOp() == DiffAction.Operation.DEL
+					&& a.getOp() == DiffAction.Operation.ADD) {
 				prevAct = new DiffAction(DiffAction.Operation.CHANGE,
 						a.getCount());
 			} else {
@@ -161,135 +231,8 @@ public class Source {
 		return finalacts;
 	}
 
-	public void canonize() {
-		if ((parent != null) && (children.size() == 0)) {
-			Iterator<Version> i = versions.values().iterator();
-			if (i.hasNext()) {
-				Version prev = i.next();
-				while (i.hasNext()) {
-					Version next = i.next();
-					List<DiffAction> actions = diff(prev.getLineList(),
-							next.getLineList());
-					if ((actions.size() > 1)
-							|| (actions.get(0).getOp() != DiffAction.Operation.SKIP)) {
-						prev = next;
-						next.setDiff(actions);
-					} else {
-						i.remove();
-					}
-				}
-			}
-		}
-		for (Source c : children) {
-			c.canonize();
-		}
-	}
-
-	public Set<Date> getKeys() {
-		Set<Date> keys = new TreeSet<Date>();
-		if ((parent != null) && (children.size() == 0)) {
-			keys.addAll(versions.keySet());
-		}
-		for (Source c : children) {
-			keys.addAll(c.getKeys());
-		}
-		return keys;
-	}
-
-	public File unpack(Date date, String dir) {
-		File file = null;
-		if ((parent != null) && (children.size() == 0)) {
-			Map.Entry<Date, Version> e = versions.floorEntry(date);
-			if (e == null) {
-				return file;
-			}
-			Version v = e.getValue();
-			List<Integer> lines = v.getLineList();
-			if (lines == null) {
-				return file;
-			}
-			file = new File(dir + getPath());
-			try {
-				file.getParentFile().mkdirs();
-				file.createNewFile();
-				FileOutputStream to = new FileOutputStream(file);
-				for (int l : lines) {
-					String s = backward.get(l).trim() + "\n";
-					to.write(s.getBytes());
-				}
-				to.close();
-			} catch (FileNotFoundException e1) {
-				e1.printStackTrace();
-			} catch (IOException e2) {
-				e2.printStackTrace();
-			}
-		} else {
-			for (Source c : children) {
-				File tfile = c.unpack(date, dir);
-				if(tfile != null){
-					file = tfile;
-					break;
-				}
-			}
-		}
-		return file;
-	}
-
-	public void setStatus(Date date, Status status, String output) {
-		if ((parent != null) && (children.size() == 0)) {
-			Version v = versions.get(date);
-			if (v != null) {
-				v.setStatus(status);
-				v.setOutput(output);
-			}
-		}
-		for (Source c : children) {
-			c.setStatus(date, status, output);
-		}
-	}
-
-	public void setReport(Date date, String tool, String report) {
-		if ((parent != null) && (children.size() == 0)) {
-			Version v = versions.get(date);
-			if (v != null) {
-				v.setReport(tool, report);
-			}
-		}
-		for (Source c : children) {
-			c.setReport(date, tool, report);
-		}
-	}
-
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void addToListModel(DefaultListModel model, Archive archive) {
-		if ((parent != null) && (children.size() == 0)) {
-			model.addElement(this);
-			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions
-					.higherEntry(e.getKey())) {
-				e.getValue().setStatus(
-						FMV.getVersionProperty(archive, this, e.getKey(),
-								"status", "unknown"));
-				e.getValue().setOutput(
-						FMV.getVersionProperty(archive, this, e.getKey(),
-								"output", ""));
-				for (String tool : Tools.getTools()) {
-					e.getValue().setReport(
-							tool,
-							FMV.getVersionProperty(archive, this, e.getKey(),
-									tool + " report", ""));
-				}
-				e.getValue().setAnnotation(
-						FMV.getVersionProperty(archive, this, e.getKey(),
-								"note", ""));
-			}
-		}
-		for (Source c : children) {
-			c.addToListModel(model, archive);
-		}
-	}
-
-	public void extractProperties(Archive archive, ArchiveData data) {
-		if ((parent != null) && (children.size() == 0)) {
+	public void extractProperties(final Archive archive, final ArchiveData data) {
+		if (parent != null && children.size() == 0) {
 			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions
 					.higherEntry(e.getKey())) {
 				e.getValue().getStatus().setData(data);
@@ -297,51 +240,19 @@ public class Source {
 						.getValue().getStatus().getName());
 				FMV.setVersionProperty(archive, this, e.getKey(), "output", e
 						.getValue().getOutput());
-				for (Map.Entry<String, String> re : e.getValue().getReports()
-						.entrySet()) {
+				for (final Map.Entry<String, String> re : e.getValue()
+						.getReports().entrySet()) {
 					FMV.setVersionProperty(archive, this, e.getKey(),
 							re.getKey() + " report", re.getValue());
 				}
 			}
 		}
-		for (Source c : children) {
+		for (final Source c : children) {
 			c.extractProperties(archive, data);
 		}
 	}
 
-	public void addDetails(Date date, InputStream in) {
-		List<Integer> lineList = new ArrayList<Integer>();
-		try {
-			boolean prevEmpty = false;
-			BufferedReader bin = new BufferedReader(new InputStreamReader(in));
-			while (true) {
-				String s = bin.readLine();
-				if (s == null) {
-					break;
-				}
-				if (s.matches("[ \t]*")) {
-					if (prevEmpty) {
-						continue;
-					}
-					prevEmpty = true;
-				} else {
-					prevEmpty = false;
-				}
-				if (!forward.containsKey(s)) {
-					int n = forward.size();
-					forward.put(s, n);
-					backward.put(n, s);
-				}
-				int mapping = forward.get(s);
-				lineList.add(mapping);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		versions.put(date, new Version(lineList));
-	}
-
-	public String formatLineNr(int x) {
+	public String formatLineNr(final int x) {
 		if (x < 10) {
 			return "   " + x + " ";
 		} else if (x < 100) {
@@ -353,25 +264,48 @@ public class Source {
 		}
 	}
 
-	public void insertDiff(boolean onLeft, List<Integer> lines,
-			List<DiffAction> diffs) throws BadLocationException {
-		TextRegion text = FMV.diffPane.getText(onLeft);
+	public Set<Date> getKeys() {
+		final Set<Date> keys = new TreeSet<Date>();
+		if (parent != null && children.size() == 0) {
+			keys.addAll(versions.keySet());
+		}
+		for (final Source c : children) {
+			keys.addAll(c.getKeys());
+		}
+		return keys;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public NavigableMap<Date, Version> getVersions() {
+		return versions;
+	}
+
+	public void insertDiff(final boolean onLeft, final List<Integer> lines,
+			final List<DiffAction> diffs) throws BadLocationException {
+		final TextRegion text = FMV.diffPane.getText(onLeft);
 		text.clearDoc();
 		int n = 1;
 		if (diffs == null) {
-			for (int l : lines) {
+			for (final int l : lines) {
 				text.append(formatLineNr(n++) + backward.get(l) + "\n", null);
 			}
 		} else {
-			DiffAction.Operation ch = onLeft ? DiffAction.Operation.ADD
+			final DiffAction.Operation ch = onLeft ? DiffAction.Operation.ADD
 					: DiffAction.Operation.DEL;
-			Iterator<Integer> liter = lines.iterator();
-			for (DiffAction d : diffs) {
+			final Iterator<Integer> liter = lines.iterator();
+			for (final DiffAction d : diffs) {
 				int c = d.getCount();
-				DiffAction.Operation o = d.getOp();
+				final DiffAction.Operation o = d.getOp();
 				if (o == DiffAction.Operation.SKIP) {
 					while (c-- > 0) {
-						int l = liter.next();
+						final int l = liter.next();
 						text.append(formatLineNr(n++) + backward.get(l) + "\n",
 								null);
 					}
@@ -381,13 +315,13 @@ public class Source {
 					}
 				} else if (o == DiffAction.Operation.CHANGE) {
 					while (c-- > 0) {
-						int l = liter.next();
+						final int l = liter.next();
 						text.append(formatLineNr(n++) + backward.get(l) + "\n",
 								TextRegion.changed);
 					}
 				} else {
 					while (c-- > 0) {
-						int l = liter.next();
+						final int l = liter.next();
 						text.append(formatLineNr(n++) + backward.get(l) + "\n",
 								TextRegion.delta);
 					}
@@ -396,24 +330,95 @@ public class Source {
 		}
 	}
 
-	public void showEmpty(boolean onLeft) {
-		TextRegion text = FMV.diffPane.getText(onLeft);
+	public void setReport(final Date date, final String tool,
+			final String report) {
+		if (parent != null && children.size() == 0) {
+			final Version v = versions.get(date);
+			if (v != null) {
+				v.setReport(tool, report);
+			}
+		}
+		for (final Source c : children) {
+			c.setReport(date, tool, report);
+		}
+	}
+
+	public void setStatus(final Date date, final Status status,
+			final String output) {
+		if (parent != null && children.size() == 0) {
+			final Version v = versions.get(date);
+			if (v != null) {
+				v.setStatus(status);
+				v.setOutput(output);
+			}
+		}
+		for (final Source c : children) {
+			c.setStatus(date, status, output);
+		}
+	}
+
+	public void showEmpty(final boolean onLeft) {
+		final TextRegion text = FMV.diffPane.getText(onLeft);
 		text.clearDoc();
 		FMV.diffPane.setLabel(onLeft, "");
 		FMV.diffPane.setButton(onLeft, false);
 	}
 
-	public void showItem(boolean onLeft, Map.Entry<Date, Version> version,
-			List<DiffAction> diffs) {
+	public void showItem(final boolean onLeft,
+			final Map.Entry<Date, Version> version, final List<DiffAction> diffs) {
 		try {
 			insertDiff(onLeft, version.getValue().getLineList(), diffs);
-		} catch (BadLocationException e) {
+		} catch (final BadLocationException e) {
 			e.printStackTrace();
 		}
-		String s = version.getValue().getStatus().getMessage();
-		String d = dateFormat.format(version.getKey());
+		final String s = version.getValue().getStatus().getMessage();
+		final String d = Source.dateFormat.format(version.getKey());
 		FMV.diffPane.setLabel(onLeft, d + " " + s + " (FB)");
 		FMV.diffPane.setButton(onLeft, true);
+	}
+
+	@Override
+	public String toString() {
+		return path;
+	}
+
+	public File unpack(final Date date, final String dir) {
+		File file = null;
+		if (parent != null && children.size() == 0) {
+			final Map.Entry<Date, Version> e = versions.floorEntry(date);
+			if (e == null) {
+				return file;
+			}
+			final Version v = e.getValue();
+			final List<Integer> lines = v.getLineList();
+			if (lines == null) {
+				return file;
+			}
+			file = new File(dir + getPath());
+			try {
+				file.getParentFile().mkdirs();
+				file.createNewFile();
+				final FileOutputStream to = new FileOutputStream(file);
+				for (final int l : lines) {
+					final String s = backward.get(l).trim() + "\n";
+					to.write(s.getBytes());
+				}
+				to.close();
+			} catch (final FileNotFoundException e1) {
+				e1.printStackTrace();
+			} catch (final IOException e2) {
+				e2.printStackTrace();
+			}
+		} else {
+			for (final Source c : children) {
+				final File tfile = c.unpack(date, dir);
+				if (tfile != null) {
+					file = tfile;
+					break;
+				}
+			}
+		}
+		return file;
 	}
 
 }

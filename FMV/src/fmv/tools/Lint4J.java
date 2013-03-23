@@ -10,40 +10,19 @@ import fmv.Pair;
 public class Lint4J extends JarTool {
 	private static final String[] command = new String[] { "/home/disco/prog/lint4j/jars/lint4j.jar" };
 
-	@Override
-	public Pair run(File workDir, String... input) {
-		return super.run(workDir, getFiles(input));
-	}
-
-	private String[] getFiles(String[] input) {
-		ArrayList<File> files = new ArrayList<File>();
-		for (String in : input) {
-			File test = new File(in);
-			if (!test.exists()) {
-				throw new IllegalArgumentException("Unexpected argument " + in);
-			} else {
-				files.add(test);
-			}
-		}
-		ArrayList<String> processed = getFiles(files.toArray(new File[files
-				.size()]));
-		return processed.toArray(new String[processed.size()]);
-	}
-
-	private ArrayList<String> getFiles(File[] files) {
-		ArrayList<String> args = new ArrayList<String>();
-		for (File file : files) {
-			if (file.isDirectory()) {
-				args.addAll(getFiles(file.listFiles()));
-			} else {
-				args.add(file.getAbsolutePath());
-			}
-		}
-		return args;
+	public static void main(final String[] args) {
+		final BasicTool lj = new Lint4J();
+		lj.configure("config/lint4j.config");
+		System.out.println(lj.run(null, "fmv"));
 	}
 
 	@Override
-	protected String getConfig(String key, String value) {
+	protected Collection<String> getCommand() {
+		return Arrays.asList(Lint4J.command);
+	}
+
+	@Override
+	protected String getConfig(final String key, final String value) {
 		String config = null;
 		if (!value.equals("none") && !value.equals("")) {
 			if (key.equals("verbosity")) {
@@ -62,19 +41,40 @@ public class Lint4J extends JarTool {
 		return config;
 	}
 
-	public static void main(String[] args) {
-		BasicTool lj = new Lint4J();
-		lj.configure("config/lint4j.config");
-		System.out.println(lj.run(null, "fmv"));
+	private ArrayList<String> getFiles(final File[] files) {
+		final ArrayList<String> args = new ArrayList<String>();
+		for (final File file : files) {
+			if (file.isDirectory()) {
+				args.addAll(getFiles(file.listFiles()));
+			} else {
+				args.add(file.getAbsolutePath());
+			}
+		}
+		return args;
 	}
 
-	@Override
-	protected Collection<String> getCommand() {
-		return Arrays.asList(command);
+	private String[] getFiles(final String[] input) {
+		final ArrayList<File> files = new ArrayList<File>();
+		for (final String in : input) {
+			final File test = new File(in);
+			if (!test.exists()) {
+				throw new IllegalArgumentException("Unexpected argument " + in);
+			} else {
+				files.add(test);
+			}
+		}
+		final ArrayList<String> processed = getFiles(files
+				.toArray(new File[files.size()]));
+		return processed.toArray(new String[processed.size()]);
 	}
 
 	@Override
 	protected boolean needCompile() {
 		return false;
+	}
+
+	@Override
+	public Pair run(final File workDir, final String... input) {
+		return super.run(workDir, getFiles(input));
 	}
 }

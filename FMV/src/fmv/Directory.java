@@ -32,68 +32,20 @@ public class Directory {
 	 *            name of the directory
 	 */
 	@SuppressWarnings("rawtypes")
-	public Directory(String dir) {
+	public Directory(final String dir) {
 		this.dir = dir;
 		properties = new Properties();
-		File f = new File(dir + File.separator + "fmv.xml");
+		final File f = new File(dir + File.separator + "fmv.xml");
 		if (f.exists()) {
 			try {
 				properties.loadFromXML(new FileInputStream(f));
-			} catch (FileNotFoundException e) {
+			} catch (final FileNotFoundException e) {
 				e.printStackTrace();
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				e.printStackTrace();
 			}
 		}
 		listModel = new DefaultListModel();
-	}
-
-	public String getXArchiveProperty(Archive archive, String key, String defualt) {
-		if (key == null) {
-			return properties.getProperty(archive.toString(), defualt);
-		} else {
-			return properties.getProperty(archive.toString() + "." + key, defualt);
-		}
-	}
-
-	public void setXArchiveProperty(Archive archive, String key, String value) {
-		if (key == null) {
-			properties.setProperty(archive.toString(), value);
-		} else {
-			properties.setProperty(archive.toString() + "." + key, value);
-		}
-	}
-
-	public String getXVersionProperty(Archive archive, Source source, Date date, String key, String defualt) {
-		String prefix = archive.toString() + "." + source.getPath() + "." + date.getTime() + "." + key;
-		return properties.getProperty(prefix, defualt);
-	}
-
-	public void setXVersionProperty(Archive archive, Source source, Date date, String key, String value) {
-		String prefix = archive.toString() + "." + source.getPath() + "." + date.getTime() + "." + key;
-		properties.setProperty(prefix, value);
-	}
-
-	public String getXDirectoryProperty(String key, String defualt) {
-		return properties.getProperty(key, defualt);
-	}
-
-	public void setXDirectoryProperty(String key, String value) {
-		properties.setProperty(key, value);
-	}
-
-	public void saveXProperties() {
-		File f = new File(dir + File.separator + "fmv.xml");
-		try {
-			for(Object value : properties.values()){
-				FMV.log(Directory.class.getName(), value.toString());
-			}
-			properties.storeToXML(new FileOutputStream(f), "FMV properties (" + new Date() + ")");
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 	/**
@@ -105,8 +57,12 @@ public class Directory {
 	 *            name of the next entry in the directory
 	 */
 	@SuppressWarnings("unchecked")
-	public void addArchive(String name) {
+	public void addArchive(final String name) {
 		listModel.addElement(new Archive(dir, name));
+	}
+
+	public Archive getArchive(final int index) {
+		return (Archive) listModel.getElementAt(index);
 	}
 
 	/**
@@ -127,17 +83,70 @@ public class Directory {
 	 * @return list of files in the index-th entry in directory
 	 */
 	@SuppressWarnings("rawtypes")
-	public DefaultListModel getModel(int index) {
+	public DefaultListModel getModel(final int index) {
 		return ((Archive) listModel.getElementAt(index)).getModel(this);
 	}
 
-	public void setDiff(int i, int j) {
-		Archive a = (Archive) listModel.getElementAt(i);
+	public String getXArchiveProperty(final Archive archive, final String key,
+			final String defualt) {
+		if (key == null) {
+			return properties.getProperty(archive.toString(), defualt);
+		} else {
+			return properties.getProperty(archive.toString() + "." + key,
+					defualt);
+		}
+	}
+
+	public String getXDirectoryProperty(final String key, final String defualt) {
+		return properties.getProperty(key, defualt);
+	}
+
+	public String getXVersionProperty(final Archive archive,
+			final Source source, final Date date, final String key,
+			final String defualt) {
+		final String prefix = archive.toString() + "." + source.getPath() + "."
+				+ date.getTime() + "." + key;
+		return properties.getProperty(prefix, defualt);
+	}
+
+	public void saveXProperties() {
+		final File f = new File(dir + File.separator + "fmv.xml");
+		try {
+			for (final Object value : properties.values()) {
+				FMV.log(Directory.class.getName(), value.toString());
+			}
+			properties.storeToXML(new FileOutputStream(f), "FMV properties ("
+					+ new Date() + ")");
+		} catch (final FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void setDiff(final int i, final int j) {
+		final Archive a = (Archive) listModel.getElementAt(i);
 		a.setDiff(j);
 	}
 
-	public Archive getArchive(int index) {
-		return (Archive) listModel.getElementAt(index);
+	public void setXArchiveProperty(final Archive archive, final String key,
+			final String value) {
+		if (key == null) {
+			properties.setProperty(archive.toString(), value);
+		} else {
+			properties.setProperty(archive.toString() + "." + key, value);
+		}
+	}
+
+	public void setXDirectoryProperty(final String key, final String value) {
+		properties.setProperty(key, value);
+	}
+
+	public void setXVersionProperty(final Archive archive, final Source source,
+			final Date date, final String key, final String value) {
+		final String prefix = archive.toString() + "." + source.getPath() + "."
+				+ date.getTime() + "." + key;
+		properties.setProperty(prefix, value);
 	}
 
 }

@@ -22,100 +22,6 @@ import fmv.db.DataRetriever;
 
 public class DBPane extends JPanel {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -9127904335874421540L;
-
-	private JList<String> projList, tokenList, subList;
-	private HashMap<String, ProjectListModel> projects;
-
-	private DataRetriever retriever;
-
-	public DBPane(DataRetriever retriever) {
-		super();
-		this.retriever = retriever;
-		createGUI();
-		addProjects(retriever.getProjects());
-
-	}
-
-	private void createGUI() {
-		Dimension d = new Dimension(150, 400);
-		projList = new JList<String>();
-		projList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e) {
-				if (!e.getValueIsAdjusting()) {
-					String p = projList.getSelectedValue();
-					if (p != null) {
-						ProjectListModel val = projects.get(p);
-						val.Load();
-						subList.setModel(val);
-						subList.setSelectedIndex(0);
-					}
-				}
-			}
-		});
-		projList.addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent evt) {
-				String p = projList.getSelectedValue();
-				if (p != null) {
-					ProjectListModel val = projects.get(p);
-					val.Load();
-					subList.setModel(val);
-					subList.setSelectedIndex(0);
-				}
-			}
-		});
-		JScrollPane projScrollPane = new JScrollPane(projList);
-		projScrollPane.setMinimumSize(d);
-		projScrollPane.setPreferredSize(d);
-		subList = new JList<String>();
-		subList.addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent evt) {
-				if (evt.getClickCount() == 2) {
-					String s = subList.getSelectedValue();
-					if (s != null) {
-						ListModel<String> tokens = ((ProjectListModel) subList
-								.getModel()).drillDown(s,
-								subList.getSelectedIndex());
-						System.out.println(s);
-						if (tokens != null) {
-							tokenList.setModel(tokens);
-						}
-					}
-				}
-			}
-		});
-		JScrollPane subScrollPane = new JScrollPane(subList);
-		subScrollPane.setMinimumSize(d);
-		subScrollPane.setPreferredSize(d);
-		tokenList = new JList<String>();
-		tokenList.addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent evt) {
-				if (evt.getClickCount() == 2) {
-					retriever.retrieveFiles(tokenList.getSelectedValue());
-				}
-			}
-		});
-		JScrollPane tokenScrollPane = new JScrollPane(tokenList);
-		tokenScrollPane.setMinimumSize(d);
-		tokenScrollPane.setPreferredSize(d);
-		add(projScrollPane, BorderLayout.WEST);
-		add(subScrollPane, BorderLayout.CENTER);
-		add(tokenScrollPane, BorderLayout.EAST);
-	}
-
-	public void addProjects(List<String> proj) {
-		projects = new HashMap<String, ProjectListModel>();
-		DefaultListModel<String> model = new DefaultListModel<String>();
-		for (String p : proj) {
-			model.addElement(p);
-			projects.put(p, new ProjectListModel(p));
-		}
-		projList.setModel(model);
-	}
-
 	class ProjectListModel extends DefaultListModel<String> {
 		/**
 		 * 
@@ -127,24 +33,19 @@ public class DBPane extends JPanel {
 		public String[] top = new String[] { "users", "dates" };
 		private Object[] current;
 
-		public ProjectListModel(String name) {
+		public ProjectListModel(final String name) {
 			this.name = name;
 		}
 
-		public void Load() {
-			if (users == null) {
-				List<String> temp = retriever.getProjectUsers(name);
-				users = temp.toArray(new String[temp.size()]);
+		public void addAll(final Object[] obs) {
+			clear();
+			for (final Object o : obs) {
+				addElement(o.toString());
 			}
-			if (dates == null) {
-				List<Date> temp = retriever.getProjectDates(name);
-				dates = retriever.getProjectDates(name).toArray(
-						new Date[temp.size()]);
-			}
-			addAll(top);
+			current = obs;
 		}
 
-		public ListModel<String> drillDown(String s, int index) {
+		public ListModel<String> drillDown(final String s, final int index) {
 			DefaultListModel<String> ret = null;
 			if (s != null && current.equals(top)) {
 				if (s.equals("users")) {
@@ -160,37 +61,141 @@ public class DBPane extends JPanel {
 				} else if (current.equals(dates)) {
 					date = dates[index];
 				}
-				List<String> temp = retriever
-						.getProjectTokens(name, user, date);
+				final List<String> temp = retriever.getProjectTokens(name,
+						user, date);
 				ret = new DefaultListModel<String>();
-				for (String val : temp) {
+				for (final String val : temp) {
 					ret.addElement(val);
 				}
 			}
 			return ret;
 		}
 
-		public void addAll(Object[] obs) {
-			clear();
-			for (Object o : obs) {
-				this.addElement(o.toString());
+		public void Load() {
+			if (users == null) {
+				final List<String> temp = retriever.getProjectUsers(name);
+				users = temp.toArray(new String[temp.size()]);
 			}
-			current = obs;
+			if (dates == null) {
+				final List<Date> temp = retriever.getProjectDates(name);
+				dates = retriever.getProjectDates(name).toArray(
+						new Date[temp.size()]);
+			}
+			addAll(top);
 		}
 	}
 
-	public static void main(String[] args) {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -9127904335874421540L;
+
+	public static void main(final String[] args) {
 		try {
-			DataRetriever ret = new DataRetriever("localhost");
-			JFrame parent = new JFrame();
+			final DataRetriever ret = new DataRetriever("localhost");
+			final JFrame parent = new JFrame();
 			parent.setSize(new Dimension(500, 300));
-			DBPane pane = new DBPane(ret);
+			final DBPane pane = new DBPane(ret);
 			parent.add(pane);
 			parent.setVisible(true);
-		} catch (UnknownHostException e) {
+		} catch (final UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	private JList<String> projList, tokenList, subList;
+
+	private HashMap<String, ProjectListModel> projects;
+
+	private final DataRetriever retriever;
+
+	public DBPane(final DataRetriever retriever) {
+		super();
+		this.retriever = retriever;
+		createGUI();
+		addProjects(retriever.getProjects());
+
+	}
+
+	public void addProjects(final List<String> proj) {
+		projects = new HashMap<String, ProjectListModel>();
+		final DefaultListModel<String> model = new DefaultListModel<String>();
+		for (final String p : proj) {
+			model.addElement(p);
+			projects.put(p, new ProjectListModel(p));
+		}
+		projList.setModel(model);
+	}
+
+	private void createGUI() {
+		final Dimension d = new Dimension(150, 400);
+		projList = new JList<String>();
+		projList.addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(final ListSelectionEvent e) {
+				if (!e.getValueIsAdjusting()) {
+					final String p = projList.getSelectedValue();
+					if (p != null) {
+						final ProjectListModel val = projects.get(p);
+						val.Load();
+						subList.setModel(val);
+						subList.setSelectedIndex(0);
+					}
+				}
+			}
+		});
+		projList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(final MouseEvent evt) {
+				final String p = projList.getSelectedValue();
+				if (p != null) {
+					final ProjectListModel val = projects.get(p);
+					val.Load();
+					subList.setModel(val);
+					subList.setSelectedIndex(0);
+				}
+			}
+		});
+		final JScrollPane projScrollPane = new JScrollPane(projList);
+		projScrollPane.setMinimumSize(d);
+		projScrollPane.setPreferredSize(d);
+		subList = new JList<String>();
+		subList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(final MouseEvent evt) {
+				if (evt.getClickCount() == 2) {
+					final String s = subList.getSelectedValue();
+					if (s != null) {
+						final ListModel<String> tokens = ((ProjectListModel) subList
+								.getModel()).drillDown(s,
+								subList.getSelectedIndex());
+						System.out.println(s);
+						if (tokens != null) {
+							tokenList.setModel(tokens);
+						}
+					}
+				}
+			}
+		});
+		final JScrollPane subScrollPane = new JScrollPane(subList);
+		subScrollPane.setMinimumSize(d);
+		subScrollPane.setPreferredSize(d);
+		tokenList = new JList<String>();
+		tokenList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(final MouseEvent evt) {
+				if (evt.getClickCount() == 2) {
+					retriever.retrieveFiles(tokenList.getSelectedValue());
+				}
+			}
+		});
+		final JScrollPane tokenScrollPane = new JScrollPane(tokenList);
+		tokenScrollPane.setMinimumSize(d);
+		tokenScrollPane.setPreferredSize(d);
+		add(projScrollPane, BorderLayout.WEST);
+		add(subScrollPane, BorderLayout.CENTER);
+		add(tokenScrollPane, BorderLayout.EAST);
 	}
 
 }

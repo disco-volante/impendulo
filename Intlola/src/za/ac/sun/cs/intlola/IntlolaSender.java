@@ -8,32 +8,24 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Arrays;
 
-import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
-
 import com.google.gson.JsonObject;
 
 public class IntlolaSender {
 
-	protected SendMode mode;
+	private SendMode mode;
 
-	protected String uname = PreferenceConstants.DEFAULT;
-
-	protected String passwd = PreferenceConstants.PASSWORD;
-
-	protected String project = "NONE";
-
-	private String token;
-
+	private String uname, passwd, project, token, address;
+	private int port;
 	private OutputStream snd = null;
 	private Socket sock = null;
 	private InputStream rcv = null;
 
-	protected String address;
+	public IntlolaSender() {
+	}
 
-	protected int port;
-
-	public IntlolaSender(String uname, String passwd, String project,
-			SendMode mode, String address, int port) {
+	public IntlolaSender(final String uname, final String passwd,
+			final String project, final SendMode mode, final String address,
+			final int port) {
 		this.uname = uname;
 		this.passwd = passwd;
 		this.project = project;
@@ -42,48 +34,73 @@ public class IntlolaSender {
 		this.port = port;
 	}
 
-	public IntlolaSender() {
+	private void closeConnection() throws IOException {
+		if (snd != null) {
+			snd.close();
+		}
+		if (rcv != null) {
+			rcv.close();
+		}
+		if (sock != null) {
+			sock.close();
+		}
+	}
+
+	public String getProject() {
+		return project;
 	}
 
 	private void login() {
-		byte[] buffer = new byte[1024];
+		final byte[] buffer = new byte[1024];
 		int read = 0;
 		try {
 			openConnection();
-			JsonObject params = new JsonObject();
+			final JsonObject params = new JsonObject();
 			params.addProperty("TYPE", "LOGIN");
 			params.addProperty("USERNAME", uname);
 			params.addProperty("PASSWORD", passwd);
-			params.addProperty("PROJECT", project);
+			params.addProperty("PROJECT", getProject());
 			params.addProperty("MODE", mode.toString());
 			snd.write(params.toString().getBytes());
 			read = rcv.read(buffer);
 			snd.flush();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			Intlola.log(e);
 		} finally {
 			try {
 				closeConnection();
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				Intlola.log(e);
 			}
 
 		}
 		if (read > 0) {
-			String received = new String(Arrays.copyOfRange(buffer, 0, read));
+			final String received = new String(Arrays.copyOfRange(buffer, 0,
+					read));
 			if (received.startsWith("TOKEN:")) {
 				token = received.substring(received.indexOf(':') + 1);
 			}
 		}
 	}
 
-	private void closeConnection() throws IOException {
-		if (snd != null)
-			snd.close();
-		if (rcv != null)
-			rcv.close();
-		if (sock != null)
-			sock.close();
+	private void logout() {
+		try {
+			openConnection();
+			final JsonObject params = new JsonObject();
+			params.addProperty("TYPE", "LOGOUT");
+			params.addProperty("TOKEN", token);
+			snd.write(params.toString().getBytes());
+			snd.flush();
+		} catch (final IOException e) {
+			Intlola.log(e);
+		} finally {
+			try {
+				closeConnection();
+			} catch (final IOException e) {
+				Intlola.log(e);
+			}
+
+		}
 	}
 
 	private void openConnection() throws IOException {
@@ -92,8 +109,7 @@ public class IntlolaSender {
 		rcv = sock.getInputStream();
 	}
 
-	public void send(SendMode check, String filename) {
-		Intlola.log(null, "Intlola sending ", check, filename);
+	public void send(final SendMode check, final String filename) {
 		if (token == null) {
 			login();
 		}
@@ -111,9 +127,8 @@ public class IntlolaSender {
 
 	}
 
-	private void sendFile(String fileName) {
-		Intlola.log(null, "Sending: "+fileName);
-		byte[] buffer = new byte[1024];
+	private void sendFile(final String fileName) {
+		final byte[] buffer = new byte[1024];
 		FileInputStream fis = null;
 		try {
 			openConnection();
@@ -124,23 +139,21 @@ public class IntlolaSender {
 			} else {
 				sendName = fileName;
 			}
-			JsonObject params = new JsonObject();
+			final JsonObject params = new JsonObject();
 			params.addProperty("TYPE", "SEND");
 			params.addProperty("TOKEN", token);
 			params.addProperty("FILENAME", sendName);
 			snd.write(params.toString().getBytes());
 			rcv.read(buffer);
-			if (!new String(buffer).startsWith("ACCEPT")) {
-				closeConnection();
-				return;
+			if (new String(buffer).startsWith("ACCEPT")) {
+				int count;
+				fis = new FileInputStream(fileName);
+				while ((count = fis.read(buffer)) >= 0) {
+					snd.write(buffer, 0, count);
+				}
+				snd.flush();
 			}
-			int count;
-			fis = new FileInputStream(fileName);
-			while ((count = fis.read(buffer)) >= 0) {
-				snd.write(buffer, 0, count);
-			}
-			snd.flush();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			Intlola.log(e);
 		} finally {
 			try {
@@ -148,7 +161,7 @@ public class IntlolaSender {
 				if (fis != null) {
 					fis.close();
 				}
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				Intlola.log(e);
 			}
 
@@ -157,41 +170,21 @@ public class IntlolaSender {
 	}
 
 	private void zipDir() {
-		byte[] buffer = new byte[1024];
+		final byte[] buffer = new byte[1024];
 		try {
 			openConnection();
-			JsonObject params = new JsonObject();
+			final JsonObject params = new JsonObject();
 			params.addProperty("TYPE", "ZIP");
 			params.addProperty("TOKEN", token);
 			snd.write(params.toString().getBytes());
 			rcv.read(buffer);
 			snd.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (final IOException e) {
+			Intlola.log(e);
 		} finally {
 			try {
 				closeConnection();
-			} catch (IOException e) {
-				Intlola.log(e);
-			}
-
-		}
-	}
-
-	private void logout() {
-		try {
-			openConnection();
-			JsonObject params = new JsonObject();
-			params.addProperty("TYPE", "LOGOUT");
-			params.addProperty("TOKEN", token);
-			snd.write(params.toString().getBytes());
-			snd.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				closeConnection();
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				Intlola.log(e);
 			}
 

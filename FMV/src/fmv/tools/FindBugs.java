@@ -5,10 +5,22 @@ import java.util.Collection;
 
 public class FindBugs extends JarTool {
 	private static final String FB_HOME = "/home/disco/prog/findbugs";
-	private static final String[] command = new String[] {FB_HOME+"/lib/findbugs.jar", "-textui" };
+	private static final String[] command = new String[] {
+			FindBugs.FB_HOME + "/lib/findbugs.jar", "-textui" };
+
+	public static void main(final String[] args) {
+		final BasicTool fb = new FindBugs();
+		fb.configure("config/fb.config");
+		System.out.println(fb.run(null, "src"));
+	}
 
 	@Override
-	protected String getConfig(String key, String value) {
+	protected Collection<String> getCommand() {
+		return Arrays.asList(FindBugs.command);
+	}
+
+	@Override
+	protected String getConfig(final String key, final String value) {
 		String config = null;
 		if (!value.equals("none") && !value.equals("")) {
 			if (key.equals("outFormat") || key.equals("confidence")) {
@@ -26,17 +38,6 @@ public class FindBugs extends JarTool {
 			}
 		}
 		return config;
-	}
-
-	public static void main(String[] args) {
-		BasicTool fb = new FindBugs();
-		fb.configure("config/fb.config");
-		System.out.println(fb.run(null, "src"));
-	}
-
-	@Override
-	protected Collection<String> getCommand() {
-		return Arrays.asList(command);
 	}
 
 	@Override

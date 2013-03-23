@@ -12,46 +12,47 @@ import fmv.Pair;
 
 public abstract class ExternalTool extends BasicTool {
 	@Override
-	public Pair run(File workDir, String... input) {
+	public Pair run(final File workDir, final String... input) {
 		if (needCompile()) {
-			for (String in : input) {
+			for (final String in : input) {
 				compile(new File(in));
 			}
 		}
 		Pair ret;
 		try {
-			String[] args = getArgs(input);
-			ProcessBuilder pb = new ProcessBuilder(args)
+			final String[] args = getArgs(input);
+			final ProcessBuilder pb = new ProcessBuilder(args)
 					.redirectErrorStream(true);
 			System.out.println(pb.command());
 			if (workDir != null && workDir.exists() && workDir.isDirectory()) {
 				pb.directory(workDir);
 			}
-			Map<String, String> env = pb.environment();
+			final Map<String, String> env = pb.environment();
 			env.clear();
-			Process p = pb.start();
-			BufferedReader errReader = new BufferedReader(
+			final Process p = pb.start();
+			final BufferedReader errReader = new BufferedReader(
 					new InputStreamReader(p.getErrorStream()));
 			String line;
 			while ((line = errReader.readLine()) != null) {
 				System.err.println(line);
 			}
-			BufferedInputStream is = new BufferedInputStream(p.getInputStream());
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			final BufferedInputStream is = new BufferedInputStream(
+					p.getInputStream());
+			final ByteArrayOutputStream os = new ByteArrayOutputStream();
 			int rb;
 			while ((rb = is.read()) != -1) {
 				os.write(rb);
 			}
-			int exit = p.waitFor();
+			final int exit = p.waitFor();
 			ret = new Pair(exit, os.toString());
-			if (ret.outPut().trim() == ""){
+			if (ret.outPut().trim() == "") {
 				ret.setOutput("No problems detected.");
 			}
 			System.out.println(ret.outPut());
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			e.printStackTrace();
 			ret = new Pair(1, e.getMessage());
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 			ret = new Pair(1, e.getMessage());
 		}

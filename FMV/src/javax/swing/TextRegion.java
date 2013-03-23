@@ -1,6 +1,5 @@
 package javax.swing;
 
-import javax.swing.JTextArea;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
@@ -16,31 +15,31 @@ public class TextRegion extends JTextArea {
 	public static final SimpleAttributeSet delta = new SimpleAttributeSet();
 
 	static {
-		changed.addAttribute("name", "changed");
-		delta.addAttribute("name", "delta");
+		TextRegion.changed.addAttribute("name", "changed");
+		TextRegion.delta.addAttribute("name", "delta");
 	}
 
-	public TextRegion(DefaultStyledDocument doc) {
+	public TextRegion(final DefaultStyledDocument doc) {
 		super(doc);
 	}
 
-	public void clearDoc() {
-		Document doc = getDocument();
-		try {
-			doc.remove(0, doc.getLength());
-		} catch (BadLocationException e) {
-			e.printStackTrace();
+	public void append(final String str, final AttributeSet attr) {
+		final Document doc = getDocument();
+		if (doc != null) {
+			try {
+				doc.insertString(doc.getLength(), str, attr);
+			} catch (final BadLocationException e) {
+			}
 		}
 	}
 
-	public void append(String str, AttributeSet attr) {
-        Document doc = getDocument();
-        if (doc != null) {
-            try {
-                doc.insertString(doc.getLength(), str, attr);
-            } catch (BadLocationException e) {
-            }
-        }
+	public void clearDoc() {
+		final Document doc = getDocument();
+		try {
+			doc.remove(0, doc.getLength());
+		} catch (final BadLocationException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/*

@@ -35,76 +35,76 @@ public class DiffPane extends JPanel implements ActionListener {
 	/**
 	 * "Previous" button at the top of the difference pane.
 	 */
-	private JButton prevButton;
+	private final JButton prevButton;
 
 	/**
 	 * "Next" button at the top of the difference pane.
 	 */
-	private JButton nextButton;
+	private final JButton nextButton;
 
 	/**
 	 * "Show" button on the left.
 	 */
-	private JButton leftOutputButton;
+	private final JButton leftOutputButton;
 
 	/**
 	 * "Annotation" button on the left.
 	 */
-	private JButton leftAnnoteButton;
+	private final JButton leftAnnoteButton;
 
 	/**
 	 * "Show" button on the right.
 	 */
-	private JButton rightOutputButton;
+	private final JButton rightOutputButton;
 
 	/**
 	 * "Annotation" button on the right.
 	 */
-	private JButton rightAnnoteButton;
+	private final JButton rightAnnoteButton;
 
 	/**
 	 * Time and status message on the left.
 	 */
-	private JLabel leftLabel;
+	private final JLabel leftLabel;
 
 	/**
 	 * Time and status message on the right.
 	 */
-	private JLabel rightLabel;
+	private final JLabel rightLabel;
 
 	/**
 	 * The text on the left.
 	 */
-	private TextRegion leftText;
+	private final TextRegion leftText;
 
 	/**
 	 * The text on the right.
 	 */
-	private TextRegion rightText;
+	private final TextRegion rightText;
 
 	/**
 	 * Scrollbar for the text on the left.
 	 */
-	private JScrollBar leftBar;
+	private final JScrollBar leftBar;
 
 	/**
 	 * Scrollbar for the text on the right.
 	 */
-	private JScrollBar rightBar;
-	private JButton toolButton;
-	private JComboBox<String> toolBox;
+	private final JScrollBar rightBar;
+	private final JButton toolButton;
+	private final JComboBox<String> toolBox;
 
 	private static VersionTimeline timeline;
 
 	public DiffPane() {
 		super(new BorderLayout());
-		Dimension d = new Dimension(24, 24);
+		final Dimension d = new Dimension(24, 24);
 
-		timeline = new VersionTimeline(true);
-		timeline.setOpaque(true);
-		Dimension d1 = new Dimension(500, 40);
-		timeline.setMinimumSize(d1);
-		timeline.setPreferredSize(d1);
+		DiffPane.timeline = new VersionTimeline(true);
+		DiffPane.timeline.setOpaque(true);
+		final Dimension d1 = new Dimension(500, 40);
+		DiffPane.timeline.setMinimumSize(d1);
+		DiffPane.timeline.setPreferredSize(d1);
 
 		leftText = new TextRegion(new DefaultStyledDocument());
 		leftText.setEditable(false);
@@ -112,31 +112,33 @@ public class DiffPane extends JPanel implements ActionListener {
 		leftText.setTabSize(3);
 		createStyles((StyledDocument) leftText.getDocument());
 		leftText.setUI(new TextRegionUI());
-		JScrollPane leftTextScrollPane = new JScrollPane(leftText);
+		final JScrollPane leftTextScrollPane = new JScrollPane(leftText);
 		leftBar = leftTextScrollPane.getVerticalScrollBar();
 		leftBar.addAdjustmentListener(new AdjustmentListener() {
-			public void adjustmentValueChanged(AdjustmentEvent event) {
+			@Override
+			public void adjustmentValueChanged(final AdjustmentEvent event) {
 				rightBar.setValue(leftBar.getValue());
 			}
 		});
 
-		JPanel leftTopPane = new JPanel(new FlowLayout(FlowLayout.LEADING));
+		final JPanel leftTopPane = new JPanel(
+				new FlowLayout(FlowLayout.LEADING));
 		leftTopPane.setOpaque(true);
 		leftOutputButton = new JButton(FMV.getMyImageIcon("output.gif"));
 		leftOutputButton.setToolTipText("Show output");
 		leftOutputButton.setActionCommand("leftshow");
-		leftOutputButton.addActionListener(timeline);
+		leftOutputButton.addActionListener(DiffPane.timeline);
 		leftOutputButton.setPreferredSize(d);
 		leftTopPane.add(leftOutputButton);
 		leftAnnoteButton = new JButton(FMV.getMyImageIcon("annotate.gif"));
 		leftAnnoteButton.setToolTipText("Edit annotation");
 		leftAnnoteButton.setActionCommand("leftedit");
-		leftAnnoteButton.addActionListener(timeline);
+		leftAnnoteButton.addActionListener(DiffPane.timeline);
 		leftAnnoteButton.setPreferredSize(d);
 		leftTopPane.add(leftAnnoteButton);
 		leftLabel = new JLabel("");
 		leftTopPane.add(leftLabel);
-		JPanel leftPane = new JPanel(new BorderLayout());
+		final JPanel leftPane = new JPanel(new BorderLayout());
 		leftPane.add(leftTopPane, BorderLayout.PAGE_START);
 		leftPane.add(leftTextScrollPane, BorderLayout.CENTER);
 
@@ -146,40 +148,42 @@ public class DiffPane extends JPanel implements ActionListener {
 		rightText.setTabSize(3);
 		createStyles((StyledDocument) rightText.getDocument());
 		rightText.setUI(new TextRegionUI());
-		JScrollPane rightTextScrollPane = new JScrollPane(rightText);
+		final JScrollPane rightTextScrollPane = new JScrollPane(rightText);
 		rightBar = rightTextScrollPane.getVerticalScrollBar();
 		rightBar.addAdjustmentListener(new AdjustmentListener() {
-			public void adjustmentValueChanged(AdjustmentEvent event) {
+			@Override
+			public void adjustmentValueChanged(final AdjustmentEvent event) {
 				leftBar.setValue(rightBar.getValue());
 			}
 		});
 
-		JPanel rightTopPane = new JPanel(new FlowLayout(FlowLayout.LEADING));
+		final JPanel rightTopPane = new JPanel(new FlowLayout(
+				FlowLayout.LEADING));
 		rightTopPane.setOpaque(true);
 		rightOutputButton = new JButton(FMV.getMyImageIcon("output.gif"));
 		rightOutputButton.setToolTipText("Show output");
 		rightOutputButton.setActionCommand("rightshow");
-		rightOutputButton.addActionListener(timeline);
+		rightOutputButton.addActionListener(DiffPane.timeline);
 		rightOutputButton.setPreferredSize(d);
 		rightTopPane.add(rightOutputButton);
 		rightAnnoteButton = new JButton(FMV.getMyImageIcon("annotate.gif"));
 		rightAnnoteButton.setToolTipText("Edit annotation");
 		rightAnnoteButton.setActionCommand("rightedit");
-		rightAnnoteButton.addActionListener(timeline);
+		rightAnnoteButton.addActionListener(DiffPane.timeline);
 		rightAnnoteButton.setPreferredSize(d);
 		rightTopPane.add(rightAnnoteButton);
 		rightLabel = new JLabel("");
 		rightTopPane.add(rightLabel);
-		JPanel rightPane = new JPanel(new BorderLayout());
+		final JPanel rightPane = new JPanel(new BorderLayout());
 		rightPane.add(rightTopPane, BorderLayout.PAGE_START);
 		rightPane.add(rightTextScrollPane, BorderLayout.CENTER);
 
-		JPanel textsPane = new JPanel(new GridLayout(1, 2));
+		final JPanel textsPane = new JPanel(new GridLayout(1, 2));
 		textsPane.setOpaque(true);
 		textsPane.add(leftPane);
 		textsPane.add(rightPane);
 
-		JPanel buttonPane = new JPanel(new FlowLayout(FlowLayout.LEADING));
+		final JPanel buttonPane = new JPanel(new FlowLayout(FlowLayout.LEADING));
 		buttonPane.setOpaque(true);
 		prevButton = new JButton("Previous", FMV.getMyImageIcon("prev.gif"));
 		prevButton.setToolTipText("Previous");
@@ -195,13 +199,26 @@ public class DiffPane extends JPanel implements ActionListener {
 		buttonPane.add(toolBox);
 		toolButton = new JButton("Show Results");
 		toolButton.setActionCommand("tool");
-		toolButton.addActionListener(timeline);
+		toolButton.addActionListener(DiffPane.timeline);
 		buttonPane.add(toolButton);
 
 		setOpaque(true);
 		add(textsPane, BorderLayout.CENTER);
 		add(buttonPane, BorderLayout.PAGE_START);
-		add(timeline, BorderLayout.PAGE_END);
+		add(DiffPane.timeline, BorderLayout.PAGE_END);
+	}
+
+	@Override
+	public void actionPerformed(final ActionEvent event) {
+		if ("showprev".equals(event.getActionCommand())) {
+			if (DiffPane.timeline != null) {
+				DiffPane.timeline.showPrev();
+			}
+		} else if ("shownext".equals(event.getActionCommand())) {
+			if (DiffPane.timeline != null) {
+				DiffPane.timeline.showNext();
+			}
+		}
 	}
 
 	/**
@@ -210,44 +227,23 @@ public class DiffPane extends JPanel implements ActionListener {
 	 * @param doc
 	 *            the document to apply the styles to
 	 */
-	private void createStyles(StyledDocument doc) {
-		Style def = StyleContext.getDefaultStyleContext().getStyle(
+	private void createStyles(final StyledDocument doc) {
+		final Style def = StyleContext.getDefaultStyleContext().getStyle(
 				StyleContext.DEFAULT_STYLE);
-		Style normal = doc.addStyle("normal", def);
+		final Style normal = doc.addStyle("normal", def);
 		doc.addStyle("delta", normal);
 		doc.addStyle("changed", normal);
 	}
 
-	public TextRegion getText(boolean onLeft) {
+	public String getCurrentTool() {
+		return (String) toolBox.getSelectedItem();
+	}
+
+	public TextRegion getText(final boolean onLeft) {
 		if (onLeft) {
 			return leftText;
 		} else {
 			return rightText;
-		}
-	}
-
-	public void setItem(Archive archive, Source source) {
-		timeline.setSource(archive, source);
-		timeline.repaint();
-	}
-
-	public void setLabel(boolean onLeft, String label) {
-		if (onLeft) {
-			leftLabel.setText(label);
-		} else {
-			rightLabel.setText(label);
-		}
-	}
-
-	public void setButton(boolean onLeft, boolean enabled) {
-		if (onLeft) {
-			prevButton.setEnabled(enabled);
-			leftOutputButton.setEnabled(enabled);
-			leftAnnoteButton.setEnabled(enabled);
-		} else {
-			nextButton.setEnabled(enabled);
-			rightOutputButton.setEnabled(enabled);
-			rightAnnoteButton.setEnabled(enabled);
 		}
 	}
 
@@ -260,20 +256,29 @@ public class DiffPane extends JPanel implements ActionListener {
 		rightBar.revalidate();
 	}
 
-	public void actionPerformed(ActionEvent event) {
-		if ("showprev".equals(event.getActionCommand())) {
-			if (timeline != null) {
-				timeline.showPrev();
-			}
-		} else if ("shownext".equals(event.getActionCommand())) {
-			if (timeline != null) {
-				timeline.showNext();
-			}
+	public void setButton(final boolean onLeft, final boolean enabled) {
+		if (onLeft) {
+			prevButton.setEnabled(enabled);
+			leftOutputButton.setEnabled(enabled);
+			leftAnnoteButton.setEnabled(enabled);
+		} else {
+			nextButton.setEnabled(enabled);
+			rightOutputButton.setEnabled(enabled);
+			rightAnnoteButton.setEnabled(enabled);
 		}
 	}
 
-	public String getCurrentTool() {
-		return (String) toolBox.getSelectedItem();
+	public void setItem(final Archive archive, final Source source) {
+		DiffPane.timeline.setSource(archive, source);
+		DiffPane.timeline.repaint();
+	}
+
+	public void setLabel(final boolean onLeft, final String label) {
+		if (onLeft) {
+			leftLabel.setText(label);
+		} else {
+			rightLabel.setText(label);
+		}
 	}
 
 }

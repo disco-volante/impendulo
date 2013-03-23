@@ -11,31 +11,30 @@ import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 public class IntlolaMonitor implements ILaunchListener {
 
 	@Override
-	public void launchAdded(ILaunch launch) {
+	public void launchAdded(final ILaunch launch) {
 	}
 
 	@Override
-	public void launchChanged(ILaunch launch) {
-		Intlola.log(null, "Intlola - project launched: ", launch);
-		ILaunchConfiguration config = launch.getLaunchConfiguration();
+	public void launchChanged(final ILaunch launch) {
+		final ILaunchConfiguration config = launch.getLaunchConfiguration();
 		String projectName = "";
 		try {
-			projectName = config.getAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, "");
-		} catch (CoreException e) {
+			projectName = config.getAttribute(
+					IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, "");
+		} catch (final CoreException e) {
 			Intlola.log(e);
 		}
 		if (projectName != "") {
-			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
-			if (project != null) {
-				if (Intlola.getRecordStatus(project)) {
-					IntlolaVisitor.copyOrTouch(project, Intlola.LAUNCHED);
-				}
+			final IProject project = ResourcesPlugin.getWorkspace().getRoot()
+					.getProject(projectName);
+			if (project != null && Intlola.getRecordStatus(project)) {
+				IntlolaVisitor.copyOrTouch(project, Intlola.LAUNCHED);
 			}
 		}
 	}
 
 	@Override
-	public void launchRemoved(ILaunch launch) {
+	public void launchRemoved(final ILaunch launch) {
 	}
 
 }

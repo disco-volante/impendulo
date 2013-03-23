@@ -8,8 +8,8 @@ import org.eclipse.core.resources.IProject;
 public class IntlolaRecord extends AbstractHandler {
 
 	@Override
-	public Object execute(ExecutionEvent event) throws ExecutionException {
-		IProject project = Intlola.getSelectedProject(event);
+	public Object execute(final ExecutionEvent event) throws ExecutionException {
+		final IProject project = Intlola.getSelectedProject(event);
 		if (!Intlola.getRecordStatus(project)) {
 			Intlola.startRecord(project);
 		}

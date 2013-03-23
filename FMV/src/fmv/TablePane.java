@@ -15,39 +15,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 
 public class TablePane extends JPanel {
 
-	/**
-	 * Apparently we need a version number because we are exending JPanel.
-	 */
-	private static final long serialVersionUID = 5637999515232549263L;
-
-	private ArchiveTableModel tableModel;
-
-	private JTable table;
-
-	public TablePane() {
-		super(new BorderLayout());
-		tableModel = new ArchiveTableModel();
-		table = new JTable(tableModel);
-		table.setAutoCreateRowSorter(true);
-		table.setDefaultRenderer(Double.class, new DoubleRenderer());
-		table.setDefaultRenderer(String.class, new StringRenderer());
-		table.setDefaultRenderer(TimeString.class, new TimeStringRenderer());
-		for (int i = 0; i < tableModel.getColumnCount(); i++) {
-			table.getColumnModel().getColumn(i).setPreferredWidth(
-					(i == 0) ? 100 : 50);
-		}
-		JScrollPane scrollPane = new JScrollPane(table);
-		add(scrollPane, BorderLayout.CENTER);
-	}
-
-	public void addData(String name, ArchiveData data) {
-		tableModel.addData(name, data);
-	}
-
-	public void clear() {
-		tableModel.removeRows();
-	}
-
 	public static class ArchiveData {
 		int nocomp = -1;
 		int eerrs = -1;
@@ -62,7 +29,7 @@ public class TablePane extends JPanel {
 		double aveTime = -1.0;
 		double totTime = -1.0;
 
-		public void readProperties(Archive archive) {
+		public void readProperties(final Archive archive) {
 			nocomp = Integer.parseInt(FMV.getArchiveProperty(archive, "nocomp",
 					"-1"));
 			eerrs = Integer.parseInt(FMV.getArchiveProperty(archive, "eerrs",
@@ -88,7 +55,7 @@ public class TablePane extends JPanel {
 					"totTime", "-1.0"));
 		}
 
-		public void writeProperties(Archive archive) {
+		public void writeProperties(final Archive archive) {
 			FMV.setArchiveProperty(archive, "nocomp", "" + nocomp);
 			FMV.setArchiveProperty(archive, "eerrs", "" + eerrs);
 			FMV.setArchiveProperty(archive, "efail", "" + efail);
@@ -113,75 +80,20 @@ public class TablePane extends JPanel {
 		 */
 		private static final long serialVersionUID = -8324415962017297601L;
 
-		private String[] columnNames = { "Archive", "No compile", "E-errors",
-				"E-failures", "A-errors", "A-failures", "Timeout", "OK",
-				"Total", "Min time", "Max time", "Ave. time", "Tot. time" };
+		private final String[] columnNames = { "Archive", "No compile",
+				"E-errors", "E-failures", "A-errors", "A-failures", "Timeout",
+				"OK", "Total", "Min time", "Max time", "Ave. time", "Tot. time" };
 
-		private Map<Integer, String> keymap = new TreeMap<Integer, String>();
+		private final Map<Integer, String> keymap = new TreeMap<Integer, String>();
 
-		private Map<String, ArchiveData> datamap = new TreeMap<String, ArchiveData>();
+		private final Map<String, ArchiveData> datamap = new TreeMap<String, ArchiveData>();
 
-		public int getColumnCount() {
-			return columnNames.length;
-		}
-
-		public int getRowCount() {
-			return keymap.size();
-		}
-
-		public String getColumnName(int col) {
-			return columnNames[col];
-		}
-
-		public void removeRows() {
-			keymap.clear();
-			datamap.clear();
-		}
-
-		public Object getValueAt(int row, int col) {
-			String key = keymap.get(row);
-			if (key == null) {
-				return null;
-			}
-			ArchiveData d = datamap.get(key);
-			switch (col) {
-			case 0:
-				return key;
-			case 1:
-				return (d.nocomp < 0) ? null : d.nocomp;
-			case 2:
-				return (d.eerrs < 0) ? null : d.eerrs;
-			case 3:
-				return (d.efail < 0) ? null : d.efail;
-			case 4:
-				return (d.aerrs < 0) ? null : d.aerrs;
-			case 5:
-				return (d.afail < 0) ? null : d.afail;
-			case 6:
-				return (d.timeout < 0) ? null : d.timeout;
-			case 7:
-				return (d.ok < 0) ? null : d.ok;
-			case 8:
-				return (d.total < 0) ? null : d.total;
-			case 9:
-				return (d.minTime < 0) ? null : d.minTime;
-			case 10:
-				return (d.maxTime < 0) ? null : d.maxTime;
-			case 11:
-				return (d.aveTime < 0) ? null : d.aveTime;
-			case 12:
-				return new TimeString(d.totTime);
-			default:
-				return null;
-			}
-		}
-
-		public void addData(String name, ArchiveData data) {
+		public void addData(final String name, final ArchiveData data) {
 			if (!keymap.containsValue(name)) {
 				keymap.put(keymap.size(), name);
 				datamap.put(name, new ArchiveData());
 			}
-			ArchiveData d = datamap.get(name);
+			final ArchiveData d = datamap.get(name);
 			d.nocomp = data.nocomp;
 			d.eerrs = data.eerrs;
 			d.efail = data.efail;
@@ -197,53 +109,79 @@ public class TablePane extends JPanel {
 			fireTableRowsInserted(0, keymap.size() - 1);
 		}
 
+		@Override
 		@SuppressWarnings({ "unchecked", "rawtypes" })
-		public Class getColumnClass(int col) {
+		public Class getColumnClass(final int col) {
+			Class ret = null;
+			if (col == 0) {
+				ret = String.class;
+			} else if (col > 0 && col < 9) {
+				ret = Integer.class;
+			} else if (col < 12) {
+				ret = Double.class;
+			} else if (col == 12) {
+				ret = TimeString.class;
+			}
+			return ret;
+		}
+
+		@Override
+		public int getColumnCount() {
+			return columnNames.length;
+		}
+
+		@Override
+		public String getColumnName(final int col) {
+			return columnNames[col];
+		}
+
+		@Override
+		public int getRowCount() {
+			return keymap.size();
+		}
+
+		@Override
+		public Object getValueAt(final int row, final int col) {
+			final String key = keymap.get(row);
+			if (key == null) {
+				return null;
+			}
+			final ArchiveData d = datamap.get(key);
 			switch (col) {
 			case 0:
-				return String.class;
+				return key;
 			case 1:
-				return Integer.class;
+				return d.nocomp < 0 ? null : d.nocomp;
 			case 2:
-				return Integer.class;
+				return d.eerrs < 0 ? null : d.eerrs;
 			case 3:
-				return Integer.class;
+				return d.efail < 0 ? null : d.efail;
 			case 4:
-				return Integer.class;
+				return d.aerrs < 0 ? null : d.aerrs;
 			case 5:
-				return Integer.class;
+				return d.afail < 0 ? null : d.afail;
 			case 6:
-				return Integer.class;
+				return d.timeout < 0 ? null : d.timeout;
 			case 7:
-				return Integer.class;
+				return d.ok < 0 ? null : d.ok;
 			case 8:
-				return Integer.class;
+				return d.total < 0 ? null : d.total;
 			case 9:
-				return Double.class;
+				return d.minTime < 0 ? null : d.minTime;
 			case 10:
-				return Double.class;
+				return d.maxTime < 0 ? null : d.maxTime;
 			case 11:
-				return Double.class;
+				return d.aveTime < 0 ? null : d.aveTime;
 			case 12:
-				return TimeString.class;
+				return new TimeString(d.totTime);
 			default:
 				return null;
 			}
 		}
 
-	}
-
-	private static class TimeString {
-		
-		private double value;
-
-		public TimeString(double value) {
-			this.value = value;
-		}
-
-		public String toString() {
-			long tt = (long) value;
-			return (value < 0) ? null : ("" + (tt / 60) + "m " + (tt % 60) + "s");
+		public void removeRows() {
+			keymap.clear();
+			datamap.clear();
 		}
 
 	}
@@ -259,16 +197,17 @@ public class TablePane extends JPanel {
 		private static final Color LIGHT_GREEN = new Color(0.8157f, 0.9059f,
 				0.6275f);
 
-		private DecimalFormat formatter = new DecimalFormat("0.00");
+		private final DecimalFormat formatter = new DecimalFormat("0.00");
 
 		public DoubleRenderer() {
 			super();
 			setHorizontalAlignment(SwingConstants.RIGHT);
 		}
 
-		public void setValue(Object value) {
-			setText((value == null) ? "" : formatter.format(value));
-			setBackground(LIGHT_GREEN);
+		@Override
+		public void setValue(final Object value) {
+			setText(value == null ? "" : formatter.format(value));
+			setBackground(DoubleRenderer.LIGHT_GREEN);
 		}
 	}
 
@@ -288,10 +227,27 @@ public class TablePane extends JPanel {
 			setHorizontalAlignment(SwingConstants.LEFT);
 		}
 
-		public void setValue(Object value) {
-			setText((value == null) ? "" : (String) value);
-			setBackground(LIGHT_CREAM);
+		@Override
+		public void setValue(final Object value) {
+			setText(value == null ? "" : (String) value);
+			setBackground(StringRenderer.LIGHT_CREAM);
 		}
+	}
+
+	private static class TimeString {
+
+		private final double value;
+
+		public TimeString(final double value) {
+			this.value = value;
+		}
+
+		@Override
+		public String toString() {
+			final long tt = (long) value;
+			return value < 0 ? null : "" + tt / 60 + "m " + tt % 60 + "s";
+		}
+
 	}
 
 	private static class TimeStringRenderer extends DefaultTableCellRenderer {
@@ -310,10 +266,44 @@ public class TablePane extends JPanel {
 			setHorizontalAlignment(SwingConstants.RIGHT);
 		}
 
-		public void setValue(Object value) {
-			setText((value == null) ? "" : ((TimeString) value).toString());
-			setBackground(LIGHT_GREEN);
+		@Override
+		public void setValue(final Object value) {
+			setText(value == null ? "" : ((TimeString) value).toString());
+			setBackground(TimeStringRenderer.LIGHT_GREEN);
 		}
+	}
+
+	/**
+	 * Apparently we need a version number because we are exending JPanel.
+	 */
+	private static final long serialVersionUID = 5637999515232549263L;
+
+	private final ArchiveTableModel tableModel;
+
+	private final JTable table;
+
+	public TablePane() {
+		super(new BorderLayout());
+		tableModel = new ArchiveTableModel();
+		table = new JTable(tableModel);
+		table.setAutoCreateRowSorter(true);
+		table.setDefaultRenderer(Double.class, new DoubleRenderer());
+		table.setDefaultRenderer(String.class, new StringRenderer());
+		table.setDefaultRenderer(TimeString.class, new TimeStringRenderer());
+		for (int i = 0; i < tableModel.getColumnCount(); i++) {
+			table.getColumnModel().getColumn(i)
+					.setPreferredWidth(i == 0 ? 100 : 50);
+		}
+		final JScrollPane scrollPane = new JScrollPane(table);
+		add(scrollPane, BorderLayout.CENTER);
+	}
+
+	public void addData(final String name, final ArchiveData data) {
+		tableModel.addData(name, data);
+	}
+
+	public void clear() {
+		tableModel.removeRows();
 	}
 
 }

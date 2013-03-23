@@ -14,77 +14,10 @@ import fmv.Pair;
 public abstract class BasicTool {
 	protected HashMap<String, String> config = new HashMap<String, String>();
 
-	protected abstract Collection<String> getCommand();
-
-	protected String[] getArgs(String... input) {
-		ArrayList<String> args = new ArrayList<String>();
-		args.addAll(getCommand());
-		for (String cfg : config.values()) {
-			String[] params = cfg.split("!");
-			for (String param : params) {
-				args.add(param.trim());
-			}
-		}
-		for (String in : input) {
-			args.add(in);
-		}
-		return args.toArray(new String[args.size()]);
-	}
-
-	public abstract Pair run(File workDir, String... input);
-
-	protected abstract boolean needCompile();
-
-	public void configure(String configFile) {
-		BufferedReader br = null;
-		config.clear();
-		try {
-			br = new BufferedReader(new FileReader(configFile));
-			String line = br.readLine();
-			while (line != null) {
-				process(line);
-				line = br.readLine();
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			if (br != null) {
-				try {
-					br.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-
-	}
-
-	public void configure(String[] configs) {
-		config.clear();
-		for (String config : configs) {
-			process(config);
-		}
-	}
-
-	protected void process(String line) {
-		String[] pair = line.split(":");
-		if (pair.length == 2) {
-			String key = pair[0].trim();
-			String value = pair[1].trim();
-			if ((value = getConfig(key, value)) != null) {
-				config.put(key, value);
-			}
-		}
-	}
-
-	protected abstract String getConfig(String key, String value);
-
-	protected void compile(File current) {
+	protected void compile(final File current) {
 		if (current.isDirectory()) {
-			File[] files = current.listFiles();
-			for (File file : files) {
+			final File[] files = current.listFiles();
+			for (final File file : files) {
 				if (file.getName().endsWith("class")) {
 					file.delete();
 				} else {
@@ -96,10 +29,77 @@ public abstract class BasicTool {
 		}
 	}
 
-	private void compile(File sourceDir, String java) {
-		Compiler compiler = new Compiler();
+	private void compile(final File sourceDir, final String java) {
+		final Compiler compiler = new Compiler();
 		compiler.configure(new String[] { "cp: " + sourceDir });
 		compiler.run(sourceDir, java);
 	}
+
+	public void configure(final String configFile) {
+		BufferedReader br = null;
+		config.clear();
+		try {
+			br = new BufferedReader(new FileReader(configFile));
+			String line = br.readLine();
+			while (line != null) {
+				process(line);
+				line = br.readLine();
+			}
+		} catch (final FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (final IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+	}
+
+	public void configure(final String[] configs) {
+		config.clear();
+		for (final String config : configs) {
+			process(config);
+		}
+	}
+
+	protected String[] getArgs(final String... input) {
+		final ArrayList<String> args = new ArrayList<String>();
+		args.addAll(getCommand());
+		for (final String cfg : config.values()) {
+			final String[] params = cfg.split("!");
+			for (final String param : params) {
+				args.add(param.trim());
+			}
+		}
+		for (final String in : input) {
+			args.add(in);
+		}
+		return args.toArray(new String[args.size()]);
+	}
+
+	protected abstract Collection<String> getCommand();
+
+	protected abstract String getConfig(String key, String value);
+
+	protected abstract boolean needCompile();
+
+	protected void process(final String line) {
+		final String[] pair = line.split(":");
+		if (pair.length == 2) {
+			final String key = pair[0].trim();
+			String value = pair[1].trim();
+			if ((value = getConfig(key, value)) != null) {
+				config.put(key, value);
+			}
+		}
+	}
+
+	public abstract Pair run(File workDir, String... input);
 
 }

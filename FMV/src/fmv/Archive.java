@@ -44,37 +44,22 @@ public class Archive {
 	/**
 	 * Tree of items contained in the ZIP file.
 	 */
-	private Source rootItem = new Source();
+	private final Source rootItem = new Source();
 
 	/**
 	 * Constructor. Stores the name of the ZIP file.
 	 */
 	@SuppressWarnings("rawtypes")
-	public Archive(String dir, String name) {
+	public Archive(final String dir, final String name) {
 		this.dir = dir;
 		this.name = name;
 		listModel = new DefaultListModel();
 		if ("true".equals(FMV.getArchiveProperty(this, "false"))) {
-			ArchiveData data = new ArchiveData();
+			final ArchiveData data = new ArchiveData();
 			data.readProperties(this);
 			FMV.tablePane.addData(name, data);
 			isCompiled = true;
 		}
-	}
-
-	/**
-	 * Return the file name for display in a list of ZIP files.
-	 */
-	public String toString() {
-		return name;
-	}
-
-	public boolean isCompiled() {
-		return isCompiled;
-	}
-
-	public void setCompiled() {
-		isCompiled = true;
 	}
 
 	/**
@@ -88,9 +73,9 @@ public class Archive {
 	 *            also ends with the time stamp, counter stamp, and a letter to
 	 *            indicate if the item has been added, changed, or removed.
 	 */
-	private void addItem(String name, InputStream in) {
-		String[] components = name.split("_");
-		int last = components.length - 4;
+	private void addItem(final String name, final InputStream in) {
+		final String[] components = name.split("_");
+		final int last = components.length - 4;
 		int first = last;
 		for (int i = 0; i <= last; i++) {
 			if (components[i].equals("src")
@@ -113,9 +98,9 @@ public class Archive {
 		ZipFile z;
 		try {
 			z = new ZipFile(dir + File.separator + name);
-			Enumeration<? extends ZipEntry> zz = z.entries();
+			final Enumeration<? extends ZipEntry> zz = z.entries();
 			while (zz.hasMoreElements()) {
-				ZipEntry e = zz.nextElement();
+				final ZipEntry e = zz.nextElement();
 				if (e.isDirectory()) {
 					continue;
 				}
@@ -125,22 +110,39 @@ public class Archive {
 			listModel.clear();
 			rootItem.addToListModel(listModel, this);
 			isExtracted = true;
-		} catch (IOException e1) {
+		} catch (final IOException e1) {
 			e1.printStackTrace();
 		}
 	}
 
-	public void runTool(String tool) {
-		ToolRunner  runner;
-		if(tool.equals("Tests")){
-			String t = dir + File.separator + "TESTING.zip";
+	@SuppressWarnings("rawtypes")
+	public DefaultListModel getModel(final Directory directory) {
+		if (!isExtracted()) {
+			extract();
+		}
+		return listModel;
+	}
+
+	public boolean isCompiled() {
+		return isCompiled;
+	}
+
+	public boolean isExtracted() {
+		return isExtracted;
+	}
+
+	public void runTool(final String tool) {
+		ToolRunner runner;
+		if (tool.equals("Tests")) {
+			final String t = dir + File.separator + "TESTING.zip";
 			runner = new ToolRunner(rootItem, FMV.toolrunner, "Tests", t);
 		} else {
 			runner = new ToolRunner(rootItem, FMV.toolrunner, tool);
 
 		}
 		runner.addPropertyChangeListener(new PropertyChangeListener() {
-			public void propertyChange(PropertyChangeEvent e) {
+			@Override
+			public void propertyChange(final PropertyChangeEvent e) {
 				if ("progress".equals(e.getPropertyName())) {
 					FMV.toolrunner.setProgress((Integer) e.getNewValue());
 				} else if ("state".equals(e.getPropertyName())
@@ -150,26 +152,25 @@ public class Archive {
 			}
 		});
 		runner.execute();
-		FMV.toolrunner.activate(this, rootItem);		
-	}
-	
-	@SuppressWarnings("rawtypes")
-	public DefaultListModel getModel(Directory directory) {
-		if(!isExtracted()){
-			extract();
-		}
-		return listModel;
+		FMV.toolrunner.activate(this, rootItem);
 	}
 
-	public void setDiff(int j) {
-		Source s = (Source) listModel.getElementAt(j);
+	public void setCompiled() {
+		isCompiled = true;
+	}
+
+	public void setDiff(final int j) {
+		final Source s = (Source) listModel.getElementAt(j);
 		FMV.diffPane.setItem(this, s);
 		FMV.timeGraph.setSource(this, s);
 	}
 
-	public boolean isExtracted() {
-		return isExtracted;
+	/**
+	 * Return the file name for display in a list of ZIP files.
+	 */
+	@Override
+	public String toString() {
+		return name;
 	}
-
 
 }

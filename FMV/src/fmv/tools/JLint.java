@@ -5,13 +5,13 @@ import java.util.Collection;
 
 public class JLint extends ExternalTool {
 
-	private String command = "jlint";
-
-	public static void main(String[] args) {
-		ExternalTool fb = new JLint();
+	public static void main(final String[] args) {
+		final ExternalTool fb = new JLint();
 		fb.configure("config/jlint.config");
 		System.out.println(fb.run(null, "/home/disco/rw334/src"));
 	}
+
+	private final String command = "jlint";
 
 	@Override
 	protected Collection<String> getCommand() {
@@ -19,7 +19,7 @@ public class JLint extends ExternalTool {
 	}
 
 	@Override
-	protected String getConfig(String key, String value) {
+	protected String getConfig(final String key, final String value) {
 		return null;
 	}
 

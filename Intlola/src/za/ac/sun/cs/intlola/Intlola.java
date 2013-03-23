@@ -51,83 +51,13 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private static Intlola plugin;
 
-	private IResourceChangeListener changeListener = null;
-
-	private boolean listenersAdded = false;
-
-	protected static IntlolaSender sender;
-
-	public Intlola() {
-		plugin = this;
-	}
-
-	@Override
-	public void start(BundleContext context) throws Exception {
-		super.start(context);
-		log(null, "Intlola started");
-		if (!listenersAdded) {
-			changeListener = new IntlolaListener();
-			getWorkspace().addResourceChangeListener(changeListener,
-					IResourceChangeEvent.POST_CHANGE);
-			listenersAdded = true;
-		}
-	}
-
-	@Override
-	public void stop(BundleContext context) throws Exception {
-		log(null, "Intlola stopped");
-		plugin = null;
-		super.stop(context);
-	}
-
 	public static Intlola getDefault() {
-		return plugin;
+		return Intlola.plugin;
 	}
 
-	public static IWorkspace getWorkspace() {
-		return org.eclipse.core.resources.ResourcesPlugin.getWorkspace();
-	}
-
-	public static boolean getRecordStatus(IProject project) {
-		try {
-			Boolean record = (Boolean) project.getSessionProperty(RECORD_KEY);
-			return record == RECORD_ON;
-		} catch (CoreException e) {
-			return false;
-		}
-	}
-
-	public static void startRecord(IProject project) {
-		log(null, "Intlola recording ", project.getName());
-		try {
-			removeDir(plugin.getStateLocation().toString(), false);
-			project.setSessionProperty(RECORD_KEY, RECORD_ON);
-			sender = getSender(project.getName());
-		} catch (CoreException e) {
-			log(e);
-		}
-	}
-
-	private static void removeDirRecur(File file, boolean removeRoot) {
-		if (file.isDirectory()) {
-			for (File f : file.listFiles()) {
-				removeDirRecur(f, true);
-			}
-			if (removeRoot) {
-				file.delete();
-			}
-		} else {
-			file.delete();
-		}
-	}
-
-	public static void removeDir(String dirname, boolean removeRoot) {
-		removeDirRecur(new File(dirname), removeRoot);
-	}
-
-	private static String getFilename(Shell shell) {
-		FileDialog dialog = new FileDialog(shell, SWT.SAVE);
-		dialog.setFileName(sender.project + ".zip");
+	private static String getFilename(final Shell shell) {
+		final FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+		dialog.setFileName(Intlola.sender.getProject() + ".zip");
 		String filename = null;
 		boolean isDone = false;
 		while (!isDone) {
@@ -135,7 +65,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			if (filename == null) {
 				isDone = true;
 			} else {
-				File file = new File(filename);
+				final File file = new File(filename);
 				if (file.exists()) {
 					if (file.isFile()) {
 						isDone = MessageDialog
@@ -162,142 +92,198 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		return filename;
 	}
 
-	private static void zipDir(ZipOutputStream outzip, File dirfile) {
-		for (File file : dirfile.listFiles()) {
-			if (file.isDirectory()) {
-				zipDir(outzip, file);
-				continue;
-			}
-			try {
-				byte[] data = new byte[ZIP_BUFFER_SIZE];
-				FileInputStream origin = new FileInputStream(file);
-				outzip.putNextEntry(new ZipEntry(file.getName()));
-				int count;
-				while ((count = origin.read(data, 0, ZIP_BUFFER_SIZE)) != -1) {
-					outzip.write(data, 0, count);
-				}
-				outzip.closeEntry();
-				origin.close();
-			} catch (IOException e) {
-				log(e);
-			}
-		}
+	public static ImageDescriptor getImageDescriptor(final String path) {
+		return AbstractUIPlugin.imageDescriptorFromPlugin(Intlola.PLUGIN_ID,
+				path);
 	}
 
-	public static void stopRecord(IProject project, Shell shell) {
-		log(null, "Intlola record stopping", project.getName());
-		boolean isDone = false;
-		while (!isDone) {
-			String filename = getFilename(shell);
-			if (filename == null) {
-				MessageDialog.openInformation(shell, "Unsaved data",
-						"Intlola data not saved - still recording.");
-				return;
-			} else if (filename.matches(PATTERN)) {
-				String hostname = filename.replaceAll(PATTERN, "$2");
-				int port = Integer.parseInt(filename.replaceAll(PATTERN, "$4"));
-				try {
-					Socket requestSocket = new Socket(hostname, port);
-					BufferedOutputStream out = new BufferedOutputStream(
-							requestSocket.getOutputStream());
-					ZipOutputStream outzip = new ZipOutputStream(out);
-					zipDir(outzip, plugin.getStateLocation().toFile());
-					outzip.close();
-					out.flush();
-					out.close();
-					requestSocket.close();
-					project.setSessionProperty(RECORD_KEY, null);
-					isDone = true;
-				} catch (CoreException e) {
-					log(e);
-				} catch (UnknownHostException e) {
-					MessageDialog.openError(shell, "Problem",
-							"Could not connect to \"" + hostname + ":" + port
-									+ "\".");
-					log(e);
-				} catch (IOException e) {
-					MessageDialog.openError(
-							shell,
-							"Problem",
-							"IO error during zip file transmission ("
-									+ e.getMessage() + ")");
-					log(e);
-				}
-			} else {
-				try {
-					FileOutputStream outfile = new FileOutputStream(filename);
-					BufferedOutputStream out = new BufferedOutputStream(outfile);
-					ZipOutputStream outzip = new ZipOutputStream(out);
-					zipDir(outzip, plugin.getStateLocation().toFile());
-					outzip.close();
-					out.flush();
-					out.close();
-					project.setSessionProperty(RECORD_KEY, null);
-					isDone = true;
-					sender.send(SendMode.ONSTOP, filename);
-				} catch (CoreException e) {
-					log(e);
-				} catch (FileNotFoundException e) {
-					MessageDialog.openError(shell, "Problem",
-							"Could not open file \"" + filename + "\".");
-					log(e);
-				} catch (IOException e) {
-					MessageDialog.openError(
-							shell,
-							"Problem",
-							"IO error during zip file creation ("
-									+ e.getMessage() + ")");
-					log(e);
-				}
-			}
-		}
-	}
-
-	public static IProject getSelectedProject(ExecutionEvent event) {
-		IStructuredSelection selection = (IStructuredSelection) HandlerUtil
+	public static IProject getSelectedProject(final ExecutionEvent event) {
+		final IStructuredSelection selection = (IStructuredSelection) HandlerUtil
 				.getActiveMenuSelection(event);
-		Object element = selection.getFirstElement();
+		final Object element = selection.getFirstElement();
 		IProject ret = null;
 		if (element instanceof IProject) {
 			ret = (IProject) element;
 		}
 		if (element instanceof IAdaptable) {
-			IAdaptable adaptable = (IAdaptable) element;
-			Object adapter = adaptable.getAdapter(IProject.class);
+			final IAdaptable adaptable = (IAdaptable) element;
+			final Object adapter = adaptable.getAdapter(IProject.class);
 			ret = (IProject) adapter;
 		}
 		return ret;
 	}
 
-	public static ImageDescriptor getImageDescriptor(String path) {
-		return imageDescriptorFromPlugin(PLUGIN_ID, path);
-	}
-
-	@Override
-	public void earlyStartup() {
-	}
-
-	private static IntlolaSender getSender(String project) {
-		SendMode mode = SendMode.getMode(getDefault().getPreferenceStore()
-				.getString(PreferenceConstants.P_SEND));
-		String uname = getDefault().getPreferenceStore().getString(
-				PreferenceConstants.P_UNAME);
-		String passwd = getDefault().getPreferenceStore().getString(
-				PreferenceConstants.P_PASSWD);
-		String address = getDefault().getPreferenceStore().getString(
-				PreferenceConstants.P_ADDRESS);
-		int port = getDefault().getPreferenceStore().getInt(
-				PreferenceConstants.P_PORT);
+	private static IntlolaSender getSender(final String project) {
+		final SendMode mode = SendMode.getMode(Intlola.getDefault()
+				.getPreferenceStore().getString(PreferenceConstants.P_SEND));
+		final String uname = Intlola.getDefault().getPreferenceStore()
+				.getString(PreferenceConstants.P_UNAME);
+		final String passwd = Intlola.getDefault().getPreferenceStore()
+				.getString(PreferenceConstants.P_PASSWD);
+		final String address = Intlola.getDefault().getPreferenceStore()
+				.getString(PreferenceConstants.P_ADDRESS);
+		final int port = Intlola.getDefault().getPreferenceStore()
+				.getInt(PreferenceConstants.P_PORT);
 		return new IntlolaSender(uname, passwd, project, mode, address, port);
 	}
 
-	public static void log(Exception e, Object... msgs) {
-		if (getDefault() != null) {
-			getDefault()._log(e, msgs);
+	public static IWorkspace getWorkspace() {
+		return org.eclipse.core.resources.ResourcesPlugin.getWorkspace();
+	}
+
+	public static void log(final Exception e, final Object... msgs) {
+		if (Intlola.getDefault() != null) {
+			Intlola.getDefault()._log(e, msgs);
 		}
 	}
 
-	public void _log(Exception e, Object... msgs) {
+	public static void removeDir(final String dirname, final boolean removeRoot) {
+		Intlola.removeDirRecur(new File(dirname), removeRoot);
+	}
+
+	private IResourceChangeListener changeListener = null;
+
+	private boolean listenersAdded = false;
+
+	protected static IntlolaSender sender;
+
+	public static boolean getRecordStatus(final IProject project) {
+		try {
+			final Boolean record = (Boolean) project
+					.getSessionProperty(Intlola.RECORD_KEY);
+			return record == Intlola.RECORD_ON;
+		} catch (final CoreException e) {
+			Intlola.log(e);
+			return false;
+		}
+	}
+
+	private static void removeDirRecur(final File file, final boolean removeRoot) {
+		if (file.isDirectory()) {
+			for (final File f : file.listFiles()) {
+				Intlola.removeDirRecur(f, true);
+			}
+			if (removeRoot) {
+				file.delete();
+			}
+		} else {
+			file.delete();
+		}
+	}
+
+	public static void startRecord(final IProject project) {
+		try {
+			Intlola.removeDir(Intlola.plugin.getStateLocation().toString(),
+					false);
+			project.setSessionProperty(Intlola.RECORD_KEY, Intlola.RECORD_ON);
+			Intlola.sender = Intlola.getSender(project.getName());
+		} catch (final CoreException e) {
+			Intlola.log(e);
+		}
+	}
+
+	public static void stopRecord(final IProject project, final Shell shell) {
+		Intlola.log(null, "Intlola record stopping", project.getName());
+		boolean isDone = false;
+		while (!isDone) {
+			final String filename = Intlola.getFilename(shell);
+			if (filename == null) {
+				MessageDialog.openInformation(shell, "Unsaved data",
+						"Intlola data not saved - still recording.");
+				return;
+			} else if (filename.matches(Intlola.PATTERN)) {
+				final String hostname = filename.replaceAll(Intlola.PATTERN,
+						"$2");
+				final int port = Integer.parseInt(filename.replaceAll(
+						Intlola.PATTERN, "$4"));
+				try {
+					final Socket requestSocket = new Socket(hostname, port);
+					final BufferedOutputStream out = new BufferedOutputStream(
+							requestSocket.getOutputStream());
+					final ZipOutputStream outzip = new ZipOutputStream(out);
+					Intlola.zipDir(outzip, Intlola.plugin.getStateLocation()
+							.toFile());
+					outzip.close();
+					out.flush();
+					out.close();
+					requestSocket.close();
+					project.setSessionProperty(Intlola.RECORD_KEY, null);
+					isDone = true;
+				} catch (final CoreException e) {
+					Intlola.log(e);
+				} catch (final UnknownHostException e) {
+					MessageDialog.openError(shell, "Problem",
+							"Could not connect to \"" + hostname + ":" + port
+									+ "\".");
+					Intlola.log(e);
+				} catch (final IOException e) {
+					MessageDialog.openError(
+							shell,
+							"Problem",
+							"IO error during zip file transmission ("
+									+ e.getMessage() + ")");
+					Intlola.log(e);
+				}
+			} else {
+				try {
+					final FileOutputStream outfile = new FileOutputStream(
+							filename);
+					final BufferedOutputStream out = new BufferedOutputStream(
+							outfile);
+					final ZipOutputStream outzip = new ZipOutputStream(out);
+					Intlola.zipDir(outzip, Intlola.plugin.getStateLocation()
+							.toFile());
+					outzip.close();
+					out.flush();
+					out.close();
+					project.setSessionProperty(Intlola.RECORD_KEY, null);
+					isDone = true;
+					Intlola.sender.send(SendMode.ONSTOP, filename);
+				} catch (final CoreException e) {
+					Intlola.log(e);
+				} catch (final FileNotFoundException e) {
+					MessageDialog.openError(shell, "Problem",
+							"Could not open file \"" + filename + "\".");
+					Intlola.log(e);
+				} catch (final IOException e) {
+					MessageDialog.openError(
+							shell,
+							"Problem",
+							"IO error during zip file creation ("
+									+ e.getMessage() + ")");
+					Intlola.log(e);
+				}
+			}
+		}
+	}
+
+	private static void zipDir(final ZipOutputStream outzip, final File dirfile) {
+		for (final File file : dirfile.listFiles()) {
+			if (file.isDirectory()) {
+				Intlola.zipDir(outzip, file);
+				continue;
+			}
+			try {
+				final byte[] data = new byte[Intlola.ZIP_BUFFER_SIZE];
+				final FileInputStream origin = new FileInputStream(file);
+				outzip.putNextEntry(new ZipEntry(file.getName()));
+				int count;
+				while ((count = origin.read(data, 0, Intlola.ZIP_BUFFER_SIZE)) != -1) {
+					outzip.write(data, 0, count);
+				}
+				outzip.closeEntry();
+				origin.close();
+			} catch (final IOException e) {
+				Intlola.log(e);
+			}
+		}
+	}
+
+	public Intlola() {
+		Intlola.plugin = this;
+	}
+
+	public void _log(final Exception e, final Object... msgs) {
 		String logMsg = "";
 		for (Object msg : msgs) {
 			if (msg == null) {
@@ -305,6 +291,29 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			}
 			logMsg += " " + msg.toString();
 		}
-		getLog().log(new Status(IStatus.INFO, PLUGIN_ID, IStatus.OK, logMsg, e));
+		getLog().log(
+				new Status(IStatus.INFO, Intlola.PLUGIN_ID, IStatus.OK, logMsg,
+						e));
+	}
+
+	@Override
+	public void earlyStartup() {
+	}
+
+	@Override
+	public void start(final BundleContext context) throws Exception {
+		super.start(context);
+		if (!listenersAdded) {
+			changeListener = new IntlolaListener();
+			Intlola.getWorkspace().addResourceChangeListener(changeListener,
+					IResourceChangeEvent.POST_CHANGE);
+			listenersAdded = true;
+		}
+	}
+
+	@Override
+	public void stop(final BundleContext context) throws Exception {
+		Intlola.plugin = null;
+		super.stop(context);
 	}
 }

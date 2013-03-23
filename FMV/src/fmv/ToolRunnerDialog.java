@@ -1,6 +1,7 @@
 package fmv;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -25,6 +26,21 @@ import fmv.TablePane.ArchiveData;
 
 public class ToolRunnerDialog extends JDialog {
 
+	private static class WindowCloser extends WindowAdapter {
+
+		private ToolRunnerDialog dialog = null;
+
+		public WindowCloser(final ToolRunnerDialog dialog) {
+			this.dialog = dialog;
+		}
+
+		@Override
+		public void windowClosing(final WindowEvent event) {
+			dialog.deactivate(true);
+		}
+
+	}
+
 	/**
 	 * Apparently we need a version number because we are exending JDialog.
 	 */
@@ -33,9 +49,9 @@ public class ToolRunnerDialog extends JDialog {
 	/**
 	 * Progress bar.
 	 */
-	private JProgressBar comptestBar;
+	private final JProgressBar comptestBar;
 
-	private JLabel messageLabel;
+	private final JLabel messageLabel;
 
 	private Source rootItem;
 
@@ -47,22 +63,22 @@ public class ToolRunnerDialog extends JDialog {
 	 * @param parent
 	 *            the parent frame
 	 */
-	public ToolRunnerDialog(JFrame parent) {
+	public ToolRunnerDialog(final JFrame parent) {
 		super(parent, "Compiling and testing", true);
 		addWindowListener(new WindowCloser(this));
-		JPanel comptestPane = new JPanel();
+		final JPanel comptestPane = new JPanel();
 		comptestPane
 				.setLayout(new BoxLayout(comptestPane, BoxLayout.PAGE_AXIS));
 		comptestPane.setBorder(BorderFactory.createEmptyBorder(10, 2, 2, 2));
 
-		JLabel comptestLabel = new JLabel(
+		final JLabel comptestLabel = new JLabel(
 				"Unpacking, compiling, and testing... (may take a while)");
-		comptestLabel.setAlignmentX(LEFT_ALIGNMENT);
+		comptestLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		comptestPane.add(comptestLabel);
 		comptestPane.add(Box.createRigidArea(new Dimension(0, 5)));
 
 		messageLabel = new JLabel("|");
-		messageLabel.setAlignmentX(LEFT_ALIGNMENT);
+		messageLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		comptestPane.add(messageLabel);
 		comptestPane.add(Box.createRigidArea(new Dimension(0, 5)));
 
@@ -70,11 +86,13 @@ public class ToolRunnerDialog extends JDialog {
 		comptestPane.add(comptestBar);
 		comptestPane.add(Box.createRigidArea(new Dimension(0, 5)));
 
-		JPanel comptestButtons = new JPanel(new FlowLayout(FlowLayout.CENTER));
-		JButton cancelButton = new JButton("Cancel");
+		final JPanel comptestButtons = new JPanel(new FlowLayout(
+				FlowLayout.CENTER));
+		final JButton cancelButton = new JButton("Cancel");
 		cancelButton.setActionCommand("cancel");
 		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent event) {
+			@Override
+			public void actionPerformed(final ActionEvent event) {
 				deactivate(true);
 			}
 
@@ -88,7 +106,7 @@ public class ToolRunnerDialog extends JDialog {
 	/**
 	 * Activate the dialog by making it visible.
 	 */
-	public void activate(Archive archive, Source rootItem) {
+	public void activate(final Archive archive, final Source rootItem) {
 		this.archive = archive;
 		this.rootItem = rootItem;
 		comptestBar.setValue(comptestBar.getMinimum());
@@ -100,15 +118,15 @@ public class ToolRunnerDialog extends JDialog {
 	/**
 	 * Deactivate the dialog by making it invisible.
 	 */
-	public void deactivate(boolean isCancel) {
+	public void deactivate(final boolean isCancel) {
 		setVisible(false);
 		dispose();
 		if (!isCancel) {
-			ArchiveData data = new ArchiveData();
+			final ArchiveData data = new ArchiveData();
 			rootItem.extractProperties(archive, data);
-			SortedSet<Date> dates = new TreeSet<Date>(rootItem.getKeys());
+			final SortedSet<Date> dates = new TreeSet<Date>(rootItem.getKeys());
 			Date prev = null, first = null, second = null;
-			for (Date d : dates) {
+			for (final Date d : dates) {
 				if (first == null) {
 					first = d;
 				} else if (second == null) {
@@ -116,7 +134,7 @@ public class ToolRunnerDialog extends JDialog {
 					data.minTime = (second.getTime() - first.getTime()) * 0.001;
 				}
 				if (prev != null) {
-					double t = (d.getTime() - prev.getTime()) * 0.001;
+					final double t = (d.getTime() - prev.getTime()) * 0.001;
 					if (t > data.maxTime) {
 						data.maxTime = t;
 					}
@@ -137,32 +155,18 @@ public class ToolRunnerDialog extends JDialog {
 		}
 	}
 
+	public void setMessage(final String s) {
+		messageLabel.setText(s);
+	}
+
 	/**
 	 * Set the value for the progress bar.
 	 * 
 	 * @param value
 	 *            the value of the progress bar (0..100)
 	 */
-	public void setProgress(int value) {
+	public void setProgress(final int value) {
 		comptestBar.setValue(value);
-	}
-
-	public void setMessage(String s) {
-		messageLabel.setText(s);
-	}
-
-	private static class WindowCloser extends WindowAdapter {
-
-		private ToolRunnerDialog dialog = null;
-
-		public WindowCloser(ToolRunnerDialog dialog) {
-			this.dialog = dialog;
-		}
-
-		public void windowClosing(WindowEvent event) {
-			dialog.deactivate(true);
-		}
-
 	}
 
 }

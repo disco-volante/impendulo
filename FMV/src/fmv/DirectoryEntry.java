@@ -13,18 +13,20 @@ public class DirectoryEntry extends JLabel implements ListCellRenderer {
 
 	private static final long serialVersionUID = 1317074593620304250L;
 
-	private ImageIcon openIcon = new ImageIcon("images/compiled.gif");
+	private final ImageIcon openIcon = new ImageIcon("images/compiled.gif");
 
-	private ImageIcon closedIcon = new ImageIcon("images/uncompiled.gif");
+	private final ImageIcon closedIcon = new ImageIcon("images/uncompiled.gif");
 
 	public DirectoryEntry() {
 		setOpaque(true);
-		setHorizontalAlignment(CENTER);
-		setVerticalAlignment(CENTER);
+		setHorizontalAlignment(SwingConstants.CENTER);
+		setVerticalAlignment(SwingConstants.CENTER);
 	}
 
-	public Component getListCellRendererComponent(JList list, Object value,
-			int index, boolean isSelected, boolean cellHasFocus) {
+	@Override
+	public Component getListCellRendererComponent(final JList list,
+			final Object value, final int index, final boolean isSelected,
+			final boolean cellHasFocus) {
 		if (isSelected) {
 			setBackground(list.getSelectionBackground());
 			setForeground(list.getSelectionForeground());
@@ -35,11 +37,11 @@ public class DirectoryEntry extends JLabel implements ListCellRenderer {
 		setHorizontalAlignment(SwingConstants.LEFT);
 		setFont(list.getFont());
 		if (value instanceof Archive) {
-			Archive a = (Archive) value;
+			final Archive a = (Archive) value;
 			setText(a.toString());
 			setIcon(a.isCompiled() ? openIcon : closedIcon);
-		}else if(value instanceof String){
-			String s = (String) value;
+		} else if (value instanceof String) {
+			final String s = (String) value;
 			setText(s);
 			setIcon(closedIcon);
 		}

@@ -15,102 +15,108 @@ import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
 public class DataRetriever {
-	private MongoClient client;
-	private DB db;
+	private final MongoClient client;
+	private final DB db;
 	private static final String DB_NAME = "impendulo";
 	private static final String PROJECTS = "projects";
 	private static final String USERS = "users";
 
-	public DataRetriever(String url) throws UnknownHostException {
-		client = new MongoClient(url);
-		db = client.getDB(DB_NAME);
-	}
-
-	public static void main(String args[]) {
+	public static void main(final String args[]) {
 		try {
-			DataRetriever ret = new DataRetriever("localhost");
-			List<String> projects = ret.getProjects();
-			for (String p : projects) {
+			final DataRetriever ret = new DataRetriever("localhost");
+			final List<String> projects = ret.getProjects();
+			for (final String p : projects) {
 				System.out.println(p);
 				System.out.println(ret.getProjectDates(p));
 			}
 
-		} catch (UnknownHostException e) {
+		} catch (final UnknownHostException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private List<?> getDistinct(String col, String key) {
-		DBCollection collection = db.getCollection(col);
+	public DataRetriever(final String url) throws UnknownHostException {
+		client = new MongoClient(url);
+		db = client.getDB(DataRetriever.DB_NAME);
+	}
+
+	private List<?> getDistinct(final String col, final String key) {
+		final DBCollection collection = db.getCollection(col);
 		return collection.distinct(key);
 	}
 
-	private DBCursor getMatching(String col, DBObject matching, DBObject ref) {
-		DBCollection collection = db.getCollection(col);
+	private DBCursor getMatching(final String col, final DBObject matching,
+			final DBObject ref) {
+		final DBCollection collection = db.getCollection(col);
 		return collection.find(matching, ref);
 	}
 
-	@SuppressWarnings("unchecked")
-	public List<String> getProjects() {
-		return (List<String>) getDistinct(PROJECTS, "name");
-	}
-
-	@SuppressWarnings("unchecked")
-	public List<String> getUsers() {
-		return (List<String>) getDistinct(USERS, "_id");
-	}
-
-	public List<Date> getProjectDates(String project) {
-		DBObject ref = new BasicDBObject("date", 1).append("_id", 0);
-		DBObject matcher = new BasicDBObject("name", project);
-		DBCursor cursor = getMatching(PROJECTS, matcher, ref);
-		List<Date> ret = new ArrayList<Date>();
-		for (DBObject o : cursor) {
+	public List<Date> getProjectDates(final String project) {
+		final DBObject ref = new BasicDBObject("date", 1).append("_id", 0);
+		final DBObject matcher = new BasicDBObject("name", project);
+		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
+				ref);
+		final List<Date> ret = new ArrayList<Date>();
+		for (final DBObject o : cursor) {
 			ret.add(new Date((Long) o.get("date")));
 		}
 		return ret;
 	}
 
-	public List<String> getProjectUsers(String project) {
-		DBObject ref = new BasicDBObject("user", 1).append("_id", 0);
-		DBObject matcher = new BasicDBObject("name", project);
-		DBCursor cursor = getMatching(PROJECTS, matcher, ref);
-		List<String> ret = new ArrayList<String>();
-		for (DBObject o : cursor) {
-			ret.add((String) o.get("user"));
-		}
-		return ret;
+	@SuppressWarnings("unchecked")
+	public List<String> getProjects() {
+		return (List<String>) getDistinct(DataRetriever.PROJECTS, "name");
 	}
 
-	public List<String> getProjectTokens(String project, String user, Date date) {
-		DBObject ref = new BasicDBObject("token", 1).append("_id", 0);
-		BasicDBObject matcher = new BasicDBObject("name", project);
+	public List<String> getProjectTokens(final String project,
+			final String user, final Date date) {
+		final DBObject ref = new BasicDBObject("token", 1).append("_id", 0);
+		final BasicDBObject matcher = new BasicDBObject("name", project);
 		if (user != null) {
 			matcher.append("user", user);
 		}
 		if (date != null) {
 			matcher.append("date", date.getTime());
 		}
-		DBCursor cursor = getMatching(PROJECTS, matcher, ref);
-		List<String> ret = new ArrayList<String>();
-		for (DBObject o : cursor) {
+		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
+				ref);
+		final List<String> ret = new ArrayList<String>();
+		for (final DBObject o : cursor) {
 			ret.add((String) o.get("token"));
 		}
 		return ret;
 	}
 
-	public List<DBFile> retrieveFiles(String token) {
-		DBObject ref = new BasicDBObject("files", 1).append("_id", 0);
-		DBObject matcher = new BasicDBObject("token", token);
-		DBCursor cursor = getMatching(PROJECTS, matcher, ref);
-		List<DBFile> files = new ArrayList<DBFile>();
-		for (DBObject o : cursor) {
+	public List<String> getProjectUsers(final String project) {
+		final DBObject ref = new BasicDBObject("user", 1).append("_id", 0);
+		final DBObject matcher = new BasicDBObject("name", project);
+		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
+				ref);
+		final List<String> ret = new ArrayList<String>();
+		for (final DBObject o : cursor) {
+			ret.add((String) o.get("user"));
+		}
+		return ret;
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<String> getUsers() {
+		return (List<String>) getDistinct(DataRetriever.USERS, "_id");
+	}
+
+	public List<DBFile> retrieveFiles(final String token) {
+		final DBObject ref = new BasicDBObject("files", 1).append("_id", 0);
+		final DBObject matcher = new BasicDBObject("token", token);
+		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
+				ref);
+		final List<DBFile> files = new ArrayList<DBFile>();
+		for (final DBObject o : cursor) {
 			System.out.println(o);
-			BasicDBList list = (BasicDBList) o.get("files");
-			for (Object file : list) {
-				String name = (String) ((DBObject) file).get("name");
-				Date date = new Date((Long) ((DBObject) file).get("date"));
-				byte[] data = ((byte[]) ((DBObject) file).get("data"));
+			final BasicDBList list = (BasicDBList) o.get("files");
+			for (final Object file : list) {
+				final String name = (String) ((DBObject) file).get("name");
+				final Date date = new Date((Long) ((DBObject) file).get("date"));
+				final byte[] data = (byte[]) ((DBObject) file).get("data");
 				files.add(new DBFile(name, date, data));
 			}
 		}

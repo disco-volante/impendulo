@@ -26,24 +26,21 @@ public class DirectoryPane extends JSplitPane {
 		createGUI();
 	}
 
-	public void setDirectory(Directory dir) {
-		this.directory = dir;
-	}
-
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void createGUI() {
-		Dimension d = new Dimension(150, 400);
+		final Dimension d = new Dimension(150, 400);
 
 		directoryList = new JList();
 		directoryList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		directoryList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e) {
+			@Override
+			public void valueChanged(final ListSelectionEvent e) {
 				if (!e.getValueIsAdjusting()) {
-					int i = directoryList.getSelectedIndex();
+					final int i = directoryList.getSelectedIndex();
 					if (i != -1) {
 						sourceList.setModel(directory.getModel(i));
 						sourceList.setSelectedIndex(0);
-						Archive archive = directory.getArchive(i);
+						final Archive archive = directory.getArchive(i);
 						if (archive.isCompiled()) {
 							directory.setDiff(i, 0);
 						}
@@ -53,7 +50,8 @@ public class DirectoryPane extends JSplitPane {
 		});
 		directoryEntry = new DirectoryEntry();
 		directoryList.setCellRenderer(directoryEntry);
-		JScrollPane directoryListScrollPane = new JScrollPane(directoryList);
+		final JScrollPane directoryListScrollPane = new JScrollPane(
+				directoryList);
 		directoryListScrollPane.setMinimumSize(d);
 		directoryListScrollPane.setPreferredSize(d);
 		setLeftComponent(directoryListScrollPane);
@@ -61,11 +59,12 @@ public class DirectoryPane extends JSplitPane {
 		sourceList = new JList();
 		sourceList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		sourceList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e) {
+			@Override
+			public void valueChanged(final ListSelectionEvent e) {
 				if (!e.getValueIsAdjusting()) {
-					int i = directoryList.getSelectedIndex();
+					final int i = directoryList.getSelectedIndex();
 					if (i != -1) {
-						int j = sourceList.getSelectedIndex();
+						final int j = sourceList.getSelectedIndex();
 						if (j != -1) {
 							directory.setDiff(i, j);
 						}
@@ -73,14 +72,18 @@ public class DirectoryPane extends JSplitPane {
 				}
 			}
 		});
-		JScrollPane sourcceListScrollPane = new JScrollPane(sourceList);
+		final JScrollPane sourcceListScrollPane = new JScrollPane(sourceList);
 		sourcceListScrollPane.setMinimumSize(d);
 		sourcceListScrollPane.setPreferredSize(d);
 		setRightComponent(sourcceListScrollPane);
-		
+
 		setOneTouchExpandable(true);
 		setResizeWeight(0);
 		setDividerLocation(150);
 	}
-	
+
+	public void setDirectory(final Directory dir) {
+		directory = dir;
+	}
+
 }

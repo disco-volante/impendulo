@@ -15,71 +15,69 @@ public class Version {
 
 	private HashMap<String, String> reports;
 
-	
 	private String annotation = "";
 
-	public Version(List<Integer> lineList) {
-		this.setLineList(lineList);
-	}
-
-	public void setStatus(Status status) {
-		this.status = status;
-	}
-
-	public void setStatus(String status) {
-		this.status = Status.parse(status);
-	}
-
-	public Status getStatus() {
-		return status;
-	}
-
-	public void setOutput(String output) {
-		this.output = output;
-	}
-
-	public String getOutput() {
-		return output;
-	}
-
-	public void setReport(String tool, String report) {
-		getReports().put(tool, report);
-	}
-
-	public String getReport(String tool) {
-		return getReports().get(tool);
-	}
-
-
-	public void setAnnotation(String annotation) {
-		this.annotation = annotation;
+	public Version(final List<Integer> lineList) {
+		setLineList(lineList);
 	}
 
 	public String getAnnotation() {
 		return annotation;
 	}
 
-	public void setLineList(List<Integer> lineList) {
-		this.lineList = lineList;
+	public List<DiffAction> getDiff() {
+		return diff;
 	}
 
 	public List<Integer> getLineList() {
 		return lineList;
 	}
 
-	public void setDiff(List<DiffAction> diff) {
-		this.diff = diff;
+	public String getOutput() {
+		return output;
 	}
 
-	public List<DiffAction> getDiff() {
-		return diff;
+	public String getReport(final String tool) {
+		return getReports().get(tool);
 	}
 
 	public HashMap<String, String> getReports() {
-		if(reports == null){
+		if (reports == null) {
 			reports = new HashMap<String, String>();
 		}
 		return reports;
+	}
+
+	public Status getStatus() {
+		return status;
+	}
+
+	public void setAnnotation(final String annotation) {
+		this.annotation = annotation;
+	}
+
+	public void setDiff(final List<DiffAction> diff) {
+		this.diff = diff;
+	}
+
+	public void setLineList(final List<Integer> lineList) {
+		this.lineList = lineList;
+	}
+
+	public void setOutput(final String output) {
+		this.output = output;
+	}
+
+	public void setReport(final String tool, final String report) {
+		getReports().put(tool, report);
+	}
+
+	public void setStatus(final Status status) {
+		this.status = status;
+	}
+
+	public void setStatus(final String status) {
+		this.status = Status.parse(status);
 	}
 
 }

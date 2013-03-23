@@ -7,11 +7,10 @@ import org.eclipse.core.runtime.CoreException;
 public class IntlolaListener implements IResourceChangeListener {
 
 	@Override
-	public void resourceChanged(IResourceChangeEvent event) {
-		Intlola.log(null, "resource changed",event);
+	public void resourceChanged(final IResourceChangeEvent event) {
 		try {
 			event.getDelta().accept(new IntlolaVisitor());
-		} catch (CoreException e) {
+		} catch (final CoreException e) {
 			Intlola.log(e);
 		}
 	}

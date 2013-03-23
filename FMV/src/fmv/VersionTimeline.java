@@ -42,7 +42,7 @@ public class VersionTimeline extends JComponent implements ActionListener,
 	/**
 	 * Borders at the sides of the timeline.
 	 */
-	private static final int BORDER = RADIUS + 3;
+	private static final int BORDER = VersionTimeline.RADIUS + 3;
 
 	/**
 	 * Size of the dashes.
@@ -95,7 +95,7 @@ public class VersionTimeline extends JComponent implements ActionListener,
 	 * @param isFlat
 	 *            whether or not this timeline is flat
 	 */
-	public VersionTimeline(boolean isFlat) {
+	public VersionTimeline(final boolean isFlat) {
 		this.isFlat = isFlat;
 		if (isFlat) {
 			addMouseListener(this);
@@ -104,214 +104,8 @@ public class VersionTimeline extends JComponent implements ActionListener,
 		}
 	}
 
-	public void setSource(Archive archive, Source source) {
-		this.archive = archive;
-		this.source = source;
-		firstTime = source.getVersions().firstKey().getTime();
-		finalTime = source.getVersions().lastKey().getTime();
-		timeSpan = finalTime - firstTime;
-		repaint();
-		if (timeSpan > 0) {
-			setDate(new Date(this.source.getVersions().firstKey().getTime() + 1));
-		}
-	}
-
-	public void paintComponent(Graphics g) {
-		if (source == null) {
-			return;
-		}
-		int h = getHeight();
-		int w = getWidth();
-		g.setColor(Color.white);
-		g.fillRect(0, 0, w, h);
-		g.setColor(Color.black);
-		int firstX = BORDER;
-		int finalX = w - BORDER;
-		int xSpan = finalX - firstX;
-		int midY = h / 2;
-		if (isFlat) {
-			g.drawLine(firstX, midY, finalX, midY);
-			if (timeSpan > 0) {
-				if ((currTime >= firstTime) && (currTime <= finalTime)) {
-					int x = (int) (firstX + xSpan * (currTime - firstTime)
-							/ timeSpan);
-					g.drawLine(x, 0, x, h - 1);
-				}
-				for (Map.Entry<Date, Version> e : source.getVersions()
-						.entrySet()) {
-					int x = (int) (firstX + xSpan
-							* (e.getKey().getTime() - firstTime) / timeSpan);
-					Version v = e.getValue();
-					g.setColor(v.getStatus().getColor());
-					g.fillOval(x - RADIUS, midY - RADIUS, RADIUS * 2,
-							RADIUS * 2);
-					Status s = v.getStatus();
-					if ((s == Status.E_ERRS) || (s == Status.A_ERRS)) {
-						g.setColor(Color.red);
-						g.fillOval(x - SEMIRADIUS, midY - SEMIRADIUS,
-								SEMIRADIUS * 2, SEMIRADIUS * 2);
-					}
-					g.setColor(Color.black);
-					g.drawOval(x - RADIUS, midY - RADIUS, RADIUS * 2,
-							RADIUS * 2);
-				}
-			}
-		} else {
-			if (timeSpan > 0) {
-				g.setFont(graphFont);
-				g.setColor(Color.darkGray);
-				for (Status s : Status.values()) {
-					if (s == Status.UNKNOWN) {
-						continue;
-					}
-					int x = 0 + DASH_SIZE, y = (int) (h * s.getY());
-					while (x < w) {
-						g.drawLine(x - DASH_SIZE, y, x, y);
-						x += DASH_SIZE + DASH_GAP;
-					}
-					if (x - DASH_SIZE < w) {
-						g.drawLine(x - DASH_SIZE, y, finalX, y);
-					}
-					g.drawString(s.getMessage(), 1, y - 1);
-				}
-				FontMetrics fm = g.getFontMetrics();
-				int dh = fm.getAscent();
-				String d = sdf.format(new Date(firstTime));
-				g.drawString(d, firstX, dh + 2);
-				d = sdf.format(new Date(finalTime));
-				int dw = g.getFontMetrics().stringWidth(d);
-				g.drawString(d, finalX - dw - 2, dh + 2);
-				d = sdf.format(new Date((firstTime + finalTime) / 2));
-				dw = g.getFontMetrics().stringWidth(d);
-				g.drawString(d, (finalX + firstX - dw) / 2, dh + 2);
-				g.setColor(Color.black);
-				int px = -1, py = 0;
-				for (Map.Entry<Date, Version> e : source.getVersions()
-						.entrySet()) {
-					int x = (int) (firstX + xSpan
-							* (e.getKey().getTime() - firstTime) / timeSpan);
-					Version v = e.getValue();
-					int y = (int) (h * v.getStatus().getY());
-					if (px != -1) {
-						g.drawLine(px, py, x, y);
-					}
-					px = x;
-					py = y;
-				}
-				for (Map.Entry<Date, Version> e : source.getVersions()
-						.entrySet()) {
-					int x = (int) (firstX + xSpan
-							* (e.getKey().getTime() - firstTime) / timeSpan);
-					Version v = e.getValue();
-					int y = (int) (h * v.getStatus().getY());
-					g.setColor(v.getStatus().getColor());
-					g.fillOval(x - RADIUS, y - RADIUS, RADIUS * 2, RADIUS * 2);
-					Status s = v.getStatus();
-					if ((s == Status.E_ERRS) || (s == Status.A_ERRS)) {
-						g.setColor(Color.red);
-						g.fillOval(x - SEMIRADIUS, y - SEMIRADIUS,
-								SEMIRADIUS * 2, SEMIRADIUS * 2);
-					}
-					g.setColor(Color.black);
-					g.drawOval(x - RADIUS, y - RADIUS, RADIUS * 2, RADIUS * 2);
-				}
-			}
-		}
-	}
-
-	public boolean contains(int x, int y) {
-		int h = getHeight();
-		int w = getWidth();
-		if (isFlat) {
-			return (x >= 0) && (x < w) && (y >= 0) && (y < h);
-		}
-		if ((source != null) && (timeSpan > 0)) {
-			int firstX = BORDER;
-			int finalX = w - BORDER;
-			int xSpan = finalX - firstX;
-			NavigableMap<Date, Version> m = source.getVersions();
-			for (Map.Entry<Date, Version> e = m.lastEntry(); e != null; e = m
-					.lowerEntry(e.getKey())) {
-				int ex = (int) (firstX + xSpan
-						* (e.getKey().getTime() - firstTime) / timeSpan);
-				if (x > ex + RADIUS) {
-					return false;
-				}
-				if (x < ex - RADIUS) {
-					continue;
-				}
-				int ey = (int) (h * e.getValue().getStatus().getY());
-				if (y > ey + RADIUS) {
-					continue;
-				}
-				if (y < ey - RADIUS) {
-					continue;
-				}
-				setToolTipText("<html>" + sdf.format(e.getKey()) + "<br/>"
-						+ e.getValue().getStatus().getMessage() + "<br/>"
-						+ e.getValue().getAnnotation() + "</html>");
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public void setDate(Date date) {
-		leftVersion = source.getVersions().floorEntry(date);
-		rightVersion = source.getVersions().ceilingEntry(date);
-		if ((leftVersion == null) && (rightVersion == null)) {
-			return;
-		} else if (leftVersion == null) {
-			currTime = ((firstTime + rightVersion.getKey().getTime()) / 2);
-			source.showItem(false, rightVersion, null);
-			source.showEmpty(true);
-		} else if (rightVersion == null) {
-			currTime = ((finalTime + leftVersion.getKey().getTime()) / 2);
-			source.showItem(true, leftVersion, null);
-			source.showEmpty(false);
-		} else {
-			currTime = ((leftVersion.getKey().getTime() + rightVersion.getKey()
-					.getTime()) / 2);
-			List<DiffAction> diffs = rightVersion.getValue().getDiff();
-			source.showItem(true, leftVersion, diffs);
-			source.showItem(false, rightVersion, diffs);
-		}
-		repaint();
-		FMV.diffPane.scrollToTop();
-	}
-
-	public void showPrev() {
-		if (leftVersion != null) {
-			setDate(new Date(leftVersion.getKey().getTime() - 1));
-		}
-	}
-
-	public void showNext() {
-		if (rightVersion != null) {
-			setDate(new Date(rightVersion.getKey().getTime() + 1));
-		}
-	}
-
-	public void mouseClicked(MouseEvent e) {
-		if (source != null) {
-			setDate(new Date(((long) (firstTime + timeSpan
-					* (e.getX() - BORDER) / (getWidth() - 2 * BORDER)))));
-		}
-	}
-
-	public void mouseEntered(MouseEvent e) {
-	}
-
-	public void mouseExited(MouseEvent e) {
-	}
-
-	public void mousePressed(MouseEvent e) {
-	}
-
-	public void mouseReleased(MouseEvent e) {
-	}
-
-	public void actionPerformed(ActionEvent e) {
+	@Override
+	public void actionPerformed(final ActionEvent e) {
 		if ("leftshow".equals(e.getActionCommand())) {
 			if (leftVersion != null) {
 				FMV.getDialog().activate(leftVersion.getValue().getOutput());
@@ -329,7 +123,7 @@ public class VersionTimeline extends JComponent implements ActionListener,
 				FMV.annotateDialog.activate(archive, source, rightVersion);
 			}
 		} else if ("tool".equals(e.getActionCommand())) {
-			String tool = FMV.diffPane.getCurrentTool();
+			final String tool = FMV.diffPane.getCurrentTool();
 			String left = "", right = "";
 			if (leftVersion != null) {
 				left = leftVersion.getValue().getReport(tool);
@@ -343,6 +137,239 @@ public class VersionTimeline extends JComponent implements ActionListener,
 					.setContents(SplitDialog.RIGHT,
 							rightVersion.getKey().toString(), right)
 					.activate(tool + " Report");
+		}
+	}
+
+	@Override
+	public boolean contains(final int x, final int y) {
+		final int h = getHeight();
+		final int w = getWidth();
+		if (isFlat) {
+			return x >= 0 && x < w && y >= 0 && y < h;
+		}
+		if (source != null && timeSpan > 0) {
+			final int firstX = VersionTimeline.BORDER;
+			final int finalX = w - VersionTimeline.BORDER;
+			final int xSpan = finalX - firstX;
+			final NavigableMap<Date, Version> m = source.getVersions();
+			for (Map.Entry<Date, Version> e = m.lastEntry(); e != null; e = m
+					.lowerEntry(e.getKey())) {
+				final int ex = (int) (firstX + xSpan
+						* (e.getKey().getTime() - firstTime) / timeSpan);
+				if (x > ex + VersionTimeline.RADIUS) {
+					return false;
+				}
+				if (x < ex - VersionTimeline.RADIUS) {
+					continue;
+				}
+				final int ey = (int) (h * e.getValue().getStatus().getY());
+				if (y > ey + VersionTimeline.RADIUS) {
+					continue;
+				}
+				if (y < ey - VersionTimeline.RADIUS) {
+					continue;
+				}
+				setToolTipText("<html>"
+						+ VersionTimeline.sdf.format(e.getKey()) + "<br/>"
+						+ e.getValue().getStatus().getMessage() + "<br/>"
+						+ e.getValue().getAnnotation() + "</html>");
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public void mouseClicked(final MouseEvent e) {
+		if (source != null) {
+			setDate(new Date(firstTime + timeSpan
+					* (e.getX() - VersionTimeline.BORDER)
+					/ (getWidth() - 2 * VersionTimeline.BORDER)));
+		}
+	}
+
+	@Override
+	public void mouseEntered(final MouseEvent e) {
+	}
+
+	@Override
+	public void mouseExited(final MouseEvent e) {
+	}
+
+	@Override
+	public void mousePressed(final MouseEvent e) {
+	}
+
+	@Override
+	public void mouseReleased(final MouseEvent e) {
+	}
+
+	@Override
+	public void paintComponent(final Graphics g) {
+		if (source == null) {
+			return;
+		}
+		final int h = getHeight();
+		final int w = getWidth();
+		g.setColor(Color.white);
+		g.fillRect(0, 0, w, h);
+		g.setColor(Color.black);
+		final int firstX = VersionTimeline.BORDER;
+		final int finalX = w - VersionTimeline.BORDER;
+		final int xSpan = finalX - firstX;
+		final int midY = h / 2;
+		if (isFlat) {
+			g.drawLine(firstX, midY, finalX, midY);
+			if (timeSpan > 0) {
+				if (currTime >= firstTime && currTime <= finalTime) {
+					final int x = (int) (firstX + xSpan
+							* (currTime - firstTime) / timeSpan);
+					g.drawLine(x, 0, x, h - 1);
+				}
+				for (final Map.Entry<Date, Version> e : source.getVersions()
+						.entrySet()) {
+					final int x = (int) (firstX + xSpan
+							* (e.getKey().getTime() - firstTime) / timeSpan);
+					final Version v = e.getValue();
+					g.setColor(v.getStatus().getColor());
+					g.fillOval(x - VersionTimeline.RADIUS, midY
+							- VersionTimeline.RADIUS,
+							VersionTimeline.RADIUS * 2,
+							VersionTimeline.RADIUS * 2);
+					final Status s = v.getStatus();
+					if (s == Status.E_ERRS || s == Status.A_ERRS) {
+						g.setColor(Color.red);
+						g.fillOval(x - VersionTimeline.SEMIRADIUS, midY
+								- VersionTimeline.SEMIRADIUS,
+								VersionTimeline.SEMIRADIUS * 2,
+								VersionTimeline.SEMIRADIUS * 2);
+					}
+					g.setColor(Color.black);
+					g.drawOval(x - VersionTimeline.RADIUS, midY
+							- VersionTimeline.RADIUS,
+							VersionTimeline.RADIUS * 2,
+							VersionTimeline.RADIUS * 2);
+				}
+			}
+		} else {
+			if (timeSpan > 0) {
+				g.setFont(VersionTimeline.graphFont);
+				g.setColor(Color.darkGray);
+				for (final Status s : Status.values()) {
+					if (s == Status.UNKNOWN) {
+						continue;
+					}
+					int x = 0 + VersionTimeline.DASH_SIZE;
+					final int y = (int) (h * s.getY());
+					while (x < w) {
+						g.drawLine(x - VersionTimeline.DASH_SIZE, y, x, y);
+						x += VersionTimeline.DASH_SIZE
+								+ VersionTimeline.DASH_GAP;
+					}
+					if (x - VersionTimeline.DASH_SIZE < w) {
+						g.drawLine(x - VersionTimeline.DASH_SIZE, y, finalX, y);
+					}
+					g.drawString(s.getMessage(), 1, y - 1);
+				}
+				final FontMetrics fm = g.getFontMetrics();
+				final int dh = fm.getAscent();
+				String d = VersionTimeline.sdf.format(new Date(firstTime));
+				g.drawString(d, firstX, dh + 2);
+				d = VersionTimeline.sdf.format(new Date(finalTime));
+				int dw = g.getFontMetrics().stringWidth(d);
+				g.drawString(d, finalX - dw - 2, dh + 2);
+				d = VersionTimeline.sdf.format(new Date(
+						(firstTime + finalTime) / 2));
+				dw = g.getFontMetrics().stringWidth(d);
+				g.drawString(d, (finalX + firstX - dw) / 2, dh + 2);
+				g.setColor(Color.black);
+				int px = -1, py = 0;
+				for (final Map.Entry<Date, Version> e : source.getVersions()
+						.entrySet()) {
+					final int x = (int) (firstX + xSpan
+							* (e.getKey().getTime() - firstTime) / timeSpan);
+					final Version v = e.getValue();
+					final int y = (int) (h * v.getStatus().getY());
+					if (px != -1) {
+						g.drawLine(px, py, x, y);
+					}
+					px = x;
+					py = y;
+				}
+				for (final Map.Entry<Date, Version> e : source.getVersions()
+						.entrySet()) {
+					final int x = (int) (firstX + xSpan
+							* (e.getKey().getTime() - firstTime) / timeSpan);
+					final Version v = e.getValue();
+					final int y = (int) (h * v.getStatus().getY());
+					g.setColor(v.getStatus().getColor());
+					g.fillOval(x - VersionTimeline.RADIUS, y
+							- VersionTimeline.RADIUS,
+							VersionTimeline.RADIUS * 2,
+							VersionTimeline.RADIUS * 2);
+					final Status s = v.getStatus();
+					if (s == Status.E_ERRS || s == Status.A_ERRS) {
+						g.setColor(Color.red);
+						g.fillOval(x - VersionTimeline.SEMIRADIUS, y
+								- VersionTimeline.SEMIRADIUS,
+								VersionTimeline.SEMIRADIUS * 2,
+								VersionTimeline.SEMIRADIUS * 2);
+					}
+					g.setColor(Color.black);
+					g.drawOval(x - VersionTimeline.RADIUS, y
+							- VersionTimeline.RADIUS,
+							VersionTimeline.RADIUS * 2,
+							VersionTimeline.RADIUS * 2);
+				}
+			}
+		}
+	}
+
+	public void setDate(final Date date) {
+		leftVersion = source.getVersions().floorEntry(date);
+		rightVersion = source.getVersions().ceilingEntry(date);
+		if (leftVersion == null && rightVersion == null) {
+			return;
+		} else if (leftVersion == null) {
+			currTime = (firstTime + rightVersion.getKey().getTime()) / 2;
+			source.showItem(false, rightVersion, null);
+			source.showEmpty(true);
+		} else if (rightVersion == null) {
+			currTime = (finalTime + leftVersion.getKey().getTime()) / 2;
+			source.showItem(true, leftVersion, null);
+			source.showEmpty(false);
+		} else {
+			currTime = (leftVersion.getKey().getTime() + rightVersion.getKey()
+					.getTime()) / 2;
+			final List<DiffAction> diffs = rightVersion.getValue().getDiff();
+			source.showItem(true, leftVersion, diffs);
+			source.showItem(false, rightVersion, diffs);
+		}
+		repaint();
+		FMV.diffPane.scrollToTop();
+	}
+
+	public void setSource(final Archive archive, final Source source) {
+		this.archive = archive;
+		this.source = source;
+		firstTime = source.getVersions().firstKey().getTime();
+		finalTime = source.getVersions().lastKey().getTime();
+		timeSpan = finalTime - firstTime;
+		repaint();
+		if (timeSpan > 0) {
+			setDate(new Date(this.source.getVersions().firstKey().getTime() + 1));
+		}
+	}
+
+	public void showNext() {
+		if (rightVersion != null) {
+			setDate(new Date(rightVersion.getKey().getTime() + 1));
+		}
+	}
+
+	public void showPrev() {
+		if (leftVersion != null) {
+			setDate(new Date(leftVersion.getKey().getTime() - 1));
 		}
 	}
 

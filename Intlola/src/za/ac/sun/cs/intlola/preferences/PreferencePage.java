@@ -13,11 +13,12 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 		IWorkbenchPreferencePage {
 
 	public PreferencePage() {
-		super(GRID);
+		super(FieldEditorPreferencePage.GRID);
 		setPreferenceStore(Intlola.getDefault().getPreferenceStore());
 		setDescription("Intlola configuration");
 	}
 
+	@Override
 	public void createFieldEditors() {
 		addField(new StringFieldEditor(PreferenceConstants.P_UNAME,
 				"Username:", getFieldEditorParent()));
@@ -38,7 +39,8 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 				getFieldEditorParent()));
 	}
 
-	public void init(IWorkbench workbench) {
+	@Override
+	public void init(final IWorkbench workbench) {
 	}
 
 }

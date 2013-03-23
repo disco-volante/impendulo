@@ -35,21 +35,24 @@ public class OutputDialog extends JDialog {
 	 * @param parent
 	 *            the parent frame
 	 */
-	public OutputDialog(JFrame parent) {
+	public OutputDialog(final JFrame parent) {
 		super(parent, "Output", true);
 
-		JPanel opane = new JPanel(new BorderLayout());
+		final JPanel opane = new JPanel(new BorderLayout());
 		opane.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
-		outputText = new JTextArea(20, 140);
-		outputText.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-		outputText.setBorder(BorderFactory.createLineBorder(Color.black));
-		JScrollPane oscroll = new JScrollPane(outputText);
+		OutputDialog.outputText = new JTextArea(20, 140);
+		OutputDialog.outputText.setFont(new Font(Font.MONOSPACED, Font.PLAIN,
+				12));
+		OutputDialog.outputText.setBorder(BorderFactory
+				.createLineBorder(Color.black));
+		final JScrollPane oscroll = new JScrollPane(OutputDialog.outputText);
 		opane.add(oscroll, BorderLayout.CENTER);
-		JPanel obuttons = new JPanel(new FlowLayout(FlowLayout.TRAILING));
-		JButton okButton = new JButton("OK");
+		final JPanel obuttons = new JPanel(new FlowLayout(FlowLayout.TRAILING));
+		final JButton okButton = new JButton("OK");
 		okButton.setActionCommand("ok");
 		okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent event) {
+			@Override
+			public void actionPerformed(final ActionEvent event) {
 				deactivate();
 			}
 
@@ -66,12 +69,12 @@ public class OutputDialog extends JDialog {
 	 * @param text
 	 *            text to insert into dialog
 	 */
-	public void activate(String text) {
-		Document doc = outputText.getDocument();
+	public void activate(final String text) {
+		final Document doc = OutputDialog.outputText.getDocument();
 		try {
 			doc.remove(0, doc.getLength());
 			doc.insertString(0, text, null);
-		} catch (BadLocationException e) {
+		} catch (final BadLocationException e) {
 			e.printStackTrace();
 		}
 		pack();

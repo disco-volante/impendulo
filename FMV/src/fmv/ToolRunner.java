@@ -24,21 +24,22 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat(
 			"HH:mm:ss.SSS");
 
-	private Source root;
+	private final Source root;
 
 	private String tempDir;
 
-	private String sourceDir;
+	private final String sourceDir;
 
-	private String toolName;
+	private final String toolName;
 
-	private ToolRunnerDialog dialog;
+	private final ToolRunnerDialog dialog;
 
-	private String[] tests = new String[] { "EasyTests", "AllTests" };
+	private final String[] tests = new String[] { "EasyTests", "AllTests" };
 
 	private String testZip;
 
-	public ToolRunner(Source root, ToolRunnerDialog dialog, String toolName) {
+	public ToolRunner(final Source root, final ToolRunnerDialog dialog,
+			final String toolName) {
 		this.root = root;
 		this.dialog = dialog;
 		this.toolName = toolName;
@@ -49,55 +50,14 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 		sourceDir = tempDir + "src";
 	}
 
-	public ToolRunner(Source root, ToolRunnerDialog dialog, String toolName,
-			String testZip) {
+	public ToolRunner(final Source root, final ToolRunnerDialog dialog,
+			final String toolName, final String testZip) {
 		this(root, dialog, toolName);
 		removeDirs(new File(sourceDir));
 		this.testZip = testZip;
 	}
 
-	private void removeDirs(File file) {
-		if (file.isDirectory()) {
-			for (File f : file.listFiles()) {
-				removeDirs(f);
-			}
-		} else {
-			file.delete();
-		}
-	}
-
-	@SuppressWarnings("resource")
-	private void prepareTestdir() {
-		if (FMV.prefs.getRemoveSrc()) {
-			System.out.println("deleting dirs");
-			removeDirs(new File(sourceDir));
-		}
-		try {
-			ZipFile z = new ZipFile(testZip);
-			Enumeration<? extends ZipEntry> zz = z.entries();
-			while (zz.hasMoreElements()) {
-				ZipEntry e = zz.nextElement();
-				if (e.isDirectory()) {
-					continue;
-				}
-				String toName = sourceDir + File.separator + e.getName();
-				File toFile = new File(toName);
-				toFile.getParentFile().mkdirs();
-				toFile.createNewFile();
-				InputStream from = z.getInputStream(e);
-				FileOutputStream to = new FileOutputStream(toFile);
-				byte[] buffer = new byte[65536];
-				int bytesRead;
-				while ((bytesRead = from.read(buffer)) != -1) {
-					to.write(buffer, 0, bytesRead);
-				}
-				to.close();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
+	@Override
 	protected Boolean doInBackground() throws Exception {
 		publish("Initializing");
 		boolean ret;
@@ -110,53 +70,109 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 	}
 
 	private boolean executeOther() {
-		Set<Date> dates = root.getKeys();
-		int i = 1, n = dates.size();
-		BasicTool tool = Tools.getTool(toolName);
-		for (Date d : dates) {
+		final Set<Date> dates = root.getKeys();
+		int i = 1;
+		final int n = dates.size();
+		final BasicTool tool = Tools.getTool(toolName);
+		for (final Date d : dates) {
 			if (isCancelled()) {
 				return false;
 			}
-			String df = "(" + i + "/" + n + ") " + dateFormat.format(d);
-			File file = root.unpack(d, sourceDir);
+			final String df = "(" + i + "/" + n + ") "
+					+ ToolRunner.dateFormat.format(d);
+			final File file = root.unpack(d, sourceDir);
 			if (file == null) {
 				return false;
 			}
-			File workDir = new File(tempDir);
+			final File workDir = new File(tempDir);
 			publish(df + ": running " + tool);
-			Pair p = tool.run(workDir, file.getParentFile().getAbsolutePath());
+			final Pair p = tool.run(workDir, file.getParentFile()
+					.getAbsolutePath());
 			root.setReport(d, toolName, p.outPut());
-			setProgress((i++ * 100) / n);
+			setProgress(i++ * 100 / n);
 		}
 		return true;
 	}
 
 	private boolean executeTests() {
 		prepareTestdir();
-		Set<Date> dates = root.getKeys();
-		int i = 1, n = dates.size();
-		Compiler compiler = new Compiler(FMV.prefs.getCompilerCmd());
+		final Set<Date> dates = root.getKeys();
+		int i = 1;
+		final int n = dates.size();
+		final Compiler compiler = new Compiler(FMV.prefs.getCompilerCmd());
 		compiler.configure(new String[] { "cp: " + sourceDir });
-		Interpreter interpreter = new Interpreter(FMV.prefs.getInterpreterCmd());
+		final Interpreter interpreter = new Interpreter(
+				FMV.prefs.getInterpreterCmd());
 		interpreter.configure(new String[] { "cp: " + sourceDir
 				+ " org.junit.runner.JUnitCore" });
-		for (Date d : dates) {
+		for (final Date d : dates) {
 			if (isCancelled()) {
 				return false;
 			}
-			String df = "(" + i + "/" + n + ") " + dateFormat.format(d);
+			final String df = "(" + i + "/" + n + ") "
+					+ ToolRunner.dateFormat.format(d);
 			root.unpack(d, sourceDir);
-			File workDir = new File(sourceDir);
+			final File workDir = new File(sourceDir);
 			runTests(d, df, compiler, interpreter, workDir);
-			setProgress((i++ * 100) / n);
+			setProgress(i++ * 100 / n);
 		}
 		return true;
 	}
 
-	private void runTests(Date date, String df, Compiler compiler,
-			Interpreter interpreter, File workDir) {
+	@SuppressWarnings("resource")
+	private void prepareTestdir() {
+		if (FMV.prefs.getRemoveSrc()) {
+			System.out.println("deleting dirs");
+			removeDirs(new File(sourceDir));
+		}
+		try {
+			final ZipFile z = new ZipFile(testZip);
+			final Enumeration<? extends ZipEntry> zz = z.entries();
+			while (zz.hasMoreElements()) {
+				final ZipEntry e = zz.nextElement();
+				if (e.isDirectory()) {
+					continue;
+				}
+				final String toName = sourceDir + File.separator + e.getName();
+				final File toFile = new File(toName);
+				toFile.getParentFile().mkdirs();
+				toFile.createNewFile();
+				final InputStream from = z.getInputStream(e);
+				final FileOutputStream to = new FileOutputStream(toFile);
+				final byte[] buffer = new byte[65536];
+				int bytesRead;
+				while ((bytesRead = from.read(buffer)) != -1) {
+					to.write(buffer, 0, bytesRead);
+				}
+				to.close();
+			}
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void process(final List<String> messages) {
+		for (final String m : messages) {
+			dialog.setMessage(m);
+		}
+	}
+
+	private void removeDirs(final File file) {
+		if (file.isDirectory()) {
+			for (final File f : file.listFiles()) {
+				removeDirs(f);
+			}
+		} else {
+			file.delete();
+		}
+	}
+
+	private void runTests(final Date date, final String df,
+			final Compiler compiler, final Interpreter interpreter,
+			final File workDir) {
 		Pair p;
-		for (String test : tests) {
+		for (final String test : tests) {
 			publish(df + ": compiling " + test);
 			p = compiler.run(workDir, sourceDir + File.separator + "testing"
 					+ File.separator + test + ".java");
@@ -166,7 +182,7 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 				return;
 			}
 		}
-		for (String test : tests) {
+		for (final String test : tests) {
 			publish(df + ": running " + test);
 			p = interpreter.run(workDir, "testing." + test);
 			if (p.hasError()) {
@@ -181,12 +197,6 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 			}
 			FMV.log(ToolRunner.class.getName(), p.outPut());
 			root.setStatus(date, Status.OK, p.outPut());
-		}
-	}
-
-	public void process(List<String> messages) {
-		for (String m : messages) {
-			dialog.setMessage(m);
 		}
 	}
 

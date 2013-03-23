@@ -1,16 +1,12 @@
 package fmv;
 
 public class Pair {
-	private int exit;
+	private final int exit;
 	private String output;
 
-	public Pair(int ex, String out) {
+	public Pair(final int ex, final String out) {
 		exit = ex;
 		output = out;
-	}
-
-	public String toString() {
-		return output + "\n Exit code : " + exit;
 	}
 
 	public boolean hasError() {
@@ -21,9 +17,14 @@ public class Pair {
 		return output;
 	}
 
-	public void setOutput(String out) {
+	public void setOutput(final String out) {
 		output = out;
 
+	}
+
+	@Override
+	public String toString() {
+		return output + "\n Exit code : " + exit;
 	}
 
 }
