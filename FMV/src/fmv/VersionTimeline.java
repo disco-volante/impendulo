@@ -59,7 +59,7 @@ public class VersionTimeline extends JComponent implements ActionListener,
 	 */
 	private Source source;
 
-	private Archive archive;
+	private ProjectData archive;
 
 	/**
 	 * Whether or not the timeline is flat or has some height.
@@ -349,7 +349,7 @@ public class VersionTimeline extends JComponent implements ActionListener,
 		FMV.diffPane.scrollToTop();
 	}
 
-	public void setSource(final Archive archive, final Source source) {
+	public void setSource(final ProjectData archive, final Source source) {
 		this.archive = archive;
 		this.source = source;
 		firstTime = source.getVersions().firstKey().getTime();

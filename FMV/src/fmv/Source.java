@@ -23,6 +23,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.TextRegion;
 import javax.swing.text.BadLocationException;
 
+import fmv.DiffAction.Operation;
 import fmv.TablePane.ArchiveData;
 import fmv.tools.Tools;
 
@@ -106,9 +107,10 @@ public class Source {
 		versions.put(date, new Version(lineList));
 	}
 
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void addToListModel(final DefaultListModel model,
-			final Archive archive) {
+			final ProjectData archive) {
 		if (parent != null && children.size() == 0) {
 			model.addElement(this);
 			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions
@@ -158,14 +160,21 @@ public class Source {
 			c.canonize();
 		}
 	}
-
+	
 	public List<DiffAction> diff(final List<Integer> x, final List<Integer> y) {
+		final List<DiffAction.Operation> ops = getOperations(x,y);
+		final List<DiffAction> actions = getActions(ops);
+		return finalizeActions(actions);
+	}
+
+
+	private List<Operation> getOperations(final List<Integer> x, final List<Integer> y){
 		final List<DiffAction.Operation> ops = new ArrayList<DiffAction.Operation>();
-		final int M = x.size();
-		final int N = y.size();
-		final int[][] opt = new int[M + 1][N + 1];
-		for (int i = M - 1; i >= 0; i--) {
-			for (int j = N - 1; j >= 0; j--) {
+		final int m = x.size();
+		final int n = y.size();
+		final int[][] opt = new int[m + 1][n + 1];
+		for (int i = m - 1; i >= 0; i--) {
+			for (int j = n- 1; j >= 0; j--) {
 				if (x.get(i).equals(y.get(j))) {
 					opt[i][j] = opt[i + 1][j + 1] + 1;
 				} else {
@@ -174,7 +183,7 @@ public class Source {
 			}
 		}
 		int i = 0, j = 0;
-		while (i < M && j < N) {
+		while (i < m && j < n) {
 			if (x.get(i).equals(y.get(j))) {
 				i++;
 				j++;
@@ -187,6 +196,10 @@ public class Source {
 				ops.add(DiffAction.Operation.ADD);
 			}
 		}
+		return ops;
+	}
+	
+	private List<DiffAction> getActions(List<Operation> ops){
 		final List<DiffAction> acts = new ArrayList<DiffAction>();
 		DiffAction.Operation prev = DiffAction.Operation.NADA;
 		int count = 0;
@@ -204,9 +217,14 @@ public class Source {
 		if (prev != DiffAction.Operation.NADA) {
 			acts.add(new DiffAction(prev, count));
 		}
+		return acts;
+		
+	}
+	
+	private List<DiffAction> finalizeActions(List<DiffAction> actions){
 		final List<DiffAction> finalacts = new ArrayList<DiffAction>();
 		DiffAction prevAct = null;
-		for (final DiffAction a : acts) {
+		for (final DiffAction a : actions) {
 			if (prevAct == null) {
 				prevAct = a;
 			} else if (prevAct.getCount() != a.getCount()) {
@@ -231,7 +249,8 @@ public class Source {
 		return finalacts;
 	}
 
-	public void extractProperties(final Archive archive, final ArchiveData data) {
+	
+	public void extractProperties(final ProjectData archive, final ArchiveData data) {
 		if (parent != null && children.size() == 0) {
 			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions
 					.higherEntry(e.getKey())) {
@@ -420,5 +439,7 @@ public class Source {
 		}
 		return file;
 	}
+
+
 
 }

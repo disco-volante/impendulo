@@ -50,6 +50,39 @@ public class IntlolaSender {
 		return project;
 	}
 
+	public void sendTests(String testFile){
+		final byte[] buffer = new byte[1024];
+		FileInputStream fis = null;
+		try {
+			openConnection();
+			final JsonObject params = new JsonObject();
+			params.addProperty("TYPE", "TESTS");
+			params.addProperty("PROJECT", getProject());
+			snd.write(params.toString().getBytes());
+			rcv.read(buffer);
+			if(new String(buffer).startsWith("ACCEPT")){
+				int count;
+				fis = new FileInputStream(testFile);
+				while ((count = fis.read(buffer)) >= 0) {
+					snd.write(buffer, 0, count);
+				}
+			}
+			snd.flush();
+		} catch (final IOException e) {
+			Intlola.log(e);
+		} finally {
+			try {
+				closeConnection();
+				if(fis != null){
+					fis.close();
+				}
+			} catch (final IOException e) {
+				Intlola.log(e);
+			}
+
+		}
+	}
+	
 	private void login() {
 		final byte[] buffer = new byte[1024];
 		int read = 0;

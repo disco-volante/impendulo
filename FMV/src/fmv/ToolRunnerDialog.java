@@ -55,7 +55,7 @@ public class ToolRunnerDialog extends JDialog {
 
 	private Source rootItem;
 
-	private Archive archive;
+	private ProjectData archive;
 
 	/**
 	 * Construct a dialog for showing the compiler/tester progress.
@@ -106,7 +106,7 @@ public class ToolRunnerDialog extends JDialog {
 	/**
 	 * Activate the dialog by making it visible.
 	 */
-	public void activate(final Archive archive, final Source rootItem) {
+	public void activate(final ProjectData archive, final Source rootItem) {
 		this.archive = archive;
 		this.rootItem = rootItem;
 		comptestBar.setValue(comptestBar.getMinimum());

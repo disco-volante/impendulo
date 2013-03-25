@@ -74,16 +74,17 @@ public class TestClient {
 	}
 
 	public static void main(final String argv[]) {
-		final Map<String, String> users = TestClient.getUsers("users");
-		final ArrayList<String> files = TestClient.getFiles(new File("data"));
-		final ArrayList<Thread> threads = new ArrayList<Thread>();
-		for (final Map.Entry<String, String> e : users.entrySet()) {
-			threads.add(new Thread(new SendThread(e.getKey(), e.getValue(),
-					files)));
-		}
-		for (final Thread th : threads) {
-			th.start();
-		}
+		IntlolaSender sender = new IntlolaSender("", "", "Data", SendMode.ONSAVE,
+				PreferenceConstants.LOCAL_ADDRESS, PreferenceConstants.PORT);
+		sender.sendTests("TESTING.zip");
+		/*
+		 * final Map<String, String> users = TestClient.getUsers("users"); final
+		 * ArrayList<String> files = TestClient.getFiles(new File("data"));
+		 * final ArrayList<Thread> threads = new ArrayList<Thread>(); for (final
+		 * Map.Entry<String, String> e : users.entrySet()) { threads.add(new
+		 * Thread(new SendThread(e.getKey(), e.getValue(), files))); } for
+		 * (final Thread th : threads) { th.start(); }
+		 */
 	}
 
 	public static String randString() {

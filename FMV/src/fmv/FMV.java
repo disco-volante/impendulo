@@ -11,9 +11,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.Date;
-import java.util.List;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,13 +47,13 @@ public class FMV {
 		@SuppressWarnings("unchecked")
 		@Override
 		public void actionPerformed(final ActionEvent e) {
-			if (FMV.directoryPane.isVisible()) {
+			if (FMV.directoryPane.isEnabled()) {
 				final int i = FMV.directoryPane.directoryList
 						.getSelectedIndex();
 				if (i != -1) {
-					final Archive archive = FMV.directory.getArchive(i);
-					if (!archive.isExtracted()) {
-						archive.extract();
+					final ProjectData archive = FMV.directory.getArchive(i);
+					if (!archive.isSetup()) {
+						archive.setup();
 					}
 					if (!archive.isCompiled()) {
 						archive.runTool("Tests");
@@ -65,7 +63,16 @@ public class FMV {
 					FMV.directoryPane.sourceList.setSelectedIndex(0);
 					FMV.directory.setDiff(i, 0);
 				}
-			} else if (FMV.dbPane.isVisible()) {
+			} else if (FMV.dbPane.isEnabled()) {
+				final ProjectData archive = FMV.dbPane.getProjectData();
+				if (archive != null) {
+					if (!archive.isSetup()) {
+						archive.setup();
+					}
+					if (!archive.isCompiled()) {
+						archive.runTool("Tests");
+					}
+				}
 
 			}
 		}
@@ -97,6 +104,7 @@ public class FMV {
 		public void actionPerformed(final ActionEvent event) {
 			if ("file.open".equals(event.getActionCommand())) {
 				FMV.saveProperties();
+				switchContexts(true);
 				if (fc == null) {
 					fc = new JFileChooser();
 					fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -122,8 +130,8 @@ public class FMV {
 					FMV.splitPane.setRightComponent(FMV.tablePane);
 				}
 			} else if ("server.open".equals(event.getActionCommand())) {
-				FMV.saveProperties();
-				FMV.showProjects();
+				saveProperties();
+				switchContexts(false);
 			} else if ("file.prefs".equals(event.getActionCommand())) {
 				FMV.prefs.activate();
 			} else if ("file.quit".equals(event.getActionCommand())) {
@@ -154,18 +162,24 @@ public class FMV {
 
 		@Override
 		public void actionPerformed(final ActionEvent e) {
-			if (FMV.directoryPane.isVisible()) {
+			if (FMV.directoryPane.isEnabled()) {
 				final int i = FMV.directoryPane.directoryList
 						.getSelectedIndex();
 				if (i != -1 && FMV.toolBox.getSelectedIndex() != -1) {
-					final Archive archive = FMV.directory.getArchive(i);
-					if (!archive.isExtracted()) {
-						archive.extract();
+					final ProjectData archive = FMV.directory.getArchive(i);
+					if (!archive.isSetup()) {
+						archive.setup();
 					}
 					archive.runTool((String) FMV.toolBox.getSelectedItem());
 				}
-			} else if (FMV.dbPane.isVisible()) {
-
+			} else if (FMV.dbPane.isEnabled()) {
+				final ProjectData proj = FMV.dbPane.getProjectData();
+				if (proj != null) {
+					if (!proj.isSetup()) {
+						proj.setup();
+					}
+					proj.runTool((String) FMV.toolBox.getSelectedItem());
+				}
 			}
 		}
 	}
@@ -237,6 +251,21 @@ public class FMV {
 		FMV.mainFrame.setVisible(true);
 	}
 
+	public static void switchContexts(boolean dir) {
+		FMV.tablePane.clear();
+		FMV.splitPane.setRightComponent(FMV.tablePane);
+		if (dir) {
+			FMV.directoryPane.setEnabled(true);
+			FMV.dbPane.setEnabled(false);
+			FMV.splitPane.setLeftComponent(directoryPane);
+
+		} else {
+			FMV.directoryPane.setEnabled(false);
+			FMV.dbPane.setEnabled(true);
+			FMV.splitPane.setLeftComponent(dbPane);
+		}
+	}
+
 	private static Container createContentPane() {
 
 		FMV.tablePane = new TablePane();
@@ -247,9 +276,13 @@ public class FMV {
 		FMV.timeGraph.setMinimumSize(new Dimension(650, 400));
 
 		FMV.directoryPane = new DirectoryPane();
+		FMV.dbPane = new DBPane(FMV.retriever);
 
 		FMV.splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
 				FMV.directoryPane, FMV.tablePane);
+
+		switchContexts(true);
+
 		FMV.splitPane.setOneTouchExpandable(true);
 		FMV.splitPane.setResizeWeight(0);
 		FMV.splitPane.setDividerLocation(150);
@@ -325,7 +358,7 @@ public class FMV {
 		return item;
 	}
 
-	public static String getArchiveProperty(final Archive archive,
+	public static String getArchiveProperty(final ProjectData archive,
 			final String defualt) {
 		if (FMV.directory != null) {
 			return FMV.directory.getXArchiveProperty(archive, null, defualt);
@@ -334,7 +367,7 @@ public class FMV {
 		}
 	}
 
-	public static String getArchiveProperty(final Archive archive,
+	public static String getArchiveProperty(final ProjectData archive,
 			final String key, final String defualt) {
 		if (FMV.directory != null) {
 			return FMV.directory.getXArchiveProperty(archive, key, defualt);
@@ -365,7 +398,6 @@ public class FMV {
 	public static Image getMyImage(final String imageName) {
 		final URL imageUrl = Thread.currentThread().getContextClassLoader()
 				.getResource(imageName);
-		System.out.println("URL: " + imageUrl);
 		if (imageUrl == null) {
 			return null;
 		}
@@ -397,7 +429,7 @@ public class FMV {
 		return new SplitDialog(FMV.mainFrame);
 	}
 
-	public static String getVersionProperty(final Archive archive,
+	public static String getVersionProperty(final ProjectData archive,
 			final Source source, final Date date, final String key,
 			final String defualt) {
 		if (FMV.directory != null) {
@@ -417,6 +449,7 @@ public class FMV {
 		FMV.logger.setUseParentHandlers(false);
 		FMV.logger.setLevel(Level.ALL);
 		try {
+			FMV.retriever = new DataRetriever("localhost");
 			FMV.logger.addHandler(new FileHandler("fmv.log"));
 			javax.swing.SwingUtilities.invokeLater(new Runnable() {
 				@Override
@@ -443,14 +476,14 @@ public class FMV {
 		}
 	}
 
-	public static void setArchiveProperty(final Archive archive,
+	public static void setArchiveProperty(final ProjectData archive,
 			final String value) {
 		if (FMV.directory != null) {
 			FMV.directory.setXArchiveProperty(archive, null, value);
 		}
 	}
 
-	public static void setArchiveProperty(final Archive archive,
+	public static void setArchiveProperty(final ProjectData archive,
 			final String key, final String value) {
 		if (FMV.directory != null) {
 			FMV.directory.setXArchiveProperty(archive, key, value);
@@ -463,27 +496,12 @@ public class FMV {
 		}
 	}
 
-	public static void setVersionProperty(final Archive archive,
+	public static void setVersionProperty(final ProjectData archive,
 			final Source source, final Date date, final String key,
 			final String value) {
 		if (FMV.directory != null) {
 			FMV.directory
 					.setXVersionProperty(archive, source, date, key, value);
-		}
-	}
-
-	public static void showProjects() {
-		if (FMV.retriever == null) {
-			try {
-				FMV.retriever = new DataRetriever(FMV.prefs.getDBHost());
-			} catch (final UnknownHostException e) {
-				e.printStackTrace();
-			}
-		}
-		final DefaultListModel<String> model = new DefaultListModel<String>();
-		final List<String> found = FMV.retriever.getProjects();
-		for (final String f : found) {
-			model.addElement(f);
 		}
 	}
 

@@ -2,11 +2,13 @@ package fmv;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -14,16 +16,19 @@ import javax.swing.DefaultListModel;
 import javax.swing.SwingWorker;
 
 import fmv.TablePane.ArchiveData;
+import fmv.db.DBFile;
 
-public class Archive {
+public class ProjectData {
 
 	/**
 	 * Flag to tell if this archive has been viewed and therefore extracted
 	 * before.
 	 */
-	private boolean isExtracted = false;
+	private boolean isSetup = false;
 
 	private boolean isCompiled = false;
+
+	private boolean isArchive;
 
 	/**
 	 * The model for the list of ZIP files. (Think MVC.)
@@ -46,20 +51,37 @@ public class Archive {
 	 */
 	private final Source rootItem = new Source();
 
+	private List<DBFile> files;
+
+	private String tests;
+
 	/**
 	 * Constructor. Stores the name of the ZIP file.
 	 */
 	@SuppressWarnings("rawtypes")
-	public Archive(final String dir, final String name) {
+	public ProjectData(final String dir, final String name) {
 		this.dir = dir;
 		this.name = name;
+		tests = dir + File.separator + "TESTING.zip";
 		listModel = new DefaultListModel();
+		isArchive = true;
 		if ("true".equals(FMV.getArchiveProperty(this, "false"))) {
 			final ArchiveData data = new ArchiveData();
 			data.readProperties(this);
 			FMV.tablePane.addData(name, data);
 			isCompiled = true;
 		}
+	}
+	
+	/**
+	 * Constructor. Stores the name of the ZIP file.
+	 */
+	@SuppressWarnings("rawtypes")
+	public ProjectData(final String name, List<DBFile> files) {
+		this.files = files;
+		this.name = name;
+		listModel = new DefaultListModel();
+		isArchive = false;
 	}
 
 	/**
@@ -94,31 +116,37 @@ public class Archive {
 		r.addDetails(new Date(Long.parseLong(components[last + 1])), in);
 	}
 
-	public void extract() {
-		ZipFile z;
-		try {
-			z = new ZipFile(dir + File.separator + name);
-			final Enumeration<? extends ZipEntry> zz = z.entries();
-			while (zz.hasMoreElements()) {
-				final ZipEntry e = zz.nextElement();
-				if (e.isDirectory()) {
-					continue;
+	public void setup() {
+		if (isArchive) {
+			ZipFile z;
+			try {
+				z = new ZipFile(dir + File.separator + name);
+				final Enumeration<? extends ZipEntry> zz = z.entries();
+				while (zz.hasMoreElements()) {
+					final ZipEntry e = zz.nextElement();
+					if (e.isDirectory()) {
+						continue;
+					}
+					addItem(e.getName(), z.getInputStream(e));
 				}
-				addItem(e.getName(), z.getInputStream(e));
+			} catch (IOException e1) {
+				e1.printStackTrace();
 			}
-			rootItem.canonize();
-			listModel.clear();
-			rootItem.addToListModel(listModel, this);
-			isExtracted = true;
-		} catch (final IOException e1) {
-			e1.printStackTrace();
+		} else {
+			for (DBFile file : files) {
+				addItem(file.name, new ByteArrayInputStream(file.data));
+			}
 		}
+		rootItem.canonize();
+		listModel.clear();
+		rootItem.addToListModel(listModel, this);
+		isSetup = true;
 	}
 
 	@SuppressWarnings("rawtypes")
 	public DefaultListModel getModel(final Directory directory) {
-		if (!isExtracted()) {
-			extract();
+		if (!isSetup()) {
+			setup();
 		}
 		return listModel;
 	}
@@ -127,15 +155,14 @@ public class Archive {
 		return isCompiled;
 	}
 
-	public boolean isExtracted() {
-		return isExtracted;
+	public boolean isSetup() {
+		return isSetup;
 	}
 
 	public void runTool(final String tool) {
 		ToolRunner runner;
 		if (tool.equals("Tests")) {
-			final String t = dir + File.separator + "TESTING.zip";
-			runner = new ToolRunner(rootItem, FMV.toolrunner, "Tests", t);
+			runner = new ToolRunner(rootItem, FMV.toolrunner, "Tests", tests);
 		} else {
 			runner = new ToolRunner(rootItem, FMV.toolrunner, tool);
 

@@ -2,87 +2,146 @@ package fmv;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.UnknownHostException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.ListModel;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
+import fmv.db.DBFile;
 import fmv.db.DataRetriever;
+import fmv.db.Project;
 
 public class DBPane extends JPanel {
 
+	public enum Level {
+		PROJECTS, CHOICES, USERS, DATES, U_TOKENS, D_TOKENS;
+	}
+
 	class ProjectListModel extends DefaultListModel<String> {
+
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = -7407750081315305369L;
-		public String name;
-		public Date[] dates;
-		public String[] users;
-		public String[] top = new String[] { "users", "dates" };
-		private Object[] current;
+		public HashMap<String, Project> projects;
+		private Level level;
+		public String[] choices = new String[] { "Dates", "Users" };
+		private String project, user, token;
+		private long date;
+		private DateFormat df = new SimpleDateFormat("HH:mm:ss, d MMM yyyy");
 
-		public ProjectListModel(final String name) {
-			this.name = name;
+		public ProjectListModel(final List<String> projList) {
+			projects = new HashMap<String, Project>();
+			for (String p : projList) {
+				projects.put(p, new Project(p));
+				addElement(p);
+			}
+			level = Level.PROJECTS;
 		}
 
-		public void addAll(final Object[] obs) {
+		public void addAll(final String[] obs) {
 			clear();
 			for (final Object o : obs) {
 				addElement(o.toString());
 			}
-			current = obs;
 		}
 
-		public ListModel<String> drillDown(final String s, final int index) {
-			DefaultListModel<String> ret = null;
-			if (s != null && current.equals(top)) {
-				if (s.equals("users")) {
-					addAll(users);
-				} else if (s.equals("dates")) {
-					addAll(dates);
-				}
-			} else {
-				String user = null;
-				Date date = null;
-				if (current.equals(users)) {
-					user = s;
-				} else if (current.equals(dates)) {
-					date = dates[index];
-				}
-				final List<String> temp = retriever.getProjectTokens(name,
-						user, date);
-				ret = new DefaultListModel<String>();
-				for (final String val : temp) {
-					ret.addElement(val);
-				}
+		private void addDates(Long[] dates) {
+			clear();
+			for (final Long d : dates) {
+				addElement(df.format(new Date(d)));
 			}
-			return ret;
 		}
 
-		public void Load() {
-			if (users == null) {
-				final List<String> temp = retriever.getProjectUsers(name);
-				users = temp.toArray(new String[temp.size()]);
+		public void drillDown(final String s, final int index) {
+			if (level.equals(Level.PROJECTS)) {
+				addAll(choices);
+				level = Level.CHOICES;
+				project = s;
+				load(projects.get(project));
+				label.setText("Choices");
+			} else if (level.equals(Level.CHOICES)) {
+				if (s.equals("Users")) {
+					addAll(projects.get(project).users);
+					level = Level.USERS;
+					label.setText("Users");
+				} else if (s.equals("Dates")) {
+					addDates(projects.get(project).dates);
+					level = Level.DATES;
+					label.setText("Dates");
+				}
+			} else if (level.equals(Level.USERS)) {
+				user = s;
+				addAll(projects.get(project).getTokens(user));
+				level = Level.U_TOKENS;
+				label.setText("Tokens for: " + user);
+			} else if (level.equals(Level.DATES)) {
+				date = projects.get(project).dates[index];
+				addAll(projects.get(project).getTokens(date));
+				level = Level.D_TOKENS;
+				label.setText("Tokens from: " + df.format(new Date(date)));
+			} else if (level.equals(Level.D_TOKENS)
+					|| level.equals(Level.U_TOKENS)) {
+				token = s;
+				if (projects.get(project).tokenData.isEmpty()) {
+					List<DBFile> files = retriever.retrieveFiles(s);
+					projects.get(project).tokenData.put(s, new ProjectData(s,
+							files));
+				}
 			}
-			if (dates == null) {
-				final List<Date> temp = retriever.getProjectDates(name);
-				dates = retriever.getProjectDates(name).toArray(
-						new Date[temp.size()]);
-			}
-			addAll(top);
 		}
+
+		public void moveUp() {
+			if (level.equals(Level.CHOICES)) {
+				addAll(projects.keySet().toArray(new String[projects.size()]));
+				level = Level.PROJECTS;
+				load(projects.get(project));
+				label.setText("Projects");
+			} else if (level.equals(Level.USERS) || level.equals(Level.DATES)) {
+				addAll(choices);
+				level = Level.CHOICES;
+				label.setText("Choices");
+			} else if (level.equals(Level.U_TOKENS)) {
+				addAll(projects.get(project).users);
+				level = Level.USERS;
+				label.setText("Users");
+			} else if (level.equals(Level.D_TOKENS)) {
+				addDates(projects.get(project).dates);
+				level = Level.DATES;
+				label.setText("Dates");
+			}
+		}
+
+		public void load(Project proj) {
+			if (!proj.loaded) {
+				final List<String> temp0 = retriever.getProjectUsers(proj.name);
+				proj.users = temp0.toArray(new String[temp0.size()]);
+				final List<Long> temp1 = retriever.getProjectDates(proj.name);
+				proj.dates = temp1.toArray(new Long[temp1.size()]);
+				proj.tokens.putAll(retriever.getTokens(project, "date"));
+				proj.tokens.putAll(retriever.getTokens(project, "user"));
+				proj.loaded = true;
+			}
+		}
+
+		public ProjectData getProjectData() {
+			return projects.get(project).tokenData.get(token);
+		}
+		
 	}
 
 	/**
@@ -94,108 +153,70 @@ public class DBPane extends JPanel {
 		try {
 			final DataRetriever ret = new DataRetriever("localhost");
 			final JFrame parent = new JFrame();
-			parent.setSize(new Dimension(500, 300));
+			parent.setSize(new Dimension(300, 400));
 			final DBPane pane = new DBPane(ret);
 			parent.add(pane);
 			parent.setVisible(true);
 		} catch (final UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-	private JList<String> projList, tokenList, subList;
-
-	private HashMap<String, ProjectListModel> projects;
+	private JList<String> itemList;
 
 	private final DataRetriever retriever;
+
+	private JLabel label;
+
+	protected List<DBFile> projectData;
 
 	public DBPane(final DataRetriever retriever) {
 		super();
 		this.retriever = retriever;
 		createGUI();
-		addProjects(retriever.getProjects());
+		itemList.setModel(new ProjectListModel(retriever.getProjects()));
 
-	}
-
-	public void addProjects(final List<String> proj) {
-		projects = new HashMap<String, ProjectListModel>();
-		final DefaultListModel<String> model = new DefaultListModel<String>();
-		for (final String p : proj) {
-			model.addElement(p);
-			projects.put(p, new ProjectListModel(p));
-		}
-		projList.setModel(model);
 	}
 
 	private void createGUI() {
-		final Dimension d = new Dimension(150, 400);
-		projList = new JList<String>();
-		projList.addListSelectionListener(new ListSelectionListener() {
+		final Dimension d = new Dimension(250, 500);
+		itemList = new JList<String>();
+		itemList.addMouseListener(new MouseAdapter() {
 			@Override
-			public void valueChanged(final ListSelectionEvent e) {
-				if (!e.getValueIsAdjusting()) {
-					final String p = projList.getSelectedValue();
-					if (p != null) {
-						final ProjectListModel val = projects.get(p);
-						val.Load();
-						subList.setModel(val);
-						subList.setSelectedIndex(0);
+			public void mouseClicked(final MouseEvent evt) {
+				if (evt.getClickCount() == 2) {
+					final String s = itemList.getSelectedValue();
+					final int i = itemList.getSelectedIndex();
+					if (s != null && i != -1) {
+						((ProjectListModel) itemList.getModel())
+								.drillDown(s, i);
 					}
 				}
 			}
 		});
-		projList.addMouseListener(new MouseAdapter() {
+		final JScrollPane itemScrollPane = new JScrollPane(itemList);
+		itemScrollPane.setMinimumSize(d);
+		itemScrollPane.setPreferredSize(d);
+
+		label = new JLabel("Projects");
+		label.setLabelFor(itemList);
+
+		JButton upBtn = new JButton(FMV.getMyImageIcon("upfolder.gif"));
+		upBtn.addActionListener(new ActionListener() {
+
 			@Override
-			public void mouseClicked(final MouseEvent evt) {
-				final String p = projList.getSelectedValue();
-				if (p != null) {
-					final ProjectListModel val = projects.get(p);
-					val.Load();
-					subList.setModel(val);
-					subList.setSelectedIndex(0);
-				}
+			public void actionPerformed(ActionEvent arg0) {
+				((ProjectListModel) itemList.getModel()).moveUp();
 			}
 		});
-		final JScrollPane projScrollPane = new JScrollPane(projList);
-		projScrollPane.setMinimumSize(d);
-		projScrollPane.setPreferredSize(d);
-		subList = new JList<String>();
-		subList.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(final MouseEvent evt) {
-				if (evt.getClickCount() == 2) {
-					final String s = subList.getSelectedValue();
-					if (s != null) {
-						final ListModel<String> tokens = ((ProjectListModel) subList
-								.getModel()).drillDown(s,
-								subList.getSelectedIndex());
-						System.out.println(s);
-						if (tokens != null) {
-							tokenList.setModel(tokens);
-						}
-					}
-				}
-			}
-		});
-		final JScrollPane subScrollPane = new JScrollPane(subList);
-		subScrollPane.setMinimumSize(d);
-		subScrollPane.setPreferredSize(d);
-		tokenList = new JList<String>();
-		tokenList.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(final MouseEvent evt) {
-				if (evt.getClickCount() == 2) {
-					retriever.retrieveFiles(tokenList.getSelectedValue());
-				}
-			}
-		});
-		final JScrollPane tokenScrollPane = new JScrollPane(tokenList);
-		tokenScrollPane.setMinimumSize(d);
-		tokenScrollPane.setPreferredSize(d);
-		add(projScrollPane, BorderLayout.WEST);
-		add(subScrollPane, BorderLayout.CENTER);
-		add(tokenScrollPane, BorderLayout.EAST);
+
+		add(label, BorderLayout.NORTH);
+		add(upBtn, BorderLayout.NORTH);
+		add(itemScrollPane, BorderLayout.CENTER);
+	}
+
+	public ProjectData getProjectData() {
+		return ((ProjectListModel) itemList.getModel()).getProjectData();
 	}
 
 }

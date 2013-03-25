@@ -64,12 +64,12 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 		if (toolName.equals("Tests")) {
 			ret = executeTests();
 		} else {
-			ret = executeOther();
+			ret = executeTool();
 		}
 		return ret;
 	}
 
-	private boolean executeOther() {
+	private boolean executeTool() {
 		final Set<Date> dates = root.getKeys();
 		int i = 1;
 		final int n = dates.size();
@@ -122,7 +122,6 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 	@SuppressWarnings("resource")
 	private void prepareTestdir() {
 		if (FMV.prefs.getRemoveSrc()) {
-			System.out.println("deleting dirs");
 			removeDirs(new File(sourceDir));
 		}
 		try {

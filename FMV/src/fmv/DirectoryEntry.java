@@ -36,8 +36,8 @@ public class DirectoryEntry extends JLabel implements ListCellRenderer {
 		}
 		setHorizontalAlignment(SwingConstants.LEFT);
 		setFont(list.getFont());
-		if (value instanceof Archive) {
-			final Archive a = (Archive) value;
+		if (value instanceof ProjectData) {
+			final ProjectData a = (ProjectData) value;
 			setText(a.toString());
 			setIcon(a.isCompiled() ? openIcon : closedIcon);
 		} else if (value instanceof String) {

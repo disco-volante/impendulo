@@ -40,7 +40,7 @@ public class DirectoryPane extends JSplitPane {
 					if (i != -1) {
 						sourceList.setModel(directory.getModel(i));
 						sourceList.setSelectedIndex(0);
-						final Archive archive = directory.getArchive(i);
+						final ProjectData archive = directory.getArchive(i);
 						if (archive.isCompiled()) {
 							directory.setDiff(i, 0);
 						}
