@@ -153,7 +153,7 @@ public class DataRetriever {
 		final BasicDBList list = (BasicDBList) o.get("files");
 		for (final Object file : list) {
 			final String name = (String) ((DBObject) file).get("name");
-			final long date = ((Long) ((DBObject) file).get("date"));
+			final long date = (Long) ((DBObject) file).get("date");
 			final byte[] data = (byte[]) ((DBObject) file).get("data");
 			files.add(new DBFile(name, date, data));
 		}

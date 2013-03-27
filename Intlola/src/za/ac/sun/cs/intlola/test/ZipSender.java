@@ -83,12 +83,12 @@ public class ZipSender {
 		return gen;
 	}
 
-	private static void sendZip(String zip) {
+	private static void sendZip(final String zip) {
 		final Map<String, String> users = ZipSender.getUsers("users");
 		final ArrayList<Thread> threads = new ArrayList<Thread>();
 		for (final Map.Entry<String, String> e : users.entrySet()) {
-			threads.add(new Thread(new SendThread(e.getKey(), e.getValue(),
-					zip)));
+			threads.add(new Thread(
+					new SendThread(e.getKey(), e.getValue(), zip)));
 		}
 		for (final Thread th : threads) {
 			th.start();

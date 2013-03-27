@@ -81,13 +81,13 @@ public class Archive {
 	 */
 	@SuppressWarnings("rawtypes")
 	public Archive(final String project, final String name,
-			final List<DBFile> files, boolean archive) {
+			final List<DBFile> files, final boolean archive) {
 		this.files = files;
 		listModel = new DefaultListModel();
 		isArchive = archive;
 		if (isArchive) {
 			this.name = writeZip(files.get(0));
-		} else{
+		} else {
 			this.name = name;
 		}
 		if ("true".equals(FMV.getArchiveProperty(this, "false"))) {
@@ -98,28 +98,6 @@ public class Archive {
 		} else {
 			tests = FMV.getTests(project);
 		}
-	}
-
-	private String writeZip(DBFile dbFile) {
-		String outfile = FMV.ZIP_DIR + File.separator + dbFile.getName();
-		FileOutputStream fos = null;
-		try {
-			fos = new FileOutputStream(new File(outfile));
-			fos.write(dbFile.getBytes());
-		} catch (final FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (final IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (fos != null) {
-					fos.close();
-				}
-			} catch (final IOException e) {
-				e.printStackTrace();
-			}
-		}
-		return outfile;
 	}
 
 	/**
@@ -237,6 +215,28 @@ public class Archive {
 	@Override
 	public String toString() {
 		return name;
+	}
+
+	private String writeZip(final DBFile dbFile) {
+		final String outfile = FMV.ZIP_DIR + File.separator + dbFile.getName();
+		FileOutputStream fos = null;
+		try {
+			fos = new FileOutputStream(new File(outfile));
+			fos.write(dbFile.getBytes());
+		} catch (final FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (fos != null) {
+					fos.close();
+				}
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return outfile;
 	}
 
 }

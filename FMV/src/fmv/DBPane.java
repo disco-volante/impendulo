@@ -37,8 +37,8 @@ public class DBPane extends JPanel {
 		 * 
 		 */
 		private static final long serialVersionUID = -7407750081315305369L;
-		private HashMap<String, Project> projects;
-		private HashMap<Submission, Archive> submissionData;
+		private final HashMap<String, Project> projects;
+		private final HashMap<Submission, Archive> submissionData;
 		private Level level;
 		private Project project;
 		private String user;
@@ -77,8 +77,8 @@ public class DBPane extends JPanel {
 				sub = project.getSubmission(user, index);
 				if (submissionData.get(sub) == null) {
 					final List<DBFile> files = retriever.retrieveFiles(sub);
-					boolean archive = sub.getFormat().equals("UNCOMPRESSED") ? false
-							: true;
+					final boolean archive = sub.getFormat().equals(
+							"UNCOMPRESSED") ? false : true;
 					submissionData.put(sub,
 							new Archive(project.getName(), sub.toString(),
 									files, archive));

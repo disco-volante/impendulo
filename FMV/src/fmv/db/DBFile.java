@@ -17,23 +17,23 @@ public class DBFile implements Comparable<DBFile> {
 	@Override
 	public int compareTo(final DBFile o) {
 		int ret = 0;
-		if (o == null || date< o.date) {
+		if (o == null || date < o.date) {
 			ret = -1;
 		} else if (date > o.date) {
 			ret = 1;
 		}
 		return ret;
 	}
-	
-	public String getName(){
-		return name;
+
+	public byte[] getBytes() {
+		return data;
 	}
-	
-	public Date getDate(){
+
+	public Date getDate() {
 		return new Date(date);
 	}
-	
-	public byte[] getBytes(){
-		return data;
+
+	public String getName() {
+		return name;
 	}
 }

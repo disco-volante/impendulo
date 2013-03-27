@@ -427,7 +427,7 @@ public class FMV {
 	public static String getTests(final String name) {
 		String outfile;
 		if ((outfile = FMV.testZips.get(name)) == null) {
-			outfile = TEST_DIR+File.separator+name + "_TESTING.zip";
+			outfile = FMV.TEST_DIR + File.separator + name + "_TESTING.zip";
 			final byte[] files = FMV.retriever.getTests(name);
 			FileOutputStream fos = null;
 			try {
@@ -468,7 +468,7 @@ public class FMV {
 
 	public static void main(final String[] args) {
 		try {
-			setup();
+			FMV.setup();
 			javax.swing.SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
@@ -481,17 +481,6 @@ public class FMV {
 			e.printStackTrace();
 		}
 
-	}
-
-	private static void setup() throws SecurityException, IOException {
-		FMV.logger = Logger.getLogger(FMV.class.getName());
-		FMV.logger.setUseParentHandlers(false);
-		FMV.logger.setLevel(Level.ALL);
-		FMV.retriever = new DataRetriever("localhost");
-		FMV.testZips = new HashMap<String, String>();
-		FMV.logger.addHandler(new FileHandler("fmv.log"));
-		File dir = new File(TEST_DIR);
-		dir.mkdirs();
 	}
 
 	public static void saveProperties() {
@@ -519,6 +508,17 @@ public class FMV {
 		if (FMV.directory != null) {
 			FMV.directory.setXDirectoryProperty(key, value);
 		}
+	}
+
+	private static void setup() throws SecurityException, IOException {
+		FMV.logger = Logger.getLogger(FMV.class.getName());
+		FMV.logger.setUseParentHandlers(false);
+		FMV.logger.setLevel(Level.ALL);
+		FMV.retriever = new DataRetriever("localhost");
+		FMV.testZips = new HashMap<String, String>();
+		FMV.logger.addHandler(new FileHandler("fmv.log"));
+		final File dir = new File(FMV.TEST_DIR);
+		dir.mkdirs();
 	}
 
 	public static void setVersionProperty(final Archive archive,

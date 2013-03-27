@@ -8,8 +8,9 @@ public class TestsSender {
 
 	public static void main(final String argv[]) {
 		TestsSender.sendTests("TESTING.zip");
-	}	
-	private static void sendTests(String name) {
+	}
+
+	private static void sendTests(final String name) {
 		final IntlolaSender sender = new IntlolaSender("", "Data",
 				SendMode.ONSAVE, PreferenceConstants.LOCAL_ADDRESS,
 				PreferenceConstants.PORT);

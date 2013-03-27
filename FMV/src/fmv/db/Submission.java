@@ -19,12 +19,12 @@ public final class Submission {
 		this.format = format;
 	}
 
-	public Object getId() {
-		return id;
-	}
-
 	public String getFormat() {
 		return format;
+	}
+
+	public Object getId() {
+		return id;
 	}
 
 	@Override
