@@ -9,9 +9,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,7 +55,7 @@ public class FMV {
 				final int i = FMV.directoryPane.directoryList
 						.getSelectedIndex();
 				if (i != -1) {
-					final ProjectData archive = FMV.directory.getArchive(i);
+					final Archive archive = FMV.directory.getArchive(i);
 					if (!archive.isSetup()) {
 						archive.setup();
 					}
@@ -64,7 +68,7 @@ public class FMV {
 					FMV.directory.setDiff(i, 0);
 				}
 			} else if (FMV.dbPane.isEnabled()) {
-				final ProjectData archive = FMV.dbPane.getProjectData();
+				final Archive archive = FMV.dbPane.getProjectData();
 				if (archive != null) {
 					if (!archive.isSetup()) {
 						archive.setup();
@@ -166,14 +170,14 @@ public class FMV {
 				final int i = FMV.directoryPane.directoryList
 						.getSelectedIndex();
 				if (i != -1 && FMV.toolBox.getSelectedIndex() != -1) {
-					final ProjectData archive = FMV.directory.getArchive(i);
+					final Archive archive = FMV.directory.getArchive(i);
 					if (!archive.isSetup()) {
 						archive.setup();
 					}
 					archive.runTool((String) FMV.toolBox.getSelectedItem());
 				}
 			} else if (FMV.dbPane.isEnabled()) {
-				final ProjectData proj = FMV.dbPane.getProjectData();
+				final Archive proj = FMV.dbPane.getProjectData();
 				if (proj != null) {
 					if (!proj.isSetup()) {
 						proj.setup();
@@ -228,6 +232,8 @@ public class FMV {
 	private static DirectoryPane directoryPane;
 
 	private static DBPane dbPane;
+
+	private static Map<String, String> testZips;
 
 	private static void createAndShowGUI() {
 		try {
@@ -358,7 +364,7 @@ public class FMV {
 		return item;
 	}
 
-	public static String getArchiveProperty(final ProjectData archive,
+	public static String getArchiveProperty(final Archive archive,
 			final String defualt) {
 		if (FMV.directory != null) {
 			return FMV.directory.getXArchiveProperty(archive, null, defualt);
@@ -367,7 +373,7 @@ public class FMV {
 		}
 	}
 
-	public static String getArchiveProperty(final ProjectData archive,
+	public static String getArchiveProperty(final Archive archive,
 			final String key, final String defualt) {
 		if (FMV.directory != null) {
 			return FMV.directory.getXArchiveProperty(archive, key, defualt);
@@ -429,7 +435,7 @@ public class FMV {
 		return new SplitDialog(FMV.mainFrame);
 	}
 
-	public static String getVersionProperty(final ProjectData archive,
+	public static String getVersionProperty(final Archive archive,
 			final Source source, final Date date, final String key,
 			final String defualt) {
 		if (FMV.directory != null) {
@@ -450,6 +456,7 @@ public class FMV {
 		FMV.logger.setLevel(Level.ALL);
 		try {
 			FMV.retriever = new DataRetriever("localhost");
+			testZips = new HashMap<String, String>();
 			FMV.logger.addHandler(new FileHandler("fmv.log"));
 			javax.swing.SwingUtilities.invokeLater(new Runnable() {
 				@Override
@@ -476,14 +483,14 @@ public class FMV {
 		}
 	}
 
-	public static void setArchiveProperty(final ProjectData archive,
+	public static void setArchiveProperty(final Archive archive,
 			final String value) {
 		if (FMV.directory != null) {
 			FMV.directory.setXArchiveProperty(archive, null, value);
 		}
 	}
 
-	public static void setArchiveProperty(final ProjectData archive,
+	public static void setArchiveProperty(final Archive archive,
 			final String key, final String value) {
 		if (FMV.directory != null) {
 			FMV.directory.setXArchiveProperty(archive, key, value);
@@ -496,13 +503,40 @@ public class FMV {
 		}
 	}
 
-	public static void setVersionProperty(final ProjectData archive,
+	public static void setVersionProperty(final Archive archive,
 			final Source source, final Date date, final String key,
 			final String value) {
 		if (FMV.directory != null) {
 			FMV.directory
 					.setXVersionProperty(archive, source, date, key, value);
 		}
+	}
+
+	public static String getTests(String name) {
+		String outfile;
+		if ((outfile = testZips.get(name)) == null) {
+			outfile = name+"_TESTING.zip";
+			byte[] files = retriever.getTests(name);
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(new File(outfile));
+				fos.write(files);
+				testZips.put(name, outfile);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					if (fos != null) {
+						fos.close();
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return outfile;
 	}
 
 }

@@ -31,7 +31,7 @@ public class AnnotateDialog extends JDialog {
 	 */
 	private final JTextArea noteText;
 
-	private ProjectData archive;
+	private Archive archive;
 
 	private Source source;
 
@@ -89,7 +89,7 @@ public class AnnotateDialog extends JDialog {
 	 * @param text
 	 *            text to insert into dialog
 	 */
-	public void activate(final ProjectData archive, final Source source,
+	public void activate(final Archive archive, final Source source,
 			final Map.Entry<Date, Version> version) {
 		this.archive = archive;
 		this.source = source;

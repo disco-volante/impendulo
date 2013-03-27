@@ -58,11 +58,11 @@ public class Directory {
 	 */
 	@SuppressWarnings("unchecked")
 	public void addArchive(final String name) {
-		listModel.addElement(new ProjectData(dir, name));
+		listModel.addElement(new Archive(dir, name));
 	}
 
-	public ProjectData getArchive(final int index) {
-		return (ProjectData) listModel.getElementAt(index);
+	public Archive getArchive(final int index) {
+		return (Archive) listModel.getElementAt(index);
 	}
 
 	/**
@@ -84,10 +84,10 @@ public class Directory {
 	 */
 	@SuppressWarnings("rawtypes")
 	public DefaultListModel getModel(final int index) {
-		return ((ProjectData) listModel.getElementAt(index)).getModel(this);
+		return ((Archive) listModel.getElementAt(index)).getModel(this);
 	}
 
-	public String getXArchiveProperty(final ProjectData archive, final String key,
+	public String getXArchiveProperty(final Archive archive, final String key,
 			final String defualt) {
 		if (key == null) {
 			return properties.getProperty(archive.toString(), defualt);
@@ -101,7 +101,7 @@ public class Directory {
 		return properties.getProperty(key, defualt);
 	}
 
-	public String getXVersionProperty(final ProjectData archive,
+	public String getXVersionProperty(final Archive archive,
 			final Source source, final Date date, final String key,
 			final String defualt) {
 		final String prefix = archive.toString() + "." + source.getPath() + "."
@@ -125,11 +125,11 @@ public class Directory {
 	}
 
 	public void setDiff(final int i, final int j) {
-		final ProjectData a = (ProjectData) listModel.getElementAt(i);
+		final Archive a = (Archive) listModel.getElementAt(i);
 		a.setDiff(j);
 	}
 
-	public void setXArchiveProperty(final ProjectData archive, final String key,
+	public void setXArchiveProperty(final Archive archive, final String key,
 			final String value) {
 		if (key == null) {
 			properties.setProperty(archive.toString(), value);
@@ -142,7 +142,7 @@ public class Directory {
 		properties.setProperty(key, value);
 	}
 
-	public void setXVersionProperty(final ProjectData archive, final Source source,
+	public void setXVersionProperty(final Archive archive, final Source source,
 			final Date date, final String key, final String value) {
 		final String prefix = archive.toString() + "." + source.getPath() + "."
 				+ date.getTime() + "." + key;

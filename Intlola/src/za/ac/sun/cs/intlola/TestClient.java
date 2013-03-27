@@ -14,26 +14,28 @@ import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
 public class TestClient {
 	static class SendThread implements Runnable {
-		private final String pword;
 		private final String user;
+		private final String passwd;
 		private final ArrayList<String> files;
 
-		public SendThread(final String user, final String pword,
+		public SendThread(final String user, final String passwd,
 				final ArrayList<String> files) {
 			this.user = user;
-			this.pword = pword;
+			this.passwd = passwd;
 			this.files = files;
 		}
 
 		@Override
 		public void run() {
-			final IntlolaSender sender = new IntlolaSender(user, pword, "Data",
+			final IntlolaSender sender = new IntlolaSender(user, "Data",
 					SendMode.ONSAVE, PreferenceConstants.LOCAL_ADDRESS,
 					PreferenceConstants.PORT);
-			for (final String file : files) {
-				sender.send(SendMode.ONSAVE, file);
+			if (sender.login(passwd)) {
+				for (final String file : files) {
+					sender.send(SendMode.ONSAVE, file);
+				}
+				sender.send(SendMode.ONSTOP, null);
 			}
-			sender.send(SendMode.ONSTOP, TestClient.randString() + ".zip");
 		}
 
 	}
@@ -74,17 +76,27 @@ public class TestClient {
 	}
 
 	public static void main(final String argv[]) {
-		IntlolaSender sender = new IntlolaSender("", "", "Data", SendMode.ONSAVE,
+		sendFiles();
+		sendTests();
+	}
+
+	private static void sendTests() {
+		IntlolaSender sender = new IntlolaSender("", "Data", SendMode.ONSAVE,
 				PreferenceConstants.LOCAL_ADDRESS, PreferenceConstants.PORT);
 		sender.sendTests("TESTING.zip");
-		/*
-		 * final Map<String, String> users = TestClient.getUsers("users"); final
-		 * ArrayList<String> files = TestClient.getFiles(new File("data"));
-		 * final ArrayList<Thread> threads = new ArrayList<Thread>(); for (final
-		 * Map.Entry<String, String> e : users.entrySet()) { threads.add(new
-		 * Thread(new SendThread(e.getKey(), e.getValue(), files))); } for
-		 * (final Thread th : threads) { th.start(); }
-		 */
+	}
+
+	private static void sendFiles() {
+		final Map<String, String> users = TestClient.getUsers("users");
+		final ArrayList<String> files = TestClient.getFiles(new File("data"));
+		final ArrayList<Thread> threads = new ArrayList<Thread>();
+		for (final Map.Entry<String, String> e : users.entrySet()) {
+			threads.add(new Thread(new SendThread(e.getKey(), e.getValue(),
+					files)));
+		}
+		for (final Thread th : threads) {
+			th.start();
+		}
 	}
 
 	public static String randString() {

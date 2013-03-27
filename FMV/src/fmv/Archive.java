@@ -18,7 +18,7 @@ import javax.swing.SwingWorker;
 import fmv.TablePane.ArchiveData;
 import fmv.db.DBFile;
 
-public class ProjectData {
+public class Archive {
 
 	/**
 	 * Flag to tell if this archive has been viewed and therefore extracted
@@ -29,7 +29,6 @@ public class ProjectData {
 	private boolean isCompiled = false;
 
 	private boolean isArchive;
-
 	/**
 	 * The model for the list of ZIP files. (Think MVC.)
 	 */
@@ -59,7 +58,7 @@ public class ProjectData {
 	 * Constructor. Stores the name of the ZIP file.
 	 */
 	@SuppressWarnings("rawtypes")
-	public ProjectData(final String dir, final String name) {
+	public Archive(final String dir, final String name) {
 		this.dir = dir;
 		this.name = name;
 		tests = dir + File.separator + "TESTING.zip";
@@ -75,13 +74,22 @@ public class ProjectData {
 	
 	/**
 	 * Constructor. Stores the name of the ZIP file.
+	 * @param s 
 	 */
 	@SuppressWarnings("rawtypes")
-	public ProjectData(final String name, List<DBFile> files) {
+	public Archive(final String project, String name, List<DBFile> files) {
 		this.files = files;
 		this.name = name;
 		listModel = new DefaultListModel();
 		isArchive = false;
+		if ("true".equals(FMV.getArchiveProperty(this, "false"))) {
+			final ArchiveData data = new ArchiveData();
+			data.readProperties(this);
+			FMV.tablePane.addData(name, data);
+			isCompiled = true;
+		} else{
+			tests = FMV.getTests(project);
+		}
 	}
 
 	/**

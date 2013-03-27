@@ -1,15 +1,12 @@
 package fmv;
 
-import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.UnknownHostException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -20,15 +17,18 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 
+import sun.awt.VerticalBagLayout;
 import fmv.db.DBFile;
 import fmv.db.DataRetriever;
 import fmv.db.Project;
+import fmv.db.Submission;
 
 public class DBPane extends JPanel {
 
 	public enum Level {
-		PROJECTS, CHOICES, USERS, DATES, U_TOKENS, D_TOKENS;
+		PROJECTS, USERS, SUBMISSIONS;
 	}
 
 	class ProjectListModel extends DefaultListModel<String> {
@@ -39,10 +39,8 @@ public class DBPane extends JPanel {
 		private static final long serialVersionUID = -7407750081315305369L;
 		public HashMap<String, Project> projects;
 		private Level level;
-		public String[] choices = new String[] { "Dates", "Users" };
-		private String project, user, token;
-		private long date;
-		private DateFormat df = new SimpleDateFormat("HH:mm:ss, d MMM yyyy");
+		private String project, user;
+		private Submission sub;
 
 		public ProjectListModel(final List<String> projList) {
 			projects = new HashMap<String, Project>();
@@ -53,95 +51,60 @@ public class DBPane extends JPanel {
 			level = Level.PROJECTS;
 		}
 
-		public void addAll(final String[] obs) {
+		public void addAll(final Object[] obs) {
 			clear();
 			for (final Object o : obs) {
 				addElement(o.toString());
 			}
 		}
 
-		private void addDates(Long[] dates) {
-			clear();
-			for (final Long d : dates) {
-				addElement(df.format(new Date(d)));
-			}
-		}
-
 		public void drillDown(final String s, final int index) {
 			if (level.equals(Level.PROJECTS)) {
-				addAll(choices);
-				level = Level.CHOICES;
 				project = s;
 				load(projects.get(project));
-				label.setText("Choices");
-			} else if (level.equals(Level.CHOICES)) {
-				if (s.equals("Users")) {
-					addAll(projects.get(project).users);
-					level = Level.USERS;
-					label.setText("Users");
-				} else if (s.equals("Dates")) {
-					addDates(projects.get(project).dates);
-					level = Level.DATES;
-					label.setText("Dates");
-				}
+				addAll(projects.get(project).users);
+				label.setText("Users");
+				level = Level.USERS;
 			} else if (level.equals(Level.USERS)) {
 				user = s;
-				addAll(projects.get(project).getTokens(user));
-				level = Level.U_TOKENS;
+				addAll(projects.get(project).getSubmissions(user));
+				level = Level.SUBMISSIONS;
 				label.setText("Tokens for: " + user);
-			} else if (level.equals(Level.DATES)) {
-				date = projects.get(project).dates[index];
-				addAll(projects.get(project).getTokens(date));
-				level = Level.D_TOKENS;
-				label.setText("Tokens from: " + df.format(new Date(date)));
-			} else if (level.equals(Level.D_TOKENS)
-					|| level.equals(Level.U_TOKENS)) {
-				token = s;
-				if (projects.get(project).tokenData.isEmpty()) {
-					List<DBFile> files = retriever.retrieveFiles(s);
-					projects.get(project).tokenData.put(s, new ProjectData(s,
-							files));
+			} else if (level.equals(Level.SUBMISSIONS)) {
+				sub = projects.get(project).submissions.get(user).get(index);
+				if (projects.get(project).submissionData.get(sub) == null) {
+					List<DBFile> files = retriever.retrieveFiles(sub);
+					projects.get(project).submissionData.put(sub, new Archive(project,
+							sub.toString(), files));
 				}
 			}
 		}
 
 		public void moveUp() {
-			if (level.equals(Level.CHOICES)) {
+			if (level.equals(Level.USERS)) {
 				addAll(projects.keySet().toArray(new String[projects.size()]));
 				level = Level.PROJECTS;
-				load(projects.get(project));
 				label.setText("Projects");
-			} else if (level.equals(Level.USERS) || level.equals(Level.DATES)) {
-				addAll(choices);
-				level = Level.CHOICES;
-				label.setText("Choices");
-			} else if (level.equals(Level.U_TOKENS)) {
+			} else if (level.equals(Level.SUBMISSIONS)) {
 				addAll(projects.get(project).users);
 				level = Level.USERS;
 				label.setText("Users");
-			} else if (level.equals(Level.D_TOKENS)) {
-				addDates(projects.get(project).dates);
-				level = Level.DATES;
-				label.setText("Dates");
-			}
+			} 
 		}
 
 		public void load(Project proj) {
 			if (!proj.loaded) {
 				final List<String> temp0 = retriever.getProjectUsers(proj.name);
 				proj.users = temp0.toArray(new String[temp0.size()]);
-				final List<Long> temp1 = retriever.getProjectDates(proj.name);
-				proj.dates = temp1.toArray(new Long[temp1.size()]);
-				proj.tokens.putAll(retriever.getTokens(project, "date"));
-				proj.tokens.putAll(retriever.getTokens(project, "user"));
+				proj.submissions.putAll(retriever.getSubmissions(project));
 				proj.loaded = true;
 			}
 		}
 
-		public ProjectData getProjectData() {
-			return projects.get(project).tokenData.get(token);
+		public Archive getProjectData() {
+			return projects.get(project).submissionData.get(sub);
 		}
-		
+
 	}
 
 	/**
@@ -171,7 +134,7 @@ public class DBPane extends JPanel {
 	protected List<DBFile> projectData;
 
 	public DBPane(final DataRetriever retriever) {
-		super();
+		super(new VerticalBagLayout());
 		this.retriever = retriever;
 		createGUI();
 		itemList.setModel(new ProjectListModel(retriever.getProjects()));
@@ -197,6 +160,8 @@ public class DBPane extends JPanel {
 		final JScrollPane itemScrollPane = new JScrollPane(itemList);
 		itemScrollPane.setMinimumSize(d);
 		itemScrollPane.setPreferredSize(d);
+		itemScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+		itemScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
 		label = new JLabel("Projects");
 		label.setLabelFor(itemList);
@@ -209,13 +174,18 @@ public class DBPane extends JPanel {
 				((ProjectListModel) itemList.getModel()).moveUp();
 			}
 		});
-
-		add(label, BorderLayout.NORTH);
-		add(upBtn, BorderLayout.NORTH);
-		add(itemScrollPane, BorderLayout.CENTER);
+		upBtn.setBorderPainted(false);
+		upBtn.setContentAreaFilled(false); 
+		upBtn.setFocusPainted(false); 
+		upBtn.setOpaque(false);
+		JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		top.add(upBtn);
+		top.add(label);
+		add(top);
+		add(itemScrollPane);
 	}
 
-	public ProjectData getProjectData() {
+	public Archive getProjectData() {
 		return ((ProjectListModel) itemList.getModel()).getProjectData();
 	}
 

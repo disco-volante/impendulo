@@ -110,7 +110,7 @@ public class Source {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void addToListModel(final DefaultListModel model,
-			final ProjectData archive) {
+			final Archive archive) {
 		if (parent != null && children.size() == 0) {
 			model.addElement(this);
 			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions
@@ -250,7 +250,7 @@ public class Source {
 	}
 
 	
-	public void extractProperties(final ProjectData archive, final ArchiveData data) {
+	public void extractProperties(final Archive archive, final ArchiveData data) {
 		if (parent != null && children.size() == 0) {
 			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions
 					.higherEntry(e.getKey())) {

@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -29,6 +30,7 @@ public class DataRetriever {
 	private static final String PROJECTS = "projects";
 	private static final String USERS = "users";
 
+	@SuppressWarnings("resource")
 	public static void main(final String args[]) {
 		try {
 			final DataRetriever ret = new DataRetriever("localhost");
@@ -41,16 +43,14 @@ public class DataRetriever {
 				try {
 					fos = new FileOutputStream(new File("tests.zip"));
 					fos.write(bytes);
-					ZipFile zf = new ZipFile("tests.zip");
-					Enumeration<? extends ZipEntry> entries = zf.entries();
-					while(entries.hasMoreElements()){
+					Enumeration<? extends ZipEntry> entries = new ZipFile(
+							"tests.zip").entries();
+					while (entries.hasMoreElements()) {
 						System.out.println(entries.nextElement());
 					}
 				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 
@@ -60,8 +60,6 @@ public class DataRetriever {
 			e.printStackTrace();
 		}
 	}
-
-
 
 	public DataRetriever(final String url) throws UnknownHostException {
 		client = new MongoClient(url);
@@ -90,7 +88,7 @@ public class DataRetriever {
 		}
 		return ret;
 	}
-	
+
 	public byte[] getTests(String project) {
 		final DBObject ref = new BasicDBObject("tests", 1).append("_id", 0);
 		final DBObject matcher = new BasicDBObject("project", project);
@@ -143,38 +141,40 @@ public class DataRetriever {
 		return (List<String>) getDistinct(DataRetriever.USERS, "_id");
 	}
 
-	public List<DBFile> retrieveFiles(final String token) {
+	public List<DBFile> retrieveFiles(final Submission sub) {
 		final DBObject ref = new BasicDBObject("files", 1).append("_id", 0);
-		final DBObject matcher = new BasicDBObject("token", token);
+		final DBObject matcher = new BasicDBObject("_id", sub.id);
 		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
 				ref);
 		final List<DBFile> files = new ArrayList<DBFile>();
-		for (final DBObject o : cursor) {
-			System.out.println(o);
-			final BasicDBList list = (BasicDBList) o.get("files");
-			for (final Object file : list) {
-				final String name = (String) ((DBObject) file).get("name");
-				final Date date = new Date((Long) ((DBObject) file).get("date"));
-				final byte[] data = (byte[]) ((DBObject) file).get("data");
-				files.add(new DBFile(name, date, data));
-			}
+
+		final DBObject o = cursor.curr();
+		final BasicDBList list = (BasicDBList) o.get("files");
+		for (final Object file : list) {
+			final String name = (String) ((DBObject) file).get("name");
+			final Date date = new Date((Long) ((DBObject) file).get("date"));
+			final byte[] data = (byte[]) ((DBObject) file).get("data");
+			files.add(new DBFile(name, date, data));
 		}
 		Collections.sort(files);
 		return files;
 	}
 
-	public HashMap<Object, ArrayList<String>> getTokens(String project, String filter) {
-		final DBObject ref = new BasicDBObject("token", 1).append("_id", 0).append(filter, 1);
+	public Map<String, ArrayList<Submission>> getSubmissions(String project) {
+		final DBObject ref = new BasicDBObject("submission_number", 1)
+				.append("_id", 1).append("date", 1).append("user", 1);
 		final BasicDBObject matcher = new BasicDBObject("name", project);
 		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
 				ref);
-		final HashMap<Object, ArrayList<String>> ret = new HashMap<Object, ArrayList<String>>();
+		final Map<String, ArrayList<Submission>> ret = new HashMap<String, ArrayList<Submission>>();
 		for (final DBObject o : cursor) {
-			Object key = o.get(filter);
-			if(!ret.containsKey(key)){
-				ret.put(key, new ArrayList<String>());
+			String key = (String) o.get("user");
+			if (!ret.containsKey(key)) {
+				ret.put(key, new ArrayList<Submission>());
 			}
-			ret.get(key).add((String) o.get("token"));
+			Submission submission = new Submission(o.get("_id"),
+					(Integer) o.get("submission_number"), (Long) o.get("date"));
+			ret.get(key).add(submission);
 		}
 		return ret;
 	}

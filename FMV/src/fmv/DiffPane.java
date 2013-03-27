@@ -268,7 +268,7 @@ public class DiffPane extends JPanel implements ActionListener {
 		}
 	}
 
-	public void setItem(final ProjectData archive, final Source source) {
+	public void setItem(final Archive archive, final Source source) {
 		DiffPane.timeline.setSource(archive, source);
 		DiffPane.timeline.repaint();
 	}

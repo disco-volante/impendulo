@@ -2,27 +2,27 @@ package fmv.db;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
-import fmv.ProjectData;
+import fmv.Archive;
 
 public class Project {
-	public String name;
-	public Long[] dates;
+	public final String name;
 	public String[] users;
-	public HashMap<Object, ArrayList<String>> tokens;
-	public HashMap<String, ProjectData> tokenData;
+	public Map<String, ArrayList<Submission>> submissions;
+	public Map<Submission, Archive> submissionData;
 	public boolean loaded;
 
 	public Project(String name) {
 		this.name = name;
-		tokenData = new HashMap<String, ProjectData>();
-		tokens = new HashMap<Object, ArrayList<String>>();
+		submissions = new HashMap<String, ArrayList<Submission>>();
+		submissionData = new HashMap<Submission, Archive>();
 		loaded = false;
 	}
 
-	public String[] getTokens(Object param) {
-		ArrayList<String> temp = tokens.get(param);
-		return temp.toArray(new String[temp.size()]);
+	public Submission[] getSubmissions(String user) {
+		ArrayList<Submission> temp = submissions.get(user);
+		return temp.toArray(new Submission[temp.size()]);
 	}
 
 	

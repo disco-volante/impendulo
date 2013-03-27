@@ -21,6 +21,8 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.IInputValidator;
+import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -118,13 +120,11 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 				.getPreferenceStore().getString(PreferenceConstants.P_SEND));
 		final String uname = Intlola.getDefault().getPreferenceStore()
 				.getString(PreferenceConstants.P_UNAME);
-		final String passwd = Intlola.getDefault().getPreferenceStore()
-				.getString(PreferenceConstants.P_PASSWD);
 		final String address = Intlola.getDefault().getPreferenceStore()
 				.getString(PreferenceConstants.P_ADDRESS);
 		final int port = Intlola.getDefault().getPreferenceStore()
 				.getInt(PreferenceConstants.P_PORT);
-		return new IntlolaSender(uname, passwd, project, mode, address, port);
+		return new IntlolaSender(uname, project, mode, address, port);
 	}
 
 	public static IWorkspace getWorkspace() {
@@ -171,15 +171,33 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
-	public static void startRecord(final IProject project) {
+	public static void startRecord(final IProject project, Shell shell) {
 		try {
 			Intlola.removeDir(Intlola.plugin.getStateLocation().toString(),
 					false);
 			project.setSessionProperty(Intlola.RECORD_KEY, Intlola.RECORD_ON);
 			Intlola.sender = Intlola.getSender(project.getName());
+			if (!login(shell)) {
+				stopRecord(project, shell);
+			}
 		} catch (final CoreException e) {
 			Intlola.log(e);
 		}
+	}
+
+	private static boolean login(Shell shell) {
+		InputDialog dialog = new InputDialog(shell, "Password",
+				"Please enter password for: " + sender.uname, "", null);
+		boolean loggedIn = false;
+		while (!loggedIn) {
+			int code = dialog.open();
+			if (code == InputDialog.OK) {
+				loggedIn = sender.login(dialog.getValue());
+			} else {
+				return false;
+			}
+		}
+		return false;
 	}
 
 	public static void stopRecord(final IProject project, final Shell shell) {
