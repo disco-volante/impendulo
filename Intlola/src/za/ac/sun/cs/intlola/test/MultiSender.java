@@ -1,4 +1,4 @@
-package za.ac.sun.cs.intlola;
+package za.ac.sun.cs.intlola.test;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -10,9 +10,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import za.ac.sun.cs.intlola.IntlolaSender;
+import za.ac.sun.cs.intlola.SendMode;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
-public class TestClient {
+public class MultiSender {
 	static class SendThread implements Runnable {
 		private final String user;
 		private final String passwd;
@@ -76,19 +78,27 @@ public class TestClient {
 	}
 
 	public static void main(final String argv[]) {
-		sendFiles();
-		sendTests();
+		MultiSender.sendFiles();
 	}
 
-	private static void sendTests() {
-		IntlolaSender sender = new IntlolaSender("", "Data", SendMode.ONSAVE,
-				PreferenceConstants.LOCAL_ADDRESS, PreferenceConstants.PORT);
-		sender.sendTests("TESTING.zip");
+	public static String randString() {
+		String gen = "";
+		MultiSender.strings.put(gen, true);
+		while (MultiSender.strings.containsKey(gen)) {
+			final char[] text = new char[MultiSender.LENGTH];
+			for (int i = 0; i < MultiSender.LENGTH; i++) {
+				text[i] = MultiSender.CHARACTERS.charAt(MultiSender.rand
+						.nextInt(MultiSender.CHARACTERS.length()));
+			}
+			gen = new String(text);
+		}
+		MultiSender.strings.put(gen, true);
+		return gen;
 	}
 
 	private static void sendFiles() {
-		final Map<String, String> users = TestClient.getUsers("users");
-		final ArrayList<String> files = TestClient.getFiles(new File("data"));
+		final Map<String, String> users = MultiSender.getUsers("users");
+		final ArrayList<String> files = MultiSender.getFiles(new File("data"));
 		final ArrayList<Thread> threads = new ArrayList<Thread>();
 		for (final Map.Entry<String, String> e : users.entrySet()) {
 			threads.add(new Thread(new SendThread(e.getKey(), e.getValue(),
@@ -97,20 +107,5 @@ public class TestClient {
 		for (final Thread th : threads) {
 			th.start();
 		}
-	}
-
-	public static String randString() {
-		String gen = "";
-		TestClient.strings.put(gen, true);
-		while (TestClient.strings.containsKey(gen)) {
-			final char[] text = new char[TestClient.LENGTH];
-			for (int i = 0; i < TestClient.LENGTH; i++) {
-				text[i] = TestClient.CHARACTERS.charAt(TestClient.rand
-						.nextInt(TestClient.CHARACTERS.length()));
-			}
-			gen = new String(text);
-		}
-		TestClient.strings.put(gen, true);
-		return gen;
 	}
 }

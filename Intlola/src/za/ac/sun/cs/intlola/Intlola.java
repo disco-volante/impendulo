@@ -21,11 +21,11 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.dialogs.IInputValidator;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
@@ -137,67 +137,24 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
-	public static void removeDir(final String dirname, final boolean removeRoot) {
-		Intlola.removeDirRecur(new File(dirname), removeRoot);
-	}
-
-	private IResourceChangeListener changeListener = null;
-
-	private boolean listenersAdded = false;
-
-	protected static IntlolaSender sender;
-
-	public static boolean getRecordStatus(final IProject project) {
-		try {
-			final Boolean record = (Boolean) project
-					.getSessionProperty(Intlola.RECORD_KEY);
-			return record == Intlola.RECORD_ON;
-		} catch (final CoreException e) {
-			Intlola.log(e);
-			return false;
-		}
-	}
-
-	private static void removeDirRecur(final File file, final boolean removeRoot) {
-		if (file.isDirectory()) {
-			for (final File f : file.listFiles()) {
-				Intlola.removeDirRecur(f, true);
-			}
-			if (removeRoot) {
-				file.delete();
-			}
-		} else {
-			file.delete();
-		}
-	}
-
-	public static void startRecord(final IProject project, Shell shell) {
-		try {
-			Intlola.removeDir(Intlola.plugin.getStateLocation().toString(),
-					false);
-			project.setSessionProperty(Intlola.RECORD_KEY, Intlola.RECORD_ON);
-			Intlola.sender = Intlola.getSender(project.getName());
-			if (!login(shell)) {
-				stopRecord(project, shell);
-			}
-		} catch (final CoreException e) {
-			Intlola.log(e);
-		}
-	}
-
-	private static boolean login(Shell shell) {
-		InputDialog dialog = new InputDialog(shell, "Password",
-				"Please enter password for: " + sender.uname, "", null);
+	private static boolean login(final Shell shell) {
+		final InputDialog dialog = new InputDialog(shell, "Password",
+				"Please enter password for: " + Intlola.sender.getUsername(),
+				"", null);
 		boolean loggedIn = false;
 		while (!loggedIn) {
-			int code = dialog.open();
-			if (code == InputDialog.OK) {
-				loggedIn = sender.login(dialog.getValue());
+			final int code = dialog.open();
+			if (code == Window.OK) {
+				loggedIn = Intlola.sender.login(dialog.getValue());
 			} else {
 				return false;
 			}
 		}
 		return false;
+	}
+
+	public static void removeDir(final String dirname, final boolean removeRoot) {
+		Intlola.removeDirRecur(new File(dirname), removeRoot);
 	}
 
 	public static void stopRecord(final IProject project, final Shell shell) {
@@ -294,6 +251,50 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			} catch (final IOException e) {
 				Intlola.log(e);
 			}
+		}
+	}
+
+	private IResourceChangeListener changeListener = null;
+
+	private boolean listenersAdded = false;
+
+	protected static IntlolaSender sender;
+
+	public static boolean getRecordStatus(final IProject project) {
+		try {
+			final Boolean record = (Boolean) project
+					.getSessionProperty(Intlola.RECORD_KEY);
+			return record == Intlola.RECORD_ON;
+		} catch (final CoreException e) {
+			Intlola.log(e);
+			return false;
+		}
+	}
+
+	private static void removeDirRecur(final File file, final boolean removeRoot) {
+		if (file.isDirectory()) {
+			for (final File f : file.listFiles()) {
+				Intlola.removeDirRecur(f, true);
+			}
+			if (removeRoot) {
+				file.delete();
+			}
+		} else {
+			file.delete();
+		}
+	}
+
+	public static void startRecord(final IProject project, final Shell shell) {
+		try {
+			Intlola.removeDir(Intlola.plugin.getStateLocation().toString(),
+					false);
+			project.setSessionProperty(Intlola.RECORD_KEY, Intlola.RECORD_ON);
+			Intlola.sender = Intlola.getSender(project.getName());
+			if (!Intlola.login(shell)) {
+				Intlola.stopRecord(project, shell);
+			}
+		} catch (final CoreException e) {
+			Intlola.log(e);
 		}
 	}
 

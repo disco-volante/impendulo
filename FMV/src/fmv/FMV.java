@@ -108,7 +108,7 @@ public class FMV {
 		public void actionPerformed(final ActionEvent event) {
 			if ("file.open".equals(event.getActionCommand())) {
 				FMV.saveProperties();
-				switchContexts(true);
+				FMV.switchContexts(true);
 				if (fc == null) {
 					fc = new JFileChooser();
 					fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -134,8 +134,8 @@ public class FMV {
 					FMV.splitPane.setRightComponent(FMV.tablePane);
 				}
 			} else if ("server.open".equals(event.getActionCommand())) {
-				saveProperties();
-				switchContexts(false);
+				FMV.saveProperties();
+				FMV.switchContexts(false);
 			} else if ("file.prefs".equals(event.getActionCommand())) {
 				FMV.prefs.activate();
 			} else if ("file.quit".equals(event.getActionCommand())) {
@@ -188,6 +188,10 @@ public class FMV {
 		}
 	}
 
+	public static final String TEST_DIR = System.getProperty("user.home")
+			+ File.separator + ".impendulo" + File.separator + "tests";
+	public static final String ZIP_DIR = System.getProperty("user.home")
+			+ File.separator + ".impendulo" + File.separator + "zips";
 	private static Logger logger;
 
 	/**
@@ -257,21 +261,6 @@ public class FMV {
 		FMV.mainFrame.setVisible(true);
 	}
 
-	public static void switchContexts(boolean dir) {
-		FMV.tablePane.clear();
-		FMV.splitPane.setRightComponent(FMV.tablePane);
-		if (dir) {
-			FMV.directoryPane.setEnabled(true);
-			FMV.dbPane.setEnabled(false);
-			FMV.splitPane.setLeftComponent(directoryPane);
-
-		} else {
-			FMV.directoryPane.setEnabled(false);
-			FMV.dbPane.setEnabled(true);
-			FMV.splitPane.setLeftComponent(dbPane);
-		}
-	}
-
 	private static Container createContentPane() {
 
 		FMV.tablePane = new TablePane();
@@ -287,7 +276,7 @@ public class FMV {
 		FMV.splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
 				FMV.directoryPane, FMV.tablePane);
 
-		switchContexts(true);
+		FMV.switchContexts(true);
 
 		FMV.splitPane.setOneTouchExpandable(true);
 		FMV.splitPane.setResizeWeight(0);
@@ -435,6 +424,33 @@ public class FMV {
 		return new SplitDialog(FMV.mainFrame);
 	}
 
+	public static String getTests(final String name) {
+		String outfile;
+		if ((outfile = FMV.testZips.get(name)) == null) {
+			outfile = TEST_DIR+File.separator+name + "_TESTING.zip";
+			final byte[] files = FMV.retriever.getTests(name);
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(new File(outfile));
+				fos.write(files);
+				FMV.testZips.put(name, outfile);
+			} catch (final FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (final IOException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					if (fos != null) {
+						fos.close();
+					}
+				} catch (final IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return outfile;
+	}
+
 	public static String getVersionProperty(final Archive archive,
 			final Source source, final Date date, final String key,
 			final String defualt) {
@@ -451,13 +467,8 @@ public class FMV {
 	}
 
 	public static void main(final String[] args) {
-		FMV.logger = Logger.getLogger(FMV.class.getName());
-		FMV.logger.setUseParentHandlers(false);
-		FMV.logger.setLevel(Level.ALL);
 		try {
-			FMV.retriever = new DataRetriever("localhost");
-			testZips = new HashMap<String, String>();
-			FMV.logger.addHandler(new FileHandler("fmv.log"));
+			setup();
 			javax.swing.SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
@@ -472,8 +483,15 @@ public class FMV {
 
 	}
 
-	protected static void retrieveProjectDates(final String project) {
-		FMV.retriever.getProjectDates(project);
+	private static void setup() throws SecurityException, IOException {
+		FMV.logger = Logger.getLogger(FMV.class.getName());
+		FMV.logger.setUseParentHandlers(false);
+		FMV.logger.setLevel(Level.ALL);
+		FMV.retriever = new DataRetriever("localhost");
+		FMV.testZips = new HashMap<String, String>();
+		FMV.logger.addHandler(new FileHandler("fmv.log"));
+		File dir = new File(TEST_DIR);
+		dir.mkdirs();
 	}
 
 	public static void saveProperties() {
@@ -512,31 +530,19 @@ public class FMV {
 		}
 	}
 
-	public static String getTests(String name) {
-		String outfile;
-		if ((outfile = testZips.get(name)) == null) {
-			outfile = name+"_TESTING.zip";
-			byte[] files = retriever.getTests(name);
-			FileOutputStream fos = null;
-			try {
-				fos = new FileOutputStream(new File(outfile));
-				fos.write(files);
-				testZips.put(name, outfile);
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} finally {
-				try {
-					if (fos != null) {
-						fos.close();
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
+	public static void switchContexts(final boolean dir) {
+		FMV.tablePane.clear();
+		FMV.splitPane.setRightComponent(FMV.tablePane);
+		if (dir) {
+			FMV.directoryPane.setEnabled(true);
+			FMV.dbPane.setEnabled(false);
+			FMV.splitPane.setLeftComponent(FMV.directoryPane);
+
+		} else {
+			FMV.directoryPane.setEnabled(false);
+			FMV.dbPane.setEnabled(true);
+			FMV.splitPane.setLeftComponent(FMV.dbPane);
 		}
-		return outfile;
 	}
 
 }

@@ -107,7 +107,6 @@ public class Source {
 		versions.put(date, new Version(lineList));
 	}
 
-
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void addToListModel(final DefaultListModel model,
 			final Archive archive) {
@@ -160,68 +159,35 @@ public class Source {
 			c.canonize();
 		}
 	}
-	
+
 	public List<DiffAction> diff(final List<Integer> x, final List<Integer> y) {
-		final List<DiffAction.Operation> ops = getOperations(x,y);
+		final List<DiffAction.Operation> ops = getOperations(x, y);
 		final List<DiffAction> actions = getActions(ops);
 		return finalizeActions(actions);
 	}
 
+	public void extractProperties(final Archive archive, final ArchiveData data) {
+		if (parent != null && children.size() == 0) {
+			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions
+					.higherEntry(e.getKey())) {
+				e.getValue().getStatus().setData(data);
+				FMV.setVersionProperty(archive, this, e.getKey(), "status", e
+						.getValue().getStatus().getName());
+				FMV.setVersionProperty(archive, this, e.getKey(), "output", e
+						.getValue().getOutput());
+				for (final Map.Entry<String, String> re : e.getValue()
+						.getReports().entrySet()) {
+					FMV.setVersionProperty(archive, this, e.getKey(),
+							re.getKey() + " report", re.getValue());
+				}
+			}
+		}
+		for (final Source c : children) {
+			c.extractProperties(archive, data);
+		}
+	}
 
-	private List<Operation> getOperations(final List<Integer> x, final List<Integer> y){
-		final List<DiffAction.Operation> ops = new ArrayList<DiffAction.Operation>();
-		final int m = x.size();
-		final int n = y.size();
-		final int[][] opt = new int[m + 1][n + 1];
-		for (int i = m - 1; i >= 0; i--) {
-			for (int j = n- 1; j >= 0; j--) {
-				if (x.get(i).equals(y.get(j))) {
-					opt[i][j] = opt[i + 1][j + 1] + 1;
-				} else {
-					opt[i][j] = Math.max(opt[i + 1][j], opt[i][j + 1]);
-				}
-			}
-		}
-		int i = 0, j = 0;
-		while (i < m && j < n) {
-			if (x.get(i).equals(y.get(j))) {
-				i++;
-				j++;
-				ops.add(DiffAction.Operation.SKIP);
-			} else if (opt[i + 1][j] >= opt[i][j + 1]) {
-				i++;
-				ops.add(DiffAction.Operation.DEL);
-			} else {
-				j++;
-				ops.add(DiffAction.Operation.ADD);
-			}
-		}
-		return ops;
-	}
-	
-	private List<DiffAction> getActions(List<Operation> ops){
-		final List<DiffAction> acts = new ArrayList<DiffAction>();
-		DiffAction.Operation prev = DiffAction.Operation.NADA;
-		int count = 0;
-		for (final DiffAction.Operation op : ops) {
-			if (op == prev) {
-				count++;
-			} else {
-				if (prev != DiffAction.Operation.NADA) {
-					acts.add(new DiffAction(prev, count));
-				}
-				prev = op;
-				count = 1;
-			}
-		}
-		if (prev != DiffAction.Operation.NADA) {
-			acts.add(new DiffAction(prev, count));
-		}
-		return acts;
-		
-	}
-	
-	private List<DiffAction> finalizeActions(List<DiffAction> actions){
+	private List<DiffAction> finalizeActions(final List<DiffAction> actions) {
 		final List<DiffAction> finalacts = new ArrayList<DiffAction>();
 		DiffAction prevAct = null;
 		for (final DiffAction a : actions) {
@@ -249,28 +215,6 @@ public class Source {
 		return finalacts;
 	}
 
-	
-	public void extractProperties(final Archive archive, final ArchiveData data) {
-		if (parent != null && children.size() == 0) {
-			for (Map.Entry<Date, Version> e = versions.firstEntry(); e != null; e = versions
-					.higherEntry(e.getKey())) {
-				e.getValue().getStatus().setData(data);
-				FMV.setVersionProperty(archive, this, e.getKey(), "status", e
-						.getValue().getStatus().getName());
-				FMV.setVersionProperty(archive, this, e.getKey(), "output", e
-						.getValue().getOutput());
-				for (final Map.Entry<String, String> re : e.getValue()
-						.getReports().entrySet()) {
-					FMV.setVersionProperty(archive, this, e.getKey(),
-							re.getKey() + " report", re.getValue());
-				}
-			}
-		}
-		for (final Source c : children) {
-			c.extractProperties(archive, data);
-		}
-	}
-
 	public String formatLineNr(final int x) {
 		if (x < 10) {
 			return "   " + x + " ";
@@ -281,6 +225,28 @@ public class Source {
 		} else {
 			return "" + x + " ";
 		}
+	}
+
+	private List<DiffAction> getActions(final List<Operation> ops) {
+		final List<DiffAction> acts = new ArrayList<DiffAction>();
+		DiffAction.Operation prev = DiffAction.Operation.NADA;
+		int count = 0;
+		for (final DiffAction.Operation op : ops) {
+			if (op == prev) {
+				count++;
+			} else {
+				if (prev != DiffAction.Operation.NADA) {
+					acts.add(new DiffAction(prev, count));
+				}
+				prev = op;
+				count = 1;
+			}
+		}
+		if (prev != DiffAction.Operation.NADA) {
+			acts.add(new DiffAction(prev, count));
+		}
+		return acts;
+
 	}
 
 	public Set<Date> getKeys() {
@@ -296,6 +262,38 @@ public class Source {
 
 	public String getName() {
 		return name;
+	}
+
+	private List<Operation> getOperations(final List<Integer> x,
+			final List<Integer> y) {
+		final List<DiffAction.Operation> ops = new ArrayList<DiffAction.Operation>();
+		final int m = x.size();
+		final int n = y.size();
+		final int[][] opt = new int[m + 1][n + 1];
+		for (int i = m - 1; i >= 0; i--) {
+			for (int j = n - 1; j >= 0; j--) {
+				if (x.get(i).equals(y.get(j))) {
+					opt[i][j] = opt[i + 1][j + 1] + 1;
+				} else {
+					opt[i][j] = Math.max(opt[i + 1][j], opt[i][j + 1]);
+				}
+			}
+		}
+		int i = 0, j = 0;
+		while (i < m && j < n) {
+			if (x.get(i).equals(y.get(j))) {
+				i++;
+				j++;
+				ops.add(DiffAction.Operation.SKIP);
+			} else if (opt[i + 1][j] >= opt[i][j + 1]) {
+				i++;
+				ops.add(DiffAction.Operation.DEL);
+			} else {
+				j++;
+				ops.add(DiffAction.Operation.ADD);
+			}
+		}
+		return ops;
 	}
 
 	public String getPath() {
@@ -439,7 +437,5 @@ public class Source {
 		}
 		return file;
 	}
-
-
 
 }

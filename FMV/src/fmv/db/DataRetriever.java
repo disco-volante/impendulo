@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -38,19 +37,19 @@ public class DataRetriever {
 			for (final String p : projects) {
 				System.out.println(p);
 				System.out.println(ret.getProjectDates(p));
-				byte[] bytes = ret.getTests(p);
+				final byte[] bytes = ret.getTests(p);
 				FileOutputStream fos;
 				try {
 					fos = new FileOutputStream(new File("tests.zip"));
 					fos.write(bytes);
-					Enumeration<? extends ZipEntry> entries = new ZipFile(
+					final Enumeration<? extends ZipEntry> entries = new ZipFile(
 							"tests.zip").entries();
 					while (entries.hasMoreElements()) {
 						System.out.println(entries.nextElement());
 					}
-				} catch (FileNotFoundException e) {
+				} catch (final FileNotFoundException e) {
 					e.printStackTrace();
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					e.printStackTrace();
 				}
 
@@ -84,44 +83,14 @@ public class DataRetriever {
 				ref);
 		final List<Long> ret = new ArrayList<Long>();
 		for (final DBObject o : cursor) {
-			ret.add(((Long) o.get("date")));
+			ret.add((Long) o.get("date"));
 		}
 		return ret;
-	}
-
-	public byte[] getTests(String project) {
-		final DBObject ref = new BasicDBObject("tests", 1).append("_id", 0);
-		final DBObject matcher = new BasicDBObject("project", project);
-		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
-				ref);
-		for (final DBObject o : cursor) {
-			return (byte[]) o.get("tests");
-		}
-		return null;
 	}
 
 	@SuppressWarnings("unchecked")
 	public List<String> getProjects() {
 		return (List<String>) getDistinct(DataRetriever.PROJECTS, "name");
-	}
-
-	public List<String> getProjectTokens(final String project,
-			final String user, final Date date) {
-		final DBObject ref = new BasicDBObject("token", 1).append("_id", 0);
-		final BasicDBObject matcher = new BasicDBObject("name", project);
-		if (user != null) {
-			matcher.append("user", user);
-		}
-		if (date != null) {
-			matcher.append("date", date.getTime());
-		}
-		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
-				ref);
-		final List<String> ret = new ArrayList<String>();
-		for (final DBObject o : cursor) {
-			ret.add((String) o.get("token"));
-		}
-		return ret;
 	}
 
 	public List<String> getProjectUsers(final String project) {
@@ -136,6 +105,38 @@ public class DataRetriever {
 		return ret;
 	}
 
+	public Map<String, ArrayList<Submission>> getSubmissions(
+			final String project) {
+		final DBObject ref = new BasicDBObject();
+		final BasicDBObject matcher = new BasicDBObject("name", project);
+		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
+				ref);
+		final Map<String, ArrayList<Submission>> ret = new HashMap<String, ArrayList<Submission>>();
+		for (final DBObject o : cursor) {
+			final String key = (String) o.get("user");
+			if (!ret.containsKey(key)) {
+				ret.put(key, new ArrayList<Submission>());
+			}
+			System.out.println(o);
+			final Submission submission = new Submission(o.get("_id"),
+					(Integer) o.get("number"), (Long) o.get("date"),
+					(String) o.get("format"));
+			ret.get(key).add(submission);
+		}
+		return ret;
+	}
+
+	public byte[] getTests(final String project) {
+		final DBObject ref = new BasicDBObject("tests", 1).append("_id", 0);
+		final DBObject matcher = new BasicDBObject("project", project);
+		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
+				ref);
+		for (final DBObject o : cursor) {
+			return (byte[]) o.get("tests");
+		}
+		return null;
+	}
+
 	@SuppressWarnings("unchecked")
 	public List<String> getUsers() {
 		return (List<String>) getDistinct(DataRetriever.USERS, "_id");
@@ -143,7 +144,7 @@ public class DataRetriever {
 
 	public List<DBFile> retrieveFiles(final Submission sub) {
 		final DBObject ref = new BasicDBObject("files", 1).append("_id", 0);
-		final DBObject matcher = new BasicDBObject("_id", sub.id);
+		final DBObject matcher = new BasicDBObject("_id", sub.getId());
 		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
 				ref);
 		final List<DBFile> files = new ArrayList<DBFile>();
@@ -152,30 +153,11 @@ public class DataRetriever {
 		final BasicDBList list = (BasicDBList) o.get("files");
 		for (final Object file : list) {
 			final String name = (String) ((DBObject) file).get("name");
-			final Date date = new Date((Long) ((DBObject) file).get("date"));
+			final long date = ((Long) ((DBObject) file).get("date"));
 			final byte[] data = (byte[]) ((DBObject) file).get("data");
 			files.add(new DBFile(name, date, data));
 		}
 		Collections.sort(files);
 		return files;
-	}
-
-	public Map<String, ArrayList<Submission>> getSubmissions(String project) {
-		final DBObject ref = new BasicDBObject("submission_number", 1)
-				.append("_id", 1).append("date", 1).append("user", 1);
-		final BasicDBObject matcher = new BasicDBObject("name", project);
-		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
-				ref);
-		final Map<String, ArrayList<Submission>> ret = new HashMap<String, ArrayList<Submission>>();
-		for (final DBObject o : cursor) {
-			String key = (String) o.get("user");
-			if (!ret.containsKey(key)) {
-				ret.put(key, new ArrayList<Submission>());
-			}
-			Submission submission = new Submission(o.get("_id"),
-					(Integer) o.get("submission_number"), (Long) o.get("date"));
-			ret.get(key).add(submission);
-		}
-		return ret;
 	}
 }

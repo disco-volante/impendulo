@@ -69,31 +69,6 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 		return ret;
 	}
 
-	private boolean executeTool() {
-		final Set<Date> dates = root.getKeys();
-		int i = 1;
-		final int n = dates.size();
-		final BasicTool tool = Tools.getTool(toolName);
-		for (final Date d : dates) {
-			if (isCancelled()) {
-				return false;
-			}
-			final String df = "(" + i + "/" + n + ") "
-					+ ToolRunner.dateFormat.format(d);
-			final File file = root.unpack(d, sourceDir);
-			if (file == null) {
-				return false;
-			}
-			final File workDir = new File(tempDir);
-			publish(df + ": running " + tool);
-			final Pair p = tool.run(workDir, file.getParentFile()
-					.getAbsolutePath());
-			root.setReport(d, toolName, p.outPut());
-			setProgress(i++ * 100 / n);
-		}
-		return true;
-	}
-
 	private boolean executeTests() {
 		prepareTestdir();
 		final Set<Date> dates = root.getKeys();
@@ -114,6 +89,31 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 			root.unpack(d, sourceDir);
 			final File workDir = new File(sourceDir);
 			runTests(d, df, compiler, interpreter, workDir);
+			setProgress(i++ * 100 / n);
+		}
+		return true;
+	}
+
+	private boolean executeTool() {
+		final Set<Date> dates = root.getKeys();
+		int i = 1;
+		final int n = dates.size();
+		final BasicTool tool = Tools.getTool(toolName);
+		for (final Date d : dates) {
+			if (isCancelled()) {
+				return false;
+			}
+			final String df = "(" + i + "/" + n + ") "
+					+ ToolRunner.dateFormat.format(d);
+			final File file = root.unpack(d, sourceDir);
+			if (file == null) {
+				return false;
+			}
+			final File workDir = new File(tempDir);
+			publish(df + ": running " + tool);
+			final Pair p = tool.run(workDir, file.getParentFile()
+					.getAbsolutePath());
+			root.setReport(d, toolName, p.outPut());
 			setProgress(i++ * 100 / n);
 		}
 		return true;

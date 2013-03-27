@@ -37,14 +37,17 @@ public class DBPane extends JPanel {
 		 * 
 		 */
 		private static final long serialVersionUID = -7407750081315305369L;
-		public HashMap<String, Project> projects;
+		private HashMap<String, Project> projects;
+		private HashMap<Submission, Archive> submissionData;
 		private Level level;
-		private String project, user;
+		private Project project;
+		private String user;
 		private Submission sub;
 
 		public ProjectListModel(final List<String> projList) {
+			submissionData = new HashMap<Submission, Archive>();
 			projects = new HashMap<String, Project>();
-			for (String p : projList) {
+			for (final String p : projList) {
 				projects.put(p, new Project(p));
 				addElement(p);
 			}
@@ -60,23 +63,38 @@ public class DBPane extends JPanel {
 
 		public void drillDown(final String s, final int index) {
 			if (level.equals(Level.PROJECTS)) {
-				project = s;
-				load(projects.get(project));
-				addAll(projects.get(project).users);
+				project = projects.get(s);
+				load(project);
+				addAll(project.getUsers());
 				label.setText("Users");
 				level = Level.USERS;
 			} else if (level.equals(Level.USERS)) {
 				user = s;
-				addAll(projects.get(project).getSubmissions(user));
+				addAll(project.getSubmissions(user));
 				level = Level.SUBMISSIONS;
 				label.setText("Tokens for: " + user);
 			} else if (level.equals(Level.SUBMISSIONS)) {
-				sub = projects.get(project).submissions.get(user).get(index);
-				if (projects.get(project).submissionData.get(sub) == null) {
-					List<DBFile> files = retriever.retrieveFiles(sub);
-					projects.get(project).submissionData.put(sub, new Archive(project,
-							sub.toString(), files));
+				sub = project.getSubmission(user, index);
+				if (submissionData.get(sub) == null) {
+					final List<DBFile> files = retriever.retrieveFiles(sub);
+					boolean archive = sub.getFormat().equals("UNCOMPRESSED") ? false
+							: true;
+					submissionData.put(sub,
+							new Archive(project.getName(), sub.toString(),
+									files, archive));
 				}
+			}
+		}
+
+		public Archive getProjectData() {
+			return submissionData.get(sub);
+		}
+
+		private void load(final Project proj) {
+			if (!proj.isLoaded()) {
+				proj.addUsers(retriever.getProjectUsers(proj.getName()));
+				proj.addSubmissions(retriever.getSubmissions(project.getName()));
+				proj.setLoaded(true);
 			}
 		}
 
@@ -86,23 +104,10 @@ public class DBPane extends JPanel {
 				level = Level.PROJECTS;
 				label.setText("Projects");
 			} else if (level.equals(Level.SUBMISSIONS)) {
-				addAll(projects.get(project).users);
+				addAll(project.getUsers());
 				level = Level.USERS;
 				label.setText("Users");
-			} 
-		}
-
-		public void load(Project proj) {
-			if (!proj.loaded) {
-				final List<String> temp0 = retriever.getProjectUsers(proj.name);
-				proj.users = temp0.toArray(new String[temp0.size()]);
-				proj.submissions.putAll(retriever.getSubmissions(project));
-				proj.loaded = true;
 			}
-		}
-
-		public Archive getProjectData() {
-			return projects.get(project).submissionData.get(sub);
 		}
 
 	}
@@ -131,8 +136,6 @@ public class DBPane extends JPanel {
 
 	private JLabel label;
 
-	protected List<DBFile> projectData;
-
 	public DBPane(final DataRetriever retriever) {
 		super(new VerticalBagLayout());
 		this.retriever = retriever;
@@ -160,25 +163,27 @@ public class DBPane extends JPanel {
 		final JScrollPane itemScrollPane = new JScrollPane(itemList);
 		itemScrollPane.setMinimumSize(d);
 		itemScrollPane.setPreferredSize(d);
-		itemScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-		itemScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		itemScrollPane
+				.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+		itemScrollPane
+				.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
 		label = new JLabel("Projects");
 		label.setLabelFor(itemList);
 
-		JButton upBtn = new JButton(FMV.getMyImageIcon("upfolder.gif"));
+		final JButton upBtn = new JButton(FMV.getMyImageIcon("upfolder.gif"));
 		upBtn.addActionListener(new ActionListener() {
 
 			@Override
-			public void actionPerformed(ActionEvent arg0) {
+			public void actionPerformed(final ActionEvent arg0) {
 				((ProjectListModel) itemList.getModel()).moveUp();
 			}
 		});
 		upBtn.setBorderPainted(false);
-		upBtn.setContentAreaFilled(false); 
-		upBtn.setFocusPainted(false); 
+		upBtn.setContentAreaFilled(false);
+		upBtn.setFocusPainted(false);
 		upBtn.setOpaque(false);
-		JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		final JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		top.add(upBtn);
 		top.add(label);
 		add(top);

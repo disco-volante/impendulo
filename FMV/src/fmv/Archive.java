@@ -4,6 +4,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
@@ -28,7 +30,7 @@ public class Archive {
 
 	private boolean isCompiled = false;
 
-	private boolean isArchive;
+	private final boolean isArchive;
 	/**
 	 * The model for the list of ZIP files. (Think MVC.)
 	 */
@@ -71,25 +73,53 @@ public class Archive {
 			isCompiled = true;
 		}
 	}
-	
+
 	/**
 	 * Constructor. Stores the name of the ZIP file.
-	 * @param s 
+	 * 
+	 * @param s
 	 */
 	@SuppressWarnings("rawtypes")
-	public Archive(final String project, String name, List<DBFile> files) {
+	public Archive(final String project, final String name,
+			final List<DBFile> files, boolean archive) {
 		this.files = files;
-		this.name = name;
 		listModel = new DefaultListModel();
-		isArchive = false;
+		isArchive = archive;
+		if (isArchive) {
+			this.name = writeZip(files.get(0));
+		} else{
+			this.name = name;
+		}
 		if ("true".equals(FMV.getArchiveProperty(this, "false"))) {
 			final ArchiveData data = new ArchiveData();
 			data.readProperties(this);
 			FMV.tablePane.addData(name, data);
 			isCompiled = true;
-		} else{
+		} else {
 			tests = FMV.getTests(project);
 		}
+	}
+
+	private String writeZip(DBFile dbFile) {
+		String outfile = FMV.ZIP_DIR + File.separator + dbFile.getName();
+		FileOutputStream fos = null;
+		try {
+			fos = new FileOutputStream(new File(outfile));
+			fos.write(dbFile.getBytes());
+		} catch (final FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (fos != null) {
+					fos.close();
+				}
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return outfile;
 	}
 
 	/**
@@ -122,33 +152,6 @@ public class Archive {
 			r = r.addChild(components[i]);
 		}
 		r.addDetails(new Date(Long.parseLong(components[last + 1])), in);
-	}
-
-	public void setup() {
-		if (isArchive) {
-			ZipFile z;
-			try {
-				z = new ZipFile(dir + File.separator + name);
-				final Enumeration<? extends ZipEntry> zz = z.entries();
-				while (zz.hasMoreElements()) {
-					final ZipEntry e = zz.nextElement();
-					if (e.isDirectory()) {
-						continue;
-					}
-					addItem(e.getName(), z.getInputStream(e));
-				}
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-		} else {
-			for (DBFile file : files) {
-				addItem(file.name, new ByteArrayInputStream(file.data));
-			}
-		}
-		rootItem.canonize();
-		listModel.clear();
-		rootItem.addToListModel(listModel, this);
-		isSetup = true;
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -198,6 +201,34 @@ public class Archive {
 		final Source s = (Source) listModel.getElementAt(j);
 		FMV.diffPane.setItem(this, s);
 		FMV.timeGraph.setSource(this, s);
+	}
+
+	public void setup() {
+		if (isArchive) {
+			ZipFile z;
+			try {
+				z = new ZipFile(dir + File.separator + name);
+				final Enumeration<? extends ZipEntry> zz = z.entries();
+				while (zz.hasMoreElements()) {
+					final ZipEntry e = zz.nextElement();
+					if (e.isDirectory()) {
+						continue;
+					}
+					addItem(e.getName(), z.getInputStream(e));
+				}
+			} catch (final IOException e1) {
+				e1.printStackTrace();
+			}
+		} else {
+			for (final DBFile file : files) {
+				addItem(file.getName(),
+						new ByteArrayInputStream(file.getBytes()));
+			}
+		}
+		rootItem.canonize();
+		listModel.clear();
+		rootItem.addToListModel(listModel, this);
+		isSetup = true;
 	}
 
 	/**
