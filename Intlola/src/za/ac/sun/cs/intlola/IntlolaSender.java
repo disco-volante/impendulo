@@ -72,14 +72,16 @@ public class IntlolaSender {
 			params.addProperty("PROJECT", project);
 			params.addProperty("FORMAT", format);
 			snd.write(params.toString().getBytes());
-			read = rcv.read(buffer);
 			snd.flush();
+			read = rcv.read(buffer);
 		} catch (final IOException e) {
+			e.printStackTrace();
 			Intlola.log(e);
 		} finally {
 			try {
 				closeConnection();
 			} catch (final IOException e) {
+				e.printStackTrace();
 				Intlola.log(e);
 			}
 
@@ -104,12 +106,17 @@ public class IntlolaSender {
 			params.addProperty("TOKEN", token);
 			snd.write(params.toString().getBytes());
 			snd.flush();
+			final byte[] buffer = new byte[1024];
+			rcv.read(buffer);
+			System.out.println(new String(buffer));
 		} catch (final IOException e) {
+			e.printStackTrace();
 			Intlola.log(e);
 		} finally {
 			try {
 				closeConnection();
 			} catch (final IOException e) {
+				e.printStackTrace();
 				Intlola.log(e);
 			}
 
@@ -137,7 +144,8 @@ public class IntlolaSender {
 	}
 
 	private void sendFile(final String fileName) {
-		final byte[] buffer = new byte[1024];
+		byte[] readBuffer = new byte[2048];
+		byte[] writeBuffer = new byte[2048];
 		FileInputStream fis = null;
 		try {
 			openConnection();
@@ -153,16 +161,20 @@ public class IntlolaSender {
 			params.addProperty("TOKEN", token);
 			params.addProperty("FILENAME", sendName);
 			snd.write(params.toString().getBytes());
-			rcv.read(buffer);
-			if (new String(buffer).startsWith("ACCEPT")) {
+			rcv.read(readBuffer);
+			if (new String(readBuffer).startsWith("ACCEPT")) {
 				int count;
 				fis = new FileInputStream(fileName);
-				while ((count = fis.read(buffer)) >= 0) {
-					snd.write(buffer, 0, count);
+				while ((count = fis.read(writeBuffer)) >= 0) {
+					snd.write(writeBuffer, 0, count);
 				}
-				snd.flush();
+				snd.write("EOF".getBytes());
 			}
+			snd.flush();
+			rcv.read(readBuffer);
+			System.out.println(new String(readBuffer));
 		} catch (final IOException e) {
+			e.printStackTrace();
 			Intlola.log(e);
 		} finally {
 			try {
@@ -171,6 +183,7 @@ public class IntlolaSender {
 					fis.close();
 				}
 			} catch (final IOException e) {
+				e.printStackTrace();
 				Intlola.log(e);
 			}
 
@@ -179,7 +192,8 @@ public class IntlolaSender {
 	}
 
 	public void sendTests(final String testFile) {
-		final byte[] buffer = new byte[1024];
+		byte[] readBuffer = new byte[2048];
+		byte[] writeBuffer = new byte[2048];
 		FileInputStream fis = null;
 		try {
 			openConnection();
@@ -187,16 +201,21 @@ public class IntlolaSender {
 			params.addProperty("TYPE", "TESTS");
 			params.addProperty("PROJECT", getProject());
 			snd.write(params.toString().getBytes());
-			rcv.read(buffer);
-			if (new String(buffer).startsWith("ACCEPT")) {
+			rcv.read(readBuffer);
+
+			if (new String(readBuffer).startsWith("ACCEPT")) {
 				int count;
 				fis = new FileInputStream(testFile);
-				while ((count = fis.read(buffer)) >= 0) {
-					snd.write(buffer, 0, count);
+				while ((count = fis.read(writeBuffer)) >= 0) {
+					snd.write(writeBuffer, 0, count);
 				}
+				snd.write("EOF".getBytes());
 			}
 			snd.flush();
+			rcv.read(readBuffer);
+			System.out.println(new String(readBuffer));
 		} catch (final IOException e) {
+			e.printStackTrace();
 			Intlola.log(e);
 		} finally {
 			try {
@@ -205,6 +224,7 @@ public class IntlolaSender {
 					fis.close();
 				}
 			} catch (final IOException e) {
+				e.printStackTrace();
 				Intlola.log(e);
 			}
 
