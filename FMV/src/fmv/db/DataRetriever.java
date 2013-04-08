@@ -20,10 +20,10 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
+import com.mongodb.Mongo;
 
 public class DataRetriever {
-	private final MongoClient client;
+	private final Mongo client;
 	private final DB db;
 	private static final String DB_NAME = "impendulo";
 	private static final String PROJECTS = "projects";
@@ -61,7 +61,7 @@ public class DataRetriever {
 	}
 
 	public DataRetriever(final String url) throws UnknownHostException {
-		client = new MongoClient(url);
+		client = new Mongo(url);
 		db = client.getDB(DataRetriever.DB_NAME);
 	}
 

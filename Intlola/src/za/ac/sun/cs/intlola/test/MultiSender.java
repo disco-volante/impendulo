@@ -36,7 +36,8 @@ public class MultiSender {
 				for (final String file : files) {
 					sender.send(SendMode.ONSAVE, file);
 				}
-				sender.send(SendMode.ONSTOP, null);
+				sender.logout();
+				System.out.println("Success");
 			}
 		}
 

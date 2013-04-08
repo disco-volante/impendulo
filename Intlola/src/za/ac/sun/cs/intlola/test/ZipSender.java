@@ -33,7 +33,7 @@ public class ZipSender {
 					SendMode.ONSTOP, PreferenceConstants.LOCAL_ADDRESS,
 					PreferenceConstants.PORT);
 			if (sender.login(passwd)) {
-				sender.send(SendMode.ONSTOP, zip);
+				sender.sendFile(zip);
 			}
 		}
 

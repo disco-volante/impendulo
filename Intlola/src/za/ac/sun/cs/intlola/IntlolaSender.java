@@ -5,11 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.Socket;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 
 import com.google.gson.JsonObject;
 
@@ -18,9 +14,7 @@ public class IntlolaSender {
 	private final SendMode mode;
 
 	private final String uname, project, address;
-
-	private String token;
-
+	private static final String OK = "OK";
 	private final int port;
 	private OutputStream snd = null;
 	private Socket sock = null;
@@ -58,9 +52,7 @@ public class IntlolaSender {
 	}
 
 	public boolean login(final String password) {
-		boolean ret = false;
 		final byte[] buffer = new byte[1024];
-		int read = 0;
 		try {
 			openConnection();
 			final String format = mode.equals(SendMode.ONSAVE) ? "UNCOMPRESSED"
@@ -73,42 +65,32 @@ public class IntlolaSender {
 			params.addProperty("FORMAT", format);
 			snd.write(params.toString().getBytes());
 			snd.flush();
-			read = rcv.read(buffer);
+			rcv.read(buffer);
+			final String received = new String(buffer);
+			if (received.startsWith(OK)) {
+				loggedIn = true;
+			} else {
+				System.out.println(received);
+			}
 		} catch (final IOException e) {
 			e.printStackTrace();
 			Intlola.log(e);
-		} finally {
-			try {
-				closeConnection();
-			} catch (final IOException e) {
-				e.printStackTrace();
-				Intlola.log(e);
-			}
-
 		}
-		if (read > 0) {
-			final String received = new String(Arrays.copyOfRange(buffer, 0,
-					read));
-			if (received.startsWith("TOKEN:")) {
-				token = received.substring(received.indexOf(':') + 1);
-				ret = true;
-				loggedIn = true;
-			}
-		}
-		return ret;
+		return loggedIn;
 	}
 
-	private void logout() {
+	public void logout() {
 		try {
-			openConnection();
 			final JsonObject params = new JsonObject();
 			params.addProperty("TYPE", "LOGOUT");
-			params.addProperty("TOKEN", token);
 			snd.write(params.toString().getBytes());
 			snd.flush();
 			final byte[] buffer = new byte[1024];
 			rcv.read(buffer);
-			System.out.println(new String(buffer));
+			final String received = new String(buffer);
+			if (!received.startsWith(OK)) {
+				System.out.println(received);
+			}
 		} catch (final IOException e) {
 			e.printStackTrace();
 			Intlola.log(e);
@@ -143,12 +125,11 @@ public class IntlolaSender {
 
 	}
 
-	private void sendFile(final String fileName) {
+	public void sendFile(final String fileName) {
 		byte[] readBuffer = new byte[2048];
 		byte[] writeBuffer = new byte[2048];
 		FileInputStream fis = null;
 		try {
-			openConnection();
 			String sendName;
 			if (fileName.contains(File.separator)) {
 				sendName = fileName.substring(fileName
@@ -158,27 +139,32 @@ public class IntlolaSender {
 			}
 			final JsonObject params = new JsonObject();
 			params.addProperty("TYPE", "SEND");
-			params.addProperty("TOKEN", token);
 			params.addProperty("FILENAME", sendName);
 			snd.write(params.toString().getBytes());
+			snd.flush();
 			rcv.read(readBuffer);
-			if (new String(readBuffer).startsWith("ACCEPT")) {
+			String received = new String(readBuffer);
+			if (received.startsWith(OK)) {
 				int count;
 				fis = new FileInputStream(fileName);
 				while ((count = fis.read(writeBuffer)) >= 0) {
 					snd.write(writeBuffer, 0, count);
 				}
 				snd.write("EOF".getBytes());
+			} else {
+				System.out.println(received);
 			}
 			snd.flush();
 			rcv.read(readBuffer);
-			System.out.println(new String(readBuffer));
+			received = new String(readBuffer);
+			if (!received.startsWith(OK)) {
+				System.out.println(received);
+			}
 		} catch (final IOException e) {
 			e.printStackTrace();
 			Intlola.log(e);
 		} finally {
 			try {
-				closeConnection();
 				if (fis != null) {
 					fis.close();
 				}
@@ -196,30 +182,33 @@ public class IntlolaSender {
 		byte[] writeBuffer = new byte[2048];
 		FileInputStream fis = null;
 		try {
-			openConnection();
 			final JsonObject params = new JsonObject();
 			params.addProperty("TYPE", "TESTS");
 			params.addProperty("PROJECT", getProject());
 			snd.write(params.toString().getBytes());
 			rcv.read(readBuffer);
-
-			if (new String(readBuffer).startsWith("ACCEPT")) {
+			String received = new String(readBuffer);
+			if (received.startsWith(OK)) {
 				int count;
 				fis = new FileInputStream(testFile);
 				while ((count = fis.read(writeBuffer)) >= 0) {
 					snd.write(writeBuffer, 0, count);
 				}
 				snd.write("EOF".getBytes());
+			} else {
+				System.out.println(received);
 			}
 			snd.flush();
 			rcv.read(readBuffer);
-			System.out.println(new String(readBuffer));
+			received = new String(readBuffer);
+			if (!received.startsWith(OK)) {
+				System.out.println(received);
+			}
 		} catch (final IOException e) {
 			e.printStackTrace();
 			Intlola.log(e);
 		} finally {
 			try {
-				closeConnection();
 				if (fis != null) {
 					fis.close();
 				}
@@ -229,25 +218,6 @@ public class IntlolaSender {
 			}
 
 		}
-	}
-
-	protected String sh1(final String password) {
-		String ret = null;
-		try {
-			final MessageDigest cript = MessageDigest.getInstance("SHA-1");
-			cript.reset();
-			cript.update(password.getBytes("utf8"));
-			final byte[] mdbytes = cript.digest();
-			final StringBuffer hexString = new StringBuffer();
-			for (final byte mdbyte : mdbytes) {
-				hexString.append(Integer.toHexString(0xFF & mdbyte));
-			}
-			ret = hexString.toString();
-		} catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-		return ret;
-
 	}
 
 }
