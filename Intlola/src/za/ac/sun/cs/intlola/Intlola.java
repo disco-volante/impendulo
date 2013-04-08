@@ -6,8 +6,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -21,7 +19,6 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -34,6 +31,7 @@ import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
+import za.ac.sun.cs.intlola.gui.LoginDialog;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
 public class Intlola extends AbstractUIPlugin implements IStartup {
@@ -48,8 +46,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	public static final int LAUNCHED = -6666;
 
 	private static final int ZIP_BUFFER_SIZE = 2048;
-
-	private static final String PATTERN = "([^/]*/)*[-a-zA-z0-9]+([.][-a-zA-z0-9]+)*[+][0-9]+";
 
 	private static Intlola plugin;
 
@@ -138,19 +134,20 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	private static boolean login(final Shell shell) {
-		final InputDialog dialog = new InputDialog(shell, "Password",
-				"Please enter password for: " + Intlola.sender.getUsername(),
-				"", null);
-		boolean loggedIn = false;
-		while (!loggedIn) {
-			final int code = dialog.open();
-			if (code == Window.OK) {
-				loggedIn = Intlola.sender.login(dialog.getValue());
-			} else {
-				return false;
+		if (Intlola.sender.openConnection()) {
+			final LoginDialog dialog = new LoginDialog(shell,
+					Intlola.sender.getUsername());
+			while (!Intlola.sender.loggedIn()) {
+				final int code = dialog.open();
+				if (code == Window.OK) {
+					Intlola.sender.login(dialog.getUserName(),
+							dialog.getPassword());
+				} else {
+					break;
+				}
 			}
 		}
-		return false;
+		return Intlola.sender.loggedIn();
 	}
 
 	public static void removeDir(final String dirname, final boolean removeRoot) {
@@ -166,39 +163,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 				MessageDialog.openInformation(shell, "Unsaved data",
 						"Intlola data not saved - still recording.");
 				return;
-			} else if (filename.matches(Intlola.PATTERN)) {
-				final String hostname = filename.replaceAll(Intlola.PATTERN,
-						"$2");
-				final int port = Integer.parseInt(filename.replaceAll(
-						Intlola.PATTERN, "$4"));
-				try {
-					final Socket requestSocket = new Socket(hostname, port);
-					final BufferedOutputStream out = new BufferedOutputStream(
-							requestSocket.getOutputStream());
-					final ZipOutputStream outzip = new ZipOutputStream(out);
-					Intlola.zipDir(outzip, Intlola.plugin.getStateLocation()
-							.toFile());
-					outzip.close();
-					out.flush();
-					out.close();
-					requestSocket.close();
-					project.setSessionProperty(Intlola.RECORD_KEY, null);
-					isDone = true;
-				} catch (final CoreException e) {
-					Intlola.log(e);
-				} catch (final UnknownHostException e) {
-					MessageDialog.openError(shell, "Problem",
-							"Could not connect to \"" + hostname + ":" + port
-									+ "\".");
-					Intlola.log(e);
-				} catch (final IOException e) {
-					MessageDialog.openError(
-							shell,
-							"Problem",
-							"IO error during zip file transmission ("
-									+ e.getMessage() + ")");
-					Intlola.log(e);
-				}
 			} else {
 				try {
 					final FileOutputStream outfile = new FileOutputStream(
@@ -288,10 +252,10 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		try {
 			Intlola.removeDir(Intlola.plugin.getStateLocation().toString(),
 					false);
-			project.setSessionProperty(Intlola.RECORD_KEY, Intlola.RECORD_ON);
 			Intlola.sender = Intlola.getSender(project.getName());
-			if (!Intlola.login(shell)) {
-				Intlola.stopRecord(project, shell);
+			if (Intlola.login(shell)) {
+				project.setSessionProperty(Intlola.RECORD_KEY,
+						Intlola.RECORD_ON);
 			}
 		} catch (final CoreException e) {
 			Intlola.log(e);

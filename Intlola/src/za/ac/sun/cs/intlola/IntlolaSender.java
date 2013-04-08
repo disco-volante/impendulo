@@ -13,7 +13,11 @@ public class IntlolaSender {
 
 	private final SendMode mode;
 
-	private final String uname, project, address;
+	private String uname;
+
+	private final String project;
+
+	private final String address;
 	private static final String OK = "OK";
 	private final int port;
 	private OutputStream snd = null;
@@ -51,10 +55,12 @@ public class IntlolaSender {
 		return uname;
 	}
 
-	public boolean login(final String password) {
+	public void login(final String username, String password) {
+		if(username != null && !uname.equals(username)){
+			uname = username;
+		}
 		final byte[] buffer = new byte[1024];
 		try {
-			openConnection();
 			final String format = mode.equals(SendMode.ONSAVE) ? "UNCOMPRESSED"
 					: "ZIP";
 			final JsonObject params = new JsonObject();
@@ -76,7 +82,6 @@ public class IntlolaSender {
 			e.printStackTrace();
 			Intlola.log(e);
 		}
-		return loggedIn;
 	}
 
 	public void logout() {
@@ -105,10 +110,17 @@ public class IntlolaSender {
 		}
 	}
 
-	private void openConnection() throws IOException {
-		sock = new Socket(address, port);
-		snd = sock.getOutputStream();
-		rcv = sock.getInputStream();
+	public boolean openConnection() {
+		boolean ret = true;
+		try {
+			sock = new Socket(address, port);
+			snd = sock.getOutputStream();
+			rcv = sock.getInputStream();
+		} catch (IOException e) {
+			e.printStackTrace();
+			ret = false;
+		}
+		return ret;
 	}
 
 	public void send(final SendMode check, final String filename) {
@@ -218,6 +230,10 @@ public class IntlolaSender {
 			}
 
 		}
+	}
+
+	public boolean loggedIn() {
+		return loggedIn;
 	}
 
 }

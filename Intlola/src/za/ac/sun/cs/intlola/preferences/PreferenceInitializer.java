@@ -14,8 +14,6 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PreferenceConstants.P_SEND, PreferenceConstants.STOP);
 		store.setDefault(PreferenceConstants.P_UNAME,
 				PreferenceConstants.DEFAULT);
-		store.setDefault(PreferenceConstants.P_PASSWD,
-				PreferenceConstants.PASSWORD);
 		store.setDefault(PreferenceConstants.P_ADDRESS,
 				PreferenceConstants.REMOTE_ADDRESS);
 		store.setDefault(PreferenceConstants.P_PORT, PreferenceConstants.PORT);

@@ -32,7 +32,8 @@ public class ZipSender {
 			final IntlolaSender sender = new IntlolaSender(user, "Data",
 					SendMode.ONSTOP, PreferenceConstants.LOCAL_ADDRESS,
 					PreferenceConstants.PORT);
-			if (sender.login(passwd)) {
+			sender.login(user, passwd);
+			if (sender.loggedIn()) {
 				sender.sendFile(zip);
 			}
 		}

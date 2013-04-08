@@ -22,8 +22,6 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 	public void createFieldEditors() {
 		addField(new StringFieldEditor(PreferenceConstants.P_UNAME,
 				"Username:", getFieldEditorParent()));
-		addField(new StringFieldEditor(PreferenceConstants.P_PASSWD,
-				"Password:", getFieldEditorParent()));
 		addField(new StringFieldEditor(PreferenceConstants.P_ADDRESS,
 				"Server address:", getFieldEditorParent()));
 		addField(new IntegerFieldEditor(PreferenceConstants.P_PORT,

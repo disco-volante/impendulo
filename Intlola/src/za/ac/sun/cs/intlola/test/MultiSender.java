@@ -32,7 +32,8 @@ public class MultiSender {
 			final IntlolaSender sender = new IntlolaSender(user, "Data",
 					SendMode.ONSAVE, PreferenceConstants.LOCAL_ADDRESS,
 					PreferenceConstants.PORT);
-			if (sender.login(passwd)) {
+			sender.login(user, passwd);
+			if (sender.loggedIn()) {
 				for (final String file : files) {
 					sender.send(SendMode.ONSAVE, file);
 				}
