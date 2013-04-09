@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import za.ac.sun.cs.intlola.FileType;
 import za.ac.sun.cs.intlola.IntlolaSender;
 import za.ac.sun.cs.intlola.SendMode;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
@@ -36,7 +37,7 @@ public class MultiSender {
 				sender.login(user, passwd);
 				if (sender.loggedIn()) {
 					for (final String file : files) {
-						sender.send(SendMode.MULTIPLE, file);
+						sender.sendFile(file, FileType.SOURCE);
 					}
 					sender.logout();
 					System.out.println("Success");

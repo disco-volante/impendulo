@@ -23,8 +23,6 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IStartup;
 import org.eclipse.ui.handlers.HandlerUtil;
@@ -51,43 +49,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	public static Intlola getDefault() {
 		return Intlola.plugin;
-	}
-
-	private static String getFilename(final Shell shell) {
-		final FileDialog dialog = new FileDialog(shell, SWT.SAVE);
-		dialog.setFileName(Intlola.sender.getProject() + ".zip");
-		String filename = null;
-		boolean isDone = false;
-		while (!isDone) {
-			filename = dialog.open();
-			if (filename == null) {
-				isDone = true;
-			} else {
-				final File file = new File(filename);
-				if (file.exists()) {
-					if (file.isFile()) {
-						isDone = MessageDialog
-								.openQuestion(
-										shell,
-										"Replace?",
-										"File \""
-												+ filename
-												+ "\" already exists.  Do you want to replace it?");
-					} else {
-						MessageDialog
-								.openInformation(
-										shell,
-										"Irregular file",
-										"File \""
-												+ filename
-												+ "\" exists, but it is not a regular file.  Please choose another file.");
-					}
-				} else {
-					isDone = true;
-				}
-			}
-		}
-		return filename;
 	}
 
 	public static ImageDescriptor getImageDescriptor(final String path) {
@@ -156,43 +117,40 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	public static void stopRecord(final IProject project, final Shell shell) {
 		Intlola.log(null, "Intlola record stopping", project.getName());
-		boolean isDone = false;
-		while (!isDone) {
-			final String filename = Intlola.getFilename(shell);
-			if (filename == null) {
-				MessageDialog.openInformation(shell, "Unsaved data",
-						"Intlola data not saved - still recording.");
-				return;
-			} else {
-				try {
-					final FileOutputStream outfile = new FileOutputStream(
-							filename);
-					final BufferedOutputStream out = new BufferedOutputStream(
-							outfile);
-					final ZipOutputStream outzip = new ZipOutputStream(out);
-					Intlola.zipDir(outzip, Intlola.plugin.getStateLocation()
-							.toFile());
-					outzip.close();
-					out.flush();
-					out.close();
-					project.setSessionProperty(Intlola.RECORD_KEY, null);
-					isDone = true;
-					Intlola.sender.send(SendMode.SINGLE, filename);
-				} catch (final CoreException e) {
-					Intlola.log(e);
-				} catch (final FileNotFoundException e) {
-					MessageDialog.openError(shell, "Problem",
-							"Could not open file \"" + filename + "\".");
-					Intlola.log(e);
-				} catch (final IOException e) {
-					MessageDialog.openError(
-							shell,
-							"Problem",
-							"IO error during zip file creation ("
-									+ e.getMessage() + ")");
-					Intlola.log(e);
-				}
-			}
+		if (sender.mode.equals(SendMode.SINGLE)) {
+			sendZip(shell);
+		} else if(sender.mode.equals(SendMode.MULTIPLE)) {
+			Intlola.sender.logout();
+		}
+		try {
+			project.setSessionProperty(Intlola.RECORD_KEY, null);
+		} catch (CoreException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	private static void sendZip(final Shell shell) {
+		String filename = Intlola.sender.getProject() + ".zip";
+		try {
+			final FileOutputStream outfile = new FileOutputStream(filename);
+			final BufferedOutputStream out = new BufferedOutputStream(outfile);
+			final ZipOutputStream outzip = new ZipOutputStream(out);
+			Intlola.zipDir(outzip, Intlola.plugin.getStateLocation().toFile());
+			outzip.close();
+			out.flush();
+			out.close();
+			Intlola.sender.sendFile(filename, FileType.ZIP);
+			Intlola.sender.logout();
+		} catch (final FileNotFoundException e) {
+			MessageDialog.openError(shell, "Problem", "Could not open file \""
+					+ filename + "\".");
+			Intlola.log(e);
+		} catch (final IOException e) {
+			MessageDialog.openError(shell, "Problem",
+					"IO error during zip file creation (" + e.getMessage()
+							+ ")");
+			Intlola.log(e);
 		}
 	}
 

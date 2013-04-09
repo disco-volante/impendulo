@@ -14,7 +14,6 @@ import java.util.zip.ZipFile;
 
 import org.bson.types.ObjectId;
 
-import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -27,6 +26,7 @@ public class DataRetriever {
 	private final DB db;
 	private static final String DB_NAME = "impendulo";
 	private static final String PROJECTS = "projects";
+	private static final String FILES = "files";
 
 	@SuppressWarnings("resource")
 	public static void main(final String args[]) {
@@ -101,8 +101,9 @@ public class DataRetriever {
 
 	public byte[] getTests(final String project) {
 		byte[] data = null;
-		final BasicDBList list = getFiles(new BasicDBObject("project", project)
-				.append("mode", "TEST"));
+		final DBObject sub = getSingle(DataRetriever.PROJECTS, new BasicDBObject("project", project)
+				.append("mode", "TEST"), new BasicDBObject());
+		List<DBObject> list = getFiles(new BasicDBObject("subid", sub.get("_id")));
 		if (list != null && list.size() > 0) {
 			DBObject obj = ((DBObject) list.get(0));
 			if (obj != null) {
@@ -112,24 +113,21 @@ public class DataRetriever {
 		return data;
 	}
 
-	public BasicDBList getFiles(BasicDBObject matcher) {
-		final DBObject ref = new BasicDBObject("files", 1);
-		final DBObject o = getSingle(DataRetriever.PROJECTS, matcher, ref);
-		BasicDBList list = null;
-		if (o != null) {
-			list = (BasicDBList) o.get("files");
-		}
-		return list;
+	public List<DBObject> getFiles(BasicDBObject matcher) {
+		final DBObject ref = new BasicDBObject();
+		final DBCursor o = getMultiple(DataRetriever.FILES, matcher, ref);
+		return o.toArray();
 	}
 
 	public List<DBFile> retrieveFiles(final Submission sub) {
-		final BasicDBList list = getFiles(new BasicDBObject("_id", sub.getId()));
+		final List<DBObject> list = getFiles(new BasicDBObject("subid",
+				sub.getId()));
 		final List<DBFile> files = new ArrayList<DBFile>();
 		if (list != null) {
-			for (final Object file : list) {
-				final String name = (String) ((DBObject) file).get("name");
-				final long date = (Long) ((DBObject) file).get("date");
-				final byte[] data = (byte[]) ((DBObject) file).get("data");
+			for (final DBObject file : list) {
+				final String name = (String) file.get("name");
+				final long date = (Long) file.get("date");
+				final byte[] data = (byte[]) file.get("data");
 				files.add(new DBFile(name, date, data));
 			}
 			Collections.sort(files);

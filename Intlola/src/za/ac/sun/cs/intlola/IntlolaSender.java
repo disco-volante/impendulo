@@ -11,7 +11,7 @@ import com.google.gson.JsonObject;
 
 public class IntlolaSender {
 
-	private final SendMode mode;
+	protected final SendMode mode;
 
 	private String uname;
 
@@ -121,21 +121,7 @@ public class IntlolaSender {
 		return ret;
 	}
 
-	public void send(final SendMode check, final String filename) {
-		if (loggedIn) {
-			if (check.equals(SendMode.SINGLE) && mode.equals(SendMode.MULTIPLE)) {
-				logout();
-			} else if (check.equals(mode)) {
-				sendFile(filename);
-				if (mode.equals(SendMode.SINGLE)) {
-					logout();
-				}
-			}
-		}
-
-	}
-
-	public void sendFile(final String fileName) {
+	public void sendFile(final String fileName, FileType ftype) {
 		byte[] readBuffer = new byte[2048];
 		byte[] writeBuffer = new byte[2048];
 		FileInputStream fis = null;
@@ -150,6 +136,7 @@ public class IntlolaSender {
 			final JsonObject params = new JsonObject();
 			params.addProperty("TYPE", "SEND");
 			params.addProperty("FILENAME", sendName);
+			params.addProperty("FILETYPE", ftype.toString());
 			snd.write(params.toString().getBytes());
 			snd.flush();
 			rcv.read(readBuffer);
