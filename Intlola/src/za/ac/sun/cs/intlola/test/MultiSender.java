@@ -30,15 +30,17 @@ public class MultiSender {
 		@Override
 		public void run() {
 			final IntlolaSender sender = new IntlolaSender(user, "Data",
-					SendMode.ONSAVE, PreferenceConstants.LOCAL_ADDRESS,
+					SendMode.MULTIPLE, PreferenceConstants.LOCAL_ADDRESS,
 					PreferenceConstants.PORT);
-			sender.login(user, passwd);
-			if (sender.loggedIn()) {
-				for (final String file : files) {
-					sender.send(SendMode.ONSAVE, file);
+			if(sender.openConnection()){
+				sender.login(user, passwd);
+				if (sender.loggedIn()) {
+					for (final String file : files) {
+						sender.send(SendMode.MULTIPLE, file);
+					}
+					sender.logout();
+					System.out.println("Success");
 				}
-				sender.logout();
-				System.out.println("Success");
 			}
 		}
 

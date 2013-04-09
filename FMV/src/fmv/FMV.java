@@ -428,24 +428,28 @@ public class FMV {
 		String outfile;
 		if ((outfile = FMV.testZips.get(name)) == null) {
 			outfile = FMV.TEST_DIR + File.separator + name + "_TESTING.zip";
-			final byte[] files = FMV.retriever.getTests(name);
-			FileOutputStream fos = null;
-			try {
-				fos = new FileOutputStream(new File(outfile));
-				fos.write(files);
-				FMV.testZips.put(name, outfile);
-			} catch (final FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (final IOException e) {
-				e.printStackTrace();
-			} finally {
+			final byte[] testData = FMV.retriever.getTests(name);
+			if (testData != null) {
+				FileOutputStream fos = null;
 				try {
-					if (fos != null) {
-						fos.close();
-					}
+					fos = new FileOutputStream(new File(outfile));
+					fos.write(testData);
+					FMV.testZips.put(name, outfile);
+				} catch (final FileNotFoundException e) {
+					e.printStackTrace();
 				} catch (final IOException e) {
 					e.printStackTrace();
+				} finally {
+					try {
+						if (fos != null) {
+							fos.close();
+						}
+					} catch (final IOException e) {
+						e.printStackTrace();
+					}
 				}
+			} else {
+				outfile = null;
 			}
 		}
 		return outfile;

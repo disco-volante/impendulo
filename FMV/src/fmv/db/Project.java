@@ -1,45 +1,28 @@
 package fmv.db;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class Project {
 	private final String name;
-	private String[] users;
-	private final Map<String, ArrayList<Submission>> submissions;
+	private final ArrayList<Submission> submissions;
 	private boolean loaded;
 
 	public Project(final String name) {
 		this.name = name;
-		submissions = new HashMap<String, ArrayList<Submission>>();
+		submissions = new ArrayList<Submission>();
 		loaded = false;
 	}
 
-	public void addSubmissions(final Map<String, ArrayList<Submission>> subs) {
-		submissions.putAll(subs);
-	}
-
-	public void addUsers(final List<String> projectUsers) {
-		users = projectUsers.toArray(new String[projectUsers.size()]);
+	public void addSubmissions(final ArrayList<Submission> subs) {
+		submissions.addAll(subs);
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public Submission getSubmission(final String user, final int index) {
-		return submissions.get(user).get(index);
-	}
-
-	public Submission[] getSubmissions(final String user) {
-		final ArrayList<Submission> temp = submissions.get(user);
-		return temp.toArray(new Submission[temp.size()]);
-	}
-
-	public String[] getUsers() {
-		return users;
+	public Submission getSubmission(final int index) {
+		return submissions.get(index);
 	}
 
 	public boolean isLoaded() {
@@ -48,6 +31,10 @@ public class Project {
 
 	public void setLoaded(final boolean b) {
 		loaded = true;
+	}
+
+	public Object[] getSubmissions() {
+		return submissions.toArray();
 	}
 
 }

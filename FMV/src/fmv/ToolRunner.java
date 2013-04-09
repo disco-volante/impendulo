@@ -70,6 +70,9 @@ public class ToolRunner extends SwingWorker<Boolean, String> {
 	}
 
 	private boolean executeTests() {
+		if(testZip == null){
+			return false;
+		}
 		prepareTestdir();
 		final Set<Date> dates = root.getKeys();
 		int i = 1;

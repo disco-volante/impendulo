@@ -61,14 +61,12 @@ public class IntlolaSender {
 		}
 		final byte[] buffer = new byte[1024];
 		try {
-			final String format = mode.equals(SendMode.ONSAVE) ? "UNCOMPRESSED"
-					: "ZIP";
 			final JsonObject params = new JsonObject();
 			params.addProperty("TYPE", "LOGIN");
 			params.addProperty("USERNAME", uname);
 			params.addProperty("PASSWORD", password);
 			params.addProperty("PROJECT", project);
-			params.addProperty("FORMAT", format);
+			params.addProperty("MODE", mode.toString());
 			snd.write(params.toString().getBytes());
 			snd.flush();
 			rcv.read(buffer);
@@ -125,11 +123,11 @@ public class IntlolaSender {
 
 	public void send(final SendMode check, final String filename) {
 		if (loggedIn) {
-			if (check.equals(SendMode.ONSTOP) && mode.equals(SendMode.ONSAVE)) {
+			if (check.equals(SendMode.SINGLE) && mode.equals(SendMode.MULTIPLE)) {
 				logout();
 			} else if (check.equals(mode)) {
 				sendFile(filename);
-				if (mode.equals(SendMode.ONSTOP)) {
+				if (mode.equals(SendMode.SINGLE)) {
 					logout();
 				}
 			}
@@ -187,49 +185,6 @@ public class IntlolaSender {
 
 		}
 
-	}
-
-	public void sendTests(final String testFile) {
-		byte[] readBuffer = new byte[2048];
-		byte[] writeBuffer = new byte[2048];
-		FileInputStream fis = null;
-		try {
-			final JsonObject params = new JsonObject();
-			params.addProperty("TYPE", "TESTS");
-			params.addProperty("PROJECT", getProject());
-			snd.write(params.toString().getBytes());
-			rcv.read(readBuffer);
-			String received = new String(readBuffer);
-			if (received.startsWith(OK)) {
-				int count;
-				fis = new FileInputStream(testFile);
-				while ((count = fis.read(writeBuffer)) >= 0) {
-					snd.write(writeBuffer, 0, count);
-				}
-				snd.write("EOF".getBytes());
-			} else {
-				System.out.println(received);
-			}
-			snd.flush();
-			rcv.read(readBuffer);
-			received = new String(readBuffer);
-			if (!received.startsWith(OK)) {
-				System.out.println(received);
-			}
-		} catch (final IOException e) {
-			e.printStackTrace();
-			Intlola.log(e);
-		} finally {
-			try {
-				if (fis != null) {
-					fis.close();
-				}
-			} catch (final IOException e) {
-				e.printStackTrace();
-				Intlola.log(e);
-			}
-
-		}
 	}
 
 	public boolean loggedIn() {

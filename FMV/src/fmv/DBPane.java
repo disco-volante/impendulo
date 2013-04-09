@@ -28,7 +28,7 @@ import fmv.db.Submission;
 public class DBPane extends JPanel {
 
 	public enum Level {
-		PROJECTS, USERS, SUBMISSIONS;
+		PROJECTS, SUBMISSIONS;
 	}
 
 	class ProjectListModel extends DefaultListModel<String> {
@@ -41,7 +41,6 @@ public class DBPane extends JPanel {
 		private final HashMap<Submission, Archive> submissionData;
 		private Level level;
 		private Project project;
-		private String user;
 		private Submission sub;
 
 		public ProjectListModel(final List<String> projList) {
@@ -65,20 +64,16 @@ public class DBPane extends JPanel {
 			if (level.equals(Level.PROJECTS)) {
 				project = projects.get(s);
 				load(project);
-				addAll(project.getUsers());
-				label.setText("Users");
-				level = Level.USERS;
-			} else if (level.equals(Level.USERS)) {
-				user = s;
-				addAll(project.getSubmissions(user));
+				addAll(project.getSubmissions());
+				label.setText("Submissions");
 				level = Level.SUBMISSIONS;
-				label.setText("Tokens for: " + user);
-			} else if (level.equals(Level.SUBMISSIONS)) {
-				sub = project.getSubmission(user, index);
+			}  else if (level.equals(Level.SUBMISSIONS)) {
+				sub = project.getSubmission(index);
 				if (submissionData.get(sub) == null) {
 					final List<DBFile> files = retriever.retrieveFiles(sub);
 					final boolean archive = sub.getFormat().equals(
-							"UNCOMPRESSED") ? false : true;
+							"SINGLE") ? true : false;
+					System.out.println(archive);
 					submissionData.put(sub,
 							new Archive(project.getName(), sub.toString(),
 									files, archive));
@@ -92,21 +87,16 @@ public class DBPane extends JPanel {
 
 		private void load(final Project proj) {
 			if (!proj.isLoaded()) {
-				proj.addUsers(retriever.getProjectUsers(proj.getName()));
 				proj.addSubmissions(retriever.getSubmissions(project.getName()));
 				proj.setLoaded(true);
 			}
 		}
 
 		public void moveUp() {
-			if (level.equals(Level.USERS)) {
+			if (level.equals(Level.SUBMISSIONS)) {
 				addAll(projects.keySet().toArray(new String[projects.size()]));
 				level = Level.PROJECTS;
 				label.setText("Projects");
-			} else if (level.equals(Level.SUBMISSIONS)) {
-				addAll(project.getUsers());
-				level = Level.USERS;
-				label.setText("Users");
 			}
 		}
 

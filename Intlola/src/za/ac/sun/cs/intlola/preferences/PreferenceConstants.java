@@ -10,8 +10,9 @@ public class PreferenceConstants {
 	public static final String REMOTE_ADDRESS = "ec2-23-22-216-19.compute-1.amazonaws.com";
 	public static final String LOCAL_ADDRESS = "localhost";
 	public static final int PORT = 9999;
-	public static final String SAVE = "SAVE";
-	public static final String STOP = "STOP";
-	public static final String DEFAULT = "DEFAULT";
+	public static final String DEFAULT = "username";
+	public static final String SINGLE = "SINGLE";
+	public static final String MULTIPLE = "MULTIPLE";
+	public static final String TEST = "TEST";
 	public static final String NEVER = "NEVER";
 }

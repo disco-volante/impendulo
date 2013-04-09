@@ -1,21 +1,18 @@
 package fmv.db;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import org.bson.types.ObjectId;
+
 
 public final class Submission {
-	private final Object id;
+	private final ObjectId id;
+	private final String user;
 	private final int number;
-	private final long date;
 	private final String format;
-	private final DateFormat df = new SimpleDateFormat("HH:mm, d MMM yyyy");
-
-	public Submission(final Object id, final int number, final long date,
+	public Submission(final ObjectId id, final String user, final int number,
 			final String format) {
 		this.id = id;
+		this.user = user;
 		this.number = number;
-		this.date = date;
 		this.format = format;
 	}
 
@@ -23,12 +20,14 @@ public final class Submission {
 		return format;
 	}
 
-	public Object getId() {
+	public ObjectId getId() {
 		return id;
 	}
 
 	@Override
 	public String toString() {
-		return "Submission " + number + " at " + df.format(new Date(date));
+		return user+" " + number;
 	}
+	
+	
 }

@@ -30,11 +30,13 @@ public class ZipSender {
 		@Override
 		public void run() {
 			final IntlolaSender sender = new IntlolaSender(user, "Data",
-					SendMode.ONSTOP, PreferenceConstants.LOCAL_ADDRESS,
+					SendMode.SINGLE, PreferenceConstants.LOCAL_ADDRESS,
 					PreferenceConstants.PORT);
-			sender.login(user, passwd);
-			if (sender.loggedIn()) {
-				sender.sendFile(zip);
+			if (sender.openConnection()) {
+				sender.login(user, passwd);
+				if (sender.loggedIn()) {
+					sender.sendFile(zip);
+				}
 			}
 		}
 

@@ -11,9 +11,15 @@ public class TestsSender {
 	}
 
 	private static void sendTests(final String name) {
-		final IntlolaSender sender = new IntlolaSender("", "Data",
-				SendMode.ONSAVE, PreferenceConstants.LOCAL_ADDRESS,
+		final IntlolaSender sender = new IntlolaSender("username", "Data",
+				SendMode.TEST, PreferenceConstants.LOCAL_ADDRESS,
 				PreferenceConstants.PORT);
-		sender.sendTests(name);
+		if (sender.openConnection()) {
+			sender.login("username", "password");
+			if (sender.loggedIn()) {
+				sender.sendFile(name);
+				sender.logout();
+			}
+		}
 	}
 }

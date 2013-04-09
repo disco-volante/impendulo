@@ -177,7 +177,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 					out.close();
 					project.setSessionProperty(Intlola.RECORD_KEY, null);
 					isDone = true;
-					Intlola.sender.send(SendMode.ONSTOP, filename);
+					Intlola.sender.send(SendMode.SINGLE, filename);
 				} catch (final CoreException e) {
 					Intlola.log(e);
 				} catch (final FileNotFoundException e) {

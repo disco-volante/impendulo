@@ -31,8 +31,8 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 				"Send data to server:",
 				1,
 				new String[][] {
-						{ "After every save", PreferenceConstants.SAVE },
-						{ "When recording is stopped", PreferenceConstants.STOP },
+						{ "After every save", PreferenceConstants.MULTIPLE },
+						{ "When recording is stopped", PreferenceConstants.SINGLE },
 						{ "Never", PreferenceConstants.NEVER } },
 				getFieldEditorParent()));
 	}

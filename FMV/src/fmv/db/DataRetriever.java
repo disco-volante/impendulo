@@ -8,11 +8,11 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import org.bson.types.ObjectId;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
@@ -27,7 +27,6 @@ public class DataRetriever {
 	private final DB db;
 	private static final String DB_NAME = "impendulo";
 	private static final String PROJECTS = "projects";
-	private static final String USERS = "users";
 
 	@SuppressWarnings("resource")
 	public static void main(final String args[]) {
@@ -35,8 +34,6 @@ public class DataRetriever {
 			final DataRetriever ret = new DataRetriever("localhost");
 			final List<String> projects = ret.getProjects();
 			for (final String p : projects) {
-				System.out.println(p);
-				System.out.println(ret.getProjectDates(p));
 				final byte[] bytes = ret.getTests(p);
 				FileOutputStream fos;
 				try {
@@ -70,94 +67,73 @@ public class DataRetriever {
 		return collection.distinct(key);
 	}
 
-	private DBCursor getMatching(final String col, final DBObject matching,
+	private DBCursor getMultiple(final String col, final DBObject matching,
 			final DBObject ref) {
 		final DBCollection collection = db.getCollection(col);
 		return collection.find(matching, ref);
 	}
 
-	public List<Long> getProjectDates(final String project) {
-		final DBObject ref = new BasicDBObject("date", 1).append("_id", 0);
-		final DBObject matcher = new BasicDBObject("name", project);
-		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
-				ref);
-		final List<Long> ret = new ArrayList<Long>();
-		for (final DBObject o : cursor) {
-			ret.add((Long) o.get("date"));
-		}
-		return ret;
+	private DBObject getSingle(final String col, final DBObject matching,
+			final DBObject ref) {
+		final DBCollection collection = db.getCollection(col);
+		return collection.findOne(matching, ref);
 	}
 
 	@SuppressWarnings("unchecked")
 	public List<String> getProjects() {
-		return (List<String>) getDistinct(DataRetriever.PROJECTS, "name");
+		return (List<String>) getDistinct(DataRetriever.PROJECTS, "project");
 	}
 
-	public List<String> getProjectUsers(final String project) {
-		final DBObject ref = new BasicDBObject("user", 1).append("_id", 0);
-		final DBObject matcher = new BasicDBObject("name", project);
-		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
-				ref);
-		final List<String> ret = new ArrayList<String>();
-		for (final DBObject o : cursor) {
-			ret.add((String) o.get("user"));
-		}
-		return ret;
-	}
-
-	public Map<String, ArrayList<Submission>> getSubmissions(
-			final String project) {
+	public ArrayList<Submission> getSubmissions(final String project) {
 		final DBObject ref = new BasicDBObject();
-		final BasicDBObject matcher = new BasicDBObject("name", project);
-		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
+		final BasicDBObject matcher = new BasicDBObject("project", project);
+		final DBCursor cursor = getMultiple(DataRetriever.PROJECTS, matcher,
 				ref);
-		final Map<String, ArrayList<Submission>> ret = new HashMap<String, ArrayList<Submission>>();
+		final ArrayList<Submission> ret = new ArrayList<Submission>();
 		for (final DBObject o : cursor) {
-			final String key = (String) o.get("user");
-			if (!ret.containsKey(key)) {
-				ret.put(key, new ArrayList<Submission>());
-			}
-			System.out.println(o);
-			final Submission submission = new Submission(o.get("_id"),
-					(Integer) o.get("number"), (Long) o.get("date"),
-					(String) o.get("format"));
-			ret.get(key).add(submission);
+			final Submission submission = new Submission(
+					(ObjectId) o.get("_id"), (String) o.get("user"),
+					(Integer) o.get("number"), (String) o.get("mode"));
+			ret.add(submission);
 		}
 		return ret;
 	}
 
 	public byte[] getTests(final String project) {
-		final DBObject ref = new BasicDBObject("tests", 1).append("_id", 0);
-		final DBObject matcher = new BasicDBObject("project", project);
-		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
-				ref);
-		for (final DBObject o : cursor) {
-			return (byte[]) o.get("tests");
+		byte[] data = null;
+		final BasicDBList list = getFiles(new BasicDBObject("project", project)
+				.append("mode", "TEST"));
+		if (list != null && list.size() > 0) {
+			DBObject obj = ((DBObject) list.get(0));
+			if (obj != null) {
+				data = (byte[]) obj.get("data");
+			}
 		}
-		return null;
+		return data;
 	}
 
-	@SuppressWarnings("unchecked")
-	public List<String> getUsers() {
-		return (List<String>) getDistinct(DataRetriever.USERS, "_id");
+	public BasicDBList getFiles(BasicDBObject matcher) {
+		final DBObject ref = new BasicDBObject("files", 1);
+		final DBObject o = getSingle(DataRetriever.PROJECTS, matcher, ref);
+		BasicDBList list = null;
+		if (o != null) {
+			list = (BasicDBList) o.get("files");
+		}
+		return list;
 	}
 
 	public List<DBFile> retrieveFiles(final Submission sub) {
-		final DBObject ref = new BasicDBObject("files", 1).append("_id", 0);
-		final DBObject matcher = new BasicDBObject("_id", sub.getId());
-		final DBCursor cursor = getMatching(DataRetriever.PROJECTS, matcher,
-				ref);
+		final BasicDBList list = getFiles(new BasicDBObject("_id", sub.getId()));
 		final List<DBFile> files = new ArrayList<DBFile>();
-
-		final DBObject o = cursor.curr();
-		final BasicDBList list = (BasicDBList) o.get("files");
-		for (final Object file : list) {
-			final String name = (String) ((DBObject) file).get("name");
-			final long date = (Long) ((DBObject) file).get("date");
-			final byte[] data = (byte[]) ((DBObject) file).get("data");
-			files.add(new DBFile(name, date, data));
+		if (list != null) {
+			for (final Object file : list) {
+				final String name = (String) ((DBObject) file).get("name");
+				final long date = (Long) ((DBObject) file).get("date");
+				final byte[] data = (byte[]) ((DBObject) file).get("data");
+				files.add(new DBFile(name, date, data));
+			}
+			Collections.sort(files);
 		}
-		Collections.sort(files);
 		return files;
 	}
 }

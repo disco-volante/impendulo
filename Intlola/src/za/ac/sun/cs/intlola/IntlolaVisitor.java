@@ -45,7 +45,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 		d.append(IntlolaVisitor.COMPONENT_SEP);
 		d.append(kindSuffix);
 		IntlolaVisitor.copyFile(l, d.toString());
-		Intlola.sender.send(SendMode.ONSAVE, d.toString());
+		Intlola.sender.send(SendMode.MULTIPLE, d.toString());
 	}
 
 	public static void copyFile(final String fromName, final String toName) {
@@ -117,7 +117,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 		d.append(IntlolaVisitor.COMPONENT_SEP);
 		d.append(kindSuffix);
 		IntlolaVisitor.touchFile(d.toString());
-		Intlola.sender.send(SendMode.ONSAVE, d.toString());
+		Intlola.sender.send(SendMode.MULTIPLE, d.toString());
 	}
 
 	public static void touchFile(final String toName) {
