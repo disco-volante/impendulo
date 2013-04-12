@@ -1,6 +1,5 @@
 package za.ac.sun.cs.intlola;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,17 +55,17 @@ public class IntlolaSender {
 	}
 
 	public void login(final String username, String password) {
-		if(username != null && !uname.equals(username)){
+		if (username != null && !uname.equals(username)) {
 			uname = username;
 		}
 		final byte[] buffer = new byte[1024];
 		try {
 			final JsonObject params = new JsonObject();
-			params.addProperty("TYPE", "LOGIN");
-			params.addProperty("USERNAME", uname);
-			params.addProperty("PASSWORD", password);
-			params.addProperty("PROJECT", project);
-			params.addProperty("MODE", mode.toString());
+			params.addProperty("type", "login");
+			params.addProperty("uname", uname);
+			params.addProperty("pword", password);
+			params.addProperty("project", project);
+			params.addProperty("mode", mode.toString());
 			snd.write(params.toString().getBytes());
 			snd.flush();
 			rcv.read(buffer);
@@ -85,7 +84,7 @@ public class IntlolaSender {
 	public void logout() {
 		try {
 			final JsonObject params = new JsonObject();
-			params.addProperty("TYPE", "LOGOUT");
+			params.addProperty("type", "logout");
 			snd.write(params.toString().getBytes());
 			snd.flush();
 			final byte[] buffer = new byte[1024];
@@ -121,29 +120,18 @@ public class IntlolaSender {
 		return ret;
 	}
 
-	public void sendFile(final String fileName, FileType ftype) {
+	public void sendFile(final IntlolaFile file) {
 		byte[] readBuffer = new byte[2048];
 		byte[] writeBuffer = new byte[2048];
 		FileInputStream fis = null;
 		try {
-			String sendName;
-			if (fileName.contains(File.separator)) {
-				sendName = fileName.substring(fileName
-						.lastIndexOf(File.separator) + 1);
-			} else {
-				sendName = fileName;
-			}
-			final JsonObject params = new JsonObject();
-			params.addProperty("TYPE", "SEND");
-			params.addProperty("FILENAME", sendName);
-			params.addProperty("FILETYPE", ftype.toString());
-			snd.write(params.toString().getBytes());
+			snd.write(file.toJSON().toString().getBytes());
 			snd.flush();
 			rcv.read(readBuffer);
 			String received = new String(readBuffer);
 			if (received.startsWith(OK)) {
 				int count;
-				fis = new FileInputStream(fileName);
+				fis = new FileInputStream(file.getPath());
 				while ((count = fis.read(writeBuffer)) >= 0) {
 					snd.write(writeBuffer, 0, count);
 				}

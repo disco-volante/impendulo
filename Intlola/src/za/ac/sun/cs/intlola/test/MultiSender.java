@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import za.ac.sun.cs.intlola.FileType;
+import za.ac.sun.cs.intlola.IntlolaFile;
 import za.ac.sun.cs.intlola.IntlolaSender;
 import za.ac.sun.cs.intlola.SendMode;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
@@ -33,16 +33,22 @@ public class MultiSender {
 			final IntlolaSender sender = new IntlolaSender(user, "Data",
 					SendMode.MULTIPLE, PreferenceConstants.LOCAL_ADDRESS,
 					PreferenceConstants.PORT);
-			if(sender.openConnection()){
+			if (sender.openConnection()) {
 				sender.login(user, passwd);
 				if (sender.loggedIn()) {
 					for (final String file : files) {
-						sender.sendFile(file, FileType.SOURCE);
+						IntlolaFile ifile = getIntlolaFile(file);
+						sender.sendFile(ifile);
 					}
 					sender.logout();
 					System.out.println("Success");
 				}
 			}
+		}
+
+		private IntlolaFile getIntlolaFile(String file) {
+			// TODO Auto-generated method stub
+			return null;
 		}
 
 	}
@@ -105,9 +111,14 @@ public class MultiSender {
 		final Map<String, String> users = MultiSender.getUsers("users");
 		final ArrayList<String> files = MultiSender.getFiles(new File("data"));
 		final ArrayList<Thread> threads = new ArrayList<Thread>();
+		int c = 0;
 		for (final Map.Entry<String, String> e : users.entrySet()) {
 			threads.add(new Thread(new SendThread(e.getKey(), e.getValue(),
 					files)));
+			c++;
+			if (c > 3) {
+				break;
+			}
 		}
 		for (final Thread th : threads) {
 			th.start();

@@ -119,9 +119,10 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		Intlola.log(null, "Intlola record stopping", project.getName());
 		if (sender.mode.equals(SendMode.SINGLE)) {
 			sendZip(shell);
-		} else if(sender.mode.equals(SendMode.MULTIPLE)) {
+		} else if (sender.mode.equals(SendMode.MULTIPLE)) {
 			Intlola.sender.logout();
 		}
+
 		try {
 			project.setSessionProperty(Intlola.RECORD_KEY, null);
 		} catch (CoreException e) {
@@ -140,8 +141,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			outzip.close();
 			out.flush();
 			out.close();
-			Intlola.sender.sendFile(filename, FileType.ZIP);
-			Intlola.sender.logout();
 		} catch (final FileNotFoundException e) {
 			MessageDialog.openError(shell, "Problem", "Could not open file \""
 					+ filename + "\".");

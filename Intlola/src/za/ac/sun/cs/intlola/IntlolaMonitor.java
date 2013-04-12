@@ -28,7 +28,7 @@ public class IntlolaMonitor implements ILaunchListener {
 			final IProject project = ResourcesPlugin.getWorkspace().getRoot()
 					.getProject(projectName);
 			if (project != null && Intlola.getRecordStatus(project)) {
-				IntlolaVisitor.copyOrTouch(project, Intlola.LAUNCHED);
+				IntlolaVisitor.sendChanges(project, Intlola.LAUNCHED);
 			}
 		}
 	}

@@ -1,8 +1,9 @@
 package za.ac.sun.cs.intlola.test;
 
-import za.ac.sun.cs.intlola.FileType;
+import za.ac.sun.cs.intlola.IntlolaFile;
 import za.ac.sun.cs.intlola.IntlolaSender;
 import za.ac.sun.cs.intlola.SendMode;
+import za.ac.sun.cs.intlola.TestZip;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
 public class TestsSender {
@@ -18,7 +19,8 @@ public class TestsSender {
 		if (sender.openConnection()) {
 			sender.login("username", "password");
 			if (sender.loggedIn()) {
-				sender.sendFile(name, FileType.ZIP);
+				IntlolaFile ifile = new TestZip(name);
+				sender.sendFile(ifile);
 				sender.logout();
 			}
 		}
