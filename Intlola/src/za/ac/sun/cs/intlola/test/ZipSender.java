@@ -10,9 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import za.ac.sun.cs.intlola.FileType;
 import za.ac.sun.cs.intlola.IntlolaSender;
 import za.ac.sun.cs.intlola.SendMode;
+import za.ac.sun.cs.intlola.file.ArchiveFile;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
 public class ZipSender {
@@ -31,12 +31,12 @@ public class ZipSender {
 		@Override
 		public void run() {
 			final IntlolaSender sender = new IntlolaSender(user, "Data",
-					SendMode.SINGLE, PreferenceConstants.LOCAL_ADDRESS,
+					SendMode.ARCHIVE, PreferenceConstants.LOCAL_ADDRESS,
 					PreferenceConstants.PORT);
 			if (sender.openConnection()) {
 				sender.login(user, passwd);
 				if (sender.loggedIn()) {
-					sender.sendFile(zip, FileType.ZIP);
+					sender.sendFile(new ArchiveFile(zip));
 				}
 			}
 		}

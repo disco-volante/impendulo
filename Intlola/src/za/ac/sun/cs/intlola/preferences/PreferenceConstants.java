@@ -11,8 +11,8 @@ public class PreferenceConstants {
 	public static final String LOCAL_ADDRESS = "localhost";
 	public static final int PORT = 9999;
 	public static final String DEFAULT = "username";
-	public static final String SINGLE = "SINGLE";
-	public static final String MULTIPLE = "MULTIPLE";
+	public static final String INDIVIDUAL = "INDIVIDUAL";
+	public static final String ARCHIVE = "ARCHIVE";
 	public static final String TEST = "TEST";
 	public static final String NEVER = "NEVER";
 }

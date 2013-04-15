@@ -29,6 +29,7 @@ import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
+import za.ac.sun.cs.intlola.file.ArchiveFile;
 import za.ac.sun.cs.intlola.gui.LoginDialog;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
@@ -47,6 +48,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private static Intlola plugin;
 
+	protected static IntlolaSender sender;
+
 	public static Intlola getDefault() {
 		return Intlola.plugin;
 	}
@@ -54,6 +57,17 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	public static ImageDescriptor getImageDescriptor(final String path) {
 		return AbstractUIPlugin.imageDescriptorFromPlugin(Intlola.PLUGIN_ID,
 				path);
+	}
+
+	public static boolean getRecordStatus(final IProject project) {
+		try {
+			final Boolean record = (Boolean) project
+					.getSessionProperty(Intlola.RECORD_KEY);
+			return record == Intlola.RECORD_ON;
+		} catch (final CoreException e) {
+			Intlola.log(e);
+			return false;
+		}
 	}
 
 	public static IProject getSelectedProject(final ExecutionEvent event) {
@@ -72,6 +86,49 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		return ret;
 	}
 
+	public static IWorkspace getWorkspace() {
+		return org.eclipse.core.resources.ResourcesPlugin.getWorkspace();
+	}
+
+	public static void log(final Exception e, final Object... msgs) {
+		if (Intlola.getDefault() != null) {
+			Intlola.getDefault()._log(e, msgs);
+		}
+	}
+
+	public static void removeDir(final String dirname, final boolean removeRoot) {
+		Intlola.removeDirRecur(new File(dirname), removeRoot);
+	}
+
+	public static void startRecord(final IProject project, final Shell shell) {
+		try {
+			Intlola.removeDir(Intlola.plugin.getStateLocation().toString(),
+					false);
+			Intlola.sender = Intlola.getSender(project.getName());
+			if (Intlola.login(shell)) {
+				project.setSessionProperty(Intlola.RECORD_KEY,
+						Intlola.RECORD_ON);
+			}
+		} catch (final CoreException e) {
+			Intlola.log(e);
+		}
+	}
+
+	public static void stopRecord(final IProject project, final Shell shell) {
+		Intlola.log(null, "Intlola record stopping", project.getName());
+		if (sender.mode.equals(SendMode.ARCHIVE)) {
+			sendArchive(shell);
+		} else if (sender.mode.equals(SendMode.INDIVIDUAL)) {
+			Intlola.sender.logout();
+		}
+		try {
+			project.setSessionProperty(Intlola.RECORD_KEY, null);
+		} catch (final CoreException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 	private static IntlolaSender getSender(final String project) {
 		final SendMode mode = SendMode.getMode(Intlola.getDefault()
 				.getPreferenceStore().getString(PreferenceConstants.P_SEND));
@@ -82,16 +139,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		final int port = Intlola.getDefault().getPreferenceStore()
 				.getInt(PreferenceConstants.P_PORT);
 		return new IntlolaSender(uname, project, mode, address, port);
-	}
-
-	public static IWorkspace getWorkspace() {
-		return org.eclipse.core.resources.ResourcesPlugin.getWorkspace();
-	}
-
-	public static void log(final Exception e, final Object... msgs) {
-		if (Intlola.getDefault() != null) {
-			Intlola.getDefault()._log(e, msgs);
-		}
 	}
 
 	private static boolean login(final Shell shell) {
@@ -111,28 +158,21 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		return Intlola.sender.loggedIn();
 	}
 
-	public static void removeDir(final String dirname, final boolean removeRoot) {
-		Intlola.removeDirRecur(new File(dirname), removeRoot);
+	private static void removeDirRecur(final File file, final boolean removeRoot) {
+		if (file.isDirectory()) {
+			for (final File f : file.listFiles()) {
+				Intlola.removeDirRecur(f, true);
+			}
+			if (removeRoot) {
+				file.delete();
+			}
+		} else {
+			file.delete();
+		}
 	}
 
-	public static void stopRecord(final IProject project, final Shell shell) {
-		Intlola.log(null, "Intlola record stopping", project.getName());
-		if (sender.mode.equals(SendMode.SINGLE)) {
-			sendZip(shell);
-		} else if (sender.mode.equals(SendMode.MULTIPLE)) {
-			Intlola.sender.logout();
-		}
-
-		try {
-			project.setSessionProperty(Intlola.RECORD_KEY, null);
-		} catch (CoreException e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	private static void sendZip(final Shell shell) {
-		String filename = Intlola.sender.getProject() + ".zip";
+	private static void sendArchive(final Shell shell) {
+		final String filename = Intlola.sender.getProject() + ".zip";
 		try {
 			final FileOutputStream outfile = new FileOutputStream(filename);
 			final BufferedOutputStream out = new BufferedOutputStream(outfile);
@@ -141,6 +181,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			outzip.close();
 			out.flush();
 			out.close();
+			sender.sendFile(new ArchiveFile(filename));
 		} catch (final FileNotFoundException e) {
 			MessageDialog.openError(shell, "Problem", "Could not open file \""
 					+ filename + "\".");
@@ -178,46 +219,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	private IResourceChangeListener changeListener = null;
 
 	private boolean listenersAdded = false;
-
-	protected static IntlolaSender sender;
-
-	public static boolean getRecordStatus(final IProject project) {
-		try {
-			final Boolean record = (Boolean) project
-					.getSessionProperty(Intlola.RECORD_KEY);
-			return record == Intlola.RECORD_ON;
-		} catch (final CoreException e) {
-			Intlola.log(e);
-			return false;
-		}
-	}
-
-	private static void removeDirRecur(final File file, final boolean removeRoot) {
-		if (file.isDirectory()) {
-			for (final File f : file.listFiles()) {
-				Intlola.removeDirRecur(f, true);
-			}
-			if (removeRoot) {
-				file.delete();
-			}
-		} else {
-			file.delete();
-		}
-	}
-
-	public static void startRecord(final IProject project, final Shell shell) {
-		try {
-			Intlola.removeDir(Intlola.plugin.getStateLocation().toString(),
-					false);
-			Intlola.sender = Intlola.getSender(project.getName());
-			if (Intlola.login(shell)) {
-				project.setSessionProperty(Intlola.RECORD_KEY,
-						Intlola.RECORD_ON);
-			}
-		} catch (final CoreException e) {
-			Intlola.log(e);
-		}
-	}
 
 	public Intlola() {
 		Intlola.plugin = this;

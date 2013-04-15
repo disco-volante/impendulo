@@ -26,13 +26,11 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 				"Server address:", getFieldEditorParent()));
 		addField(new IntegerFieldEditor(PreferenceConstants.P_PORT,
 				"Server port:", getFieldEditorParent()));
-		addField(new RadioGroupFieldEditor(
-				PreferenceConstants.P_SEND,
-				"Send data to server:",
-				1,
-				new String[][] {
-						{ "After every save", PreferenceConstants.MULTIPLE },
-						{ "When recording is stopped", PreferenceConstants.SINGLE },
+		addField(new RadioGroupFieldEditor(PreferenceConstants.P_SEND,
+				"Send data to server:", 1, new String[][] {
+						{ "After every save", PreferenceConstants.INDIVIDUAL },
+						{ "When recording is stopped",
+								PreferenceConstants.ARCHIVE },
 						{ "Never", PreferenceConstants.NEVER } },
 				getFieldEditorParent()));
 	}

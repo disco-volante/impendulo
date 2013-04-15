@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import za.ac.sun.cs.intlola.file.IntlolaFile;
+
 import com.google.gson.JsonObject;
 
 public class IntlolaSender {
@@ -34,18 +36,6 @@ public class IntlolaSender {
 		loggedIn = false;
 	}
 
-	private void closeConnection() throws IOException {
-		if (snd != null) {
-			snd.close();
-		}
-		if (rcv != null) {
-			rcv.close();
-		}
-		if (sock != null) {
-			sock.close();
-		}
-	}
-
 	public String getProject() {
 		return project;
 	}
@@ -54,7 +44,11 @@ public class IntlolaSender {
 		return uname;
 	}
 
-	public void login(final String username, String password) {
+	public boolean loggedIn() {
+		return loggedIn;
+	}
+
+	public void login(final String username, final String password) {
 		if (username != null && !uname.equals(username)) {
 			uname = username;
 		}
@@ -113,7 +107,7 @@ public class IntlolaSender {
 			sock = new Socket(address, port);
 			snd = sock.getOutputStream();
 			rcv = sock.getInputStream();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 			ret = false;
 		}
@@ -121,8 +115,8 @@ public class IntlolaSender {
 	}
 
 	public void sendFile(final IntlolaFile file) {
-		byte[] readBuffer = new byte[2048];
-		byte[] writeBuffer = new byte[2048];
+		final byte[] readBuffer = new byte[2048];
+		final byte[] writeBuffer = new byte[2048];
 		FileInputStream fis = null;
 		try {
 			snd.write(file.toJSON().toString().getBytes());
@@ -130,21 +124,22 @@ public class IntlolaSender {
 			rcv.read(readBuffer);
 			String received = new String(readBuffer);
 			if (received.startsWith(OK)) {
-				int count;
-				fis = new FileInputStream(file.getPath());
-				while ((count = fis.read(writeBuffer)) >= 0) {
-					snd.write(writeBuffer, 0, count);
+				if (file.hasContents()) {
+					int count;
+					fis = new FileInputStream(file.getPath());
+					while ((count = fis.read(writeBuffer)) >= 0) {
+						snd.write(writeBuffer, 0, count);
+					}
 				}
 				snd.write("EOF".getBytes());
-			} else {
-				System.out.println(received);
+				snd.flush();
+				rcv.read(readBuffer);
+				received = new String(readBuffer);
+				if (!received.startsWith(OK)) {
+					System.out.println(received);
+				}
 			}
-			snd.flush();
-			rcv.read(readBuffer);
-			received = new String(readBuffer);
-			if (!received.startsWith(OK)) {
-				System.out.println(received);
-			}
+
 		} catch (final IOException e) {
 			e.printStackTrace();
 			Intlola.log(e);
@@ -162,8 +157,16 @@ public class IntlolaSender {
 
 	}
 
-	public boolean loggedIn() {
-		return loggedIn;
+	private void closeConnection() throws IOException {
+		if (snd != null) {
+			snd.close();
+		}
+		if (rcv != null) {
+			rcv.close();
+		}
+		if (sock != null) {
+			sock.close();
+		}
 	}
 
 }

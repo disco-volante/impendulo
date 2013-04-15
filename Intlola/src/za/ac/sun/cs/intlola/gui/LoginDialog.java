@@ -32,41 +32,28 @@ public class LoginDialog extends Dialog {
 
 	private String password;
 
-	public LoginDialog(Shell parentShell, final String username) {
+	public LoginDialog(final Shell parentShell, final String username) {
 		super(parentShell);
 		this.username = username;
 	}
 
-	protected Control createDialogArea(Composite parent) {
-		Composite comp = (Composite) super.createDialogArea(parent);
-
-		GridLayout layout = (GridLayout) comp.getLayout();
-		layout.numColumns = 2;
-
-		Label usernameLabel = new Label(comp, SWT.RIGHT);
-		usernameLabel.setText("Username: ");
-
-		usernameField = new Text(comp, SWT.SINGLE);
-		GridData data = new GridData(GridData.FILL_HORIZONTAL);
-		usernameField.setLayoutData(data);
-		usernameField.setText(username);
-
-		Label passwordLabel = new Label(comp, SWT.RIGHT);
-		passwordLabel.setText("Password: ");
-
-		passwordField = new Text(comp, SWT.SINGLE | SWT.PASSWORD);
-		data = new GridData(GridData.FILL_HORIZONTAL);
-		passwordField.setLayoutData(data);
-
-		return comp;
+	@Override
+	public boolean close() {
+		username = usernameField.getText().trim();
+		password = passwordField.getText().trim();
+		return super.close();
 	}
 
-	protected void createButtonsForButtonBar(Composite parent) {
-		super.createButtonsForButtonBar(parent);
-		createButton(parent, RESET_ID, "Reset All", false);
+	public String getPassword() {
+		return password;
 	}
 
-	protected void buttonPressed(int buttonId) {
+	public String getUserName() {
+		return username;
+	}
+
+	@Override
+	protected void buttonPressed(final int buttonId) {
 		if (buttonId == RESET_ID) {
 			usernameField.setText("");
 			passwordField.setText("");
@@ -74,18 +61,35 @@ public class LoginDialog extends Dialog {
 			super.buttonPressed(buttonId);
 		}
 	}
-	
-	public String getUserName(){
-		return username;
+
+	@Override
+	protected void createButtonsForButtonBar(final Composite parent) {
+		super.createButtonsForButtonBar(parent);
+		createButton(parent, RESET_ID, "Reset All", false);
 	}
-	
-	public String getPassword(){
-		return password;
-	}
-	
-	public boolean close(){
-		username = usernameField.getText().trim();
-		password = passwordField.getText().trim();
-		return super.close();
+
+	@Override
+	protected Control createDialogArea(final Composite parent) {
+		final Composite comp = (Composite) super.createDialogArea(parent);
+
+		final GridLayout layout = (GridLayout) comp.getLayout();
+		layout.numColumns = 2;
+
+		final Label usernameLabel = new Label(comp, SWT.RIGHT);
+		usernameLabel.setText("Username: ");
+
+		usernameField = new Text(comp, SWT.SINGLE);
+		GridData data = new GridData(GridData.FILL_HORIZONTAL);
+		usernameField.setLayoutData(data);
+		usernameField.setText(username);
+
+		final Label passwordLabel = new Label(comp, SWT.RIGHT);
+		passwordLabel.setText("Password: ");
+
+		passwordField = new Text(comp, SWT.SINGLE | SWT.PASSWORD);
+		data = new GridData(GridData.FILL_HORIZONTAL);
+		passwordField.setLayoutData(data);
+
+		return comp;
 	}
 }

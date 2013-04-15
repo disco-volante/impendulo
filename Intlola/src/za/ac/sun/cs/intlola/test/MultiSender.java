@@ -10,9 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import za.ac.sun.cs.intlola.IntlolaFile;
 import za.ac.sun.cs.intlola.IntlolaSender;
 import za.ac.sun.cs.intlola.SendMode;
+import za.ac.sun.cs.intlola.file.IndividualFile;
+import za.ac.sun.cs.intlola.file.IntlolaFile;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
 public class MultiSender {
@@ -31,13 +32,13 @@ public class MultiSender {
 		@Override
 		public void run() {
 			final IntlolaSender sender = new IntlolaSender(user, "Data",
-					SendMode.MULTIPLE, PreferenceConstants.LOCAL_ADDRESS,
+					SendMode.INDIVIDUAL, PreferenceConstants.LOCAL_ADDRESS,
 					PreferenceConstants.PORT);
 			if (sender.openConnection()) {
 				sender.login(user, passwd);
 				if (sender.loggedIn()) {
 					for (final String file : files) {
-						IntlolaFile ifile = getIntlolaFile(file);
+						final IntlolaFile ifile = IndividualFile.read(file);
 						sender.sendFile(ifile);
 					}
 					sender.logout();
@@ -45,12 +46,6 @@ public class MultiSender {
 				}
 			}
 		}
-
-		private IntlolaFile getIntlolaFile(String file) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
 	}
 
 	private static Random rand = new Random();

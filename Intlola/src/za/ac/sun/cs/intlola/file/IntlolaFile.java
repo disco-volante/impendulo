@@ -1,11 +1,13 @@
-package za.ac.sun.cs.intlola;
+package za.ac.sun.cs.intlola.file;
 
 import com.google.gson.JsonObject;
 
 public interface IntlolaFile {
 
-	JsonObject toJSON();
-
 	String getPath();
+
+	boolean hasContents();
+
+	JsonObject toJSON();
 
 }
