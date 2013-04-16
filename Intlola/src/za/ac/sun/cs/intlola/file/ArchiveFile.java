@@ -22,8 +22,8 @@ public class ArchiveFile implements IntlolaFile {
 	@Override
 	public JsonObject toJSON() {
 		final JsonObject ret = new JsonObject();
-		ret.addProperty("type", "archive");
-		ret.addProperty("ftype", "zip");
+		ret.addProperty(Args.TYPE, Args.ARCHIVE);
+		ret.addProperty(Args.FTYPE, Args.ZIP);
 		return ret;
 	}
 

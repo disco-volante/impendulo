@@ -30,10 +30,10 @@ public class TestFile implements IntlolaFile {
 	@Override
 	public JsonObject toJSON() {
 		final JsonObject ret = new JsonObject();
-		ret.addProperty("type", "test");
-		ret.addProperty("name", name);
-		ret.addProperty("ftype", "zip");
-		ret.addProperty("time", time);
+		ret.addProperty(Args.TYPE, Args.TEST);
+		ret.addProperty(Args.FTYPE, Args.ZIP);
+		ret.addProperty(Args.NAME, name);
+		ret.addProperty(Args.TIME, time);
 		return ret;
 	}
 

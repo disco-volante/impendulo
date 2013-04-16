@@ -19,7 +19,17 @@ public class IntlolaSender {
 	private final String project;
 
 	private final String address;
-	private static final String OK = "OK";
+	private static final String OK = "ok";
+	private static final String EOF = "eof";
+	private static final String SEND = "send";
+	private static final String LOGIN = "begin";
+	private static final String LOGOUT = "end";
+	private static final String REQ = "req";
+	private static final String UNAME = "uname";
+	private static final String PWORD = "pword";
+	private static final String PROJECT = "project";
+	private static final String MODE = "mode";
+
 	private final int port;
 	private OutputStream snd = null;
 	private Socket sock = null;
@@ -55,11 +65,11 @@ public class IntlolaSender {
 		final byte[] buffer = new byte[1024];
 		try {
 			final JsonObject params = new JsonObject();
-			params.addProperty("type", "login");
-			params.addProperty("uname", uname);
-			params.addProperty("pword", password);
-			params.addProperty("project", project);
-			params.addProperty("mode", mode.toString());
+			params.addProperty(REQ, LOGIN);
+			params.addProperty(UNAME, uname);
+			params.addProperty(PWORD, password);
+			params.addProperty(PROJECT, project);
+			params.addProperty(MODE, mode.toString());
 			snd.write(params.toString().getBytes());
 			snd.flush();
 			rcv.read(buffer);
@@ -78,7 +88,7 @@ public class IntlolaSender {
 	public void logout() {
 		try {
 			final JsonObject params = new JsonObject();
-			params.addProperty("type", "logout");
+			params.addProperty(REQ, LOGOUT);
 			snd.write(params.toString().getBytes());
 			snd.flush();
 			final byte[] buffer = new byte[1024];
@@ -119,7 +129,9 @@ public class IntlolaSender {
 		final byte[] writeBuffer = new byte[2048];
 		FileInputStream fis = null;
 		try {
-			snd.write(file.toJSON().toString().getBytes());
+			JsonObject fjson = file.toJSON();
+			fjson.addProperty(REQ, SEND);
+			snd.write(fjson.toString().getBytes());
 			snd.flush();
 			rcv.read(readBuffer);
 			String received = new String(readBuffer);
@@ -131,7 +143,7 @@ public class IntlolaSender {
 						snd.write(writeBuffer, 0, count);
 					}
 				}
-				snd.write("EOF".getBytes());
+				snd.write(EOF.getBytes());
 				snd.flush();
 				rcv.read(readBuffer);
 				received = new String(readBuffer);
