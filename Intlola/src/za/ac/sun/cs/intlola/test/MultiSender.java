@@ -39,6 +39,7 @@ public class MultiSender {
 				if (sender.loggedIn()) {
 					for (final String file : files) {
 						final IntlolaFile ifile = IndividualFile.read(file);
+						System.out.println(ifile.toJSON());
 						sender.sendFile(ifile);
 					}
 					sender.logout();
@@ -111,7 +112,7 @@ public class MultiSender {
 			threads.add(new Thread(new SendThread(e.getKey(), e.getValue(),
 					files)));
 			c++;
-			if (c > 3) {
+			if (c > 1) {
 				break;
 			}
 		}

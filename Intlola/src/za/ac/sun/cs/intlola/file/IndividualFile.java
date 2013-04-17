@@ -13,14 +13,14 @@ public class IndividualFile implements IntlolaFile {
 		String pkg = "";
 		boolean start = false;
 		for (int i = 0; i < len; i++) {
-			if (holder[i].equals("src") || holder[i].equals("bin")) {
-				start = true;
-			}
 			if (start) {
 				pkg += holder[i];
-				if (i < len) {
+				if (i < len - 1) {
 					pkg += NAME_SEP;
 				}
+			}
+			if (holder[i].equals("src") || holder[i].equals("bin")) {
+				start = true;
 			}
 		}
 		return pkg;
