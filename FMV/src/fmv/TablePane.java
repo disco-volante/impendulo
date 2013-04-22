@@ -29,47 +29,6 @@ public class TablePane extends JPanel {
 		double aveTime = -1.0;
 		double totTime = -1.0;
 
-		public void readProperties(final Archive archive) {
-			nocomp = Integer.parseInt(FMV.getArchiveProperty(archive, "nocomp",
-					"-1"));
-			eerrs = Integer.parseInt(FMV.getArchiveProperty(archive, "eerrs",
-					"-1"));
-			efail = Integer.parseInt(FMV.getArchiveProperty(archive, "efail",
-					"-1"));
-			aerrs = Integer.parseInt(FMV.getArchiveProperty(archive, "aerrs",
-					"-1"));
-			afail = Integer.parseInt(FMV.getArchiveProperty(archive, "afail",
-					"-1"));
-			timeout = Integer.parseInt(FMV.getArchiveProperty(archive,
-					"timeout", "-1"));
-			ok = Integer.parseInt(FMV.getArchiveProperty(archive, "ok", "-1"));
-			total = Integer.parseInt(FMV.getArchiveProperty(archive, "total",
-					"-1"));
-			minTime = Double.parseDouble(FMV.getArchiveProperty(archive,
-					"minTime", "-1.0"));
-			maxTime = Double.parseDouble(FMV.getArchiveProperty(archive,
-					"maxTime", "-1.0"));
-			aveTime = Double.parseDouble(FMV.getArchiveProperty(archive,
-					"aveTime", "-1.0"));
-			totTime = Double.parseDouble(FMV.getArchiveProperty(archive,
-					"totTime", "-1.0"));
-		}
-
-		public void writeProperties(final Archive archive) {
-			FMV.setArchiveProperty(archive, "nocomp", "" + nocomp);
-			FMV.setArchiveProperty(archive, "eerrs", "" + eerrs);
-			FMV.setArchiveProperty(archive, "efail", "" + efail);
-			FMV.setArchiveProperty(archive, "aerrs", "" + aerrs);
-			FMV.setArchiveProperty(archive, "afail", "" + afail);
-			FMV.setArchiveProperty(archive, "timeout", "" + timeout);
-			FMV.setArchiveProperty(archive, "ok", "" + ok);
-			FMV.setArchiveProperty(archive, "total", "" + total);
-			FMV.setArchiveProperty(archive, "minTime", "" + minTime);
-			FMV.setArchiveProperty(archive, "maxTime", "" + maxTime);
-			FMV.setArchiveProperty(archive, "aveTime", "" + aveTime);
-			FMV.setArchiveProperty(archive, "totTime", "" + totTime);
-		}
-
 	}
 
 	private class ArchiveTableModel extends AbstractTableModel {

@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 
 import com.google.gson.JsonObject;
@@ -19,16 +20,6 @@ public class IntlolaSender {
 	private final String project;
 
 	private final String address;
-	private static final String OK = "ok";
-	private static final String EOF = "eof";
-	private static final String SEND = "send";
-	private static final String LOGIN = "begin";
-	private static final String LOGOUT = "end";
-	private static final String REQ = "req";
-	private static final String UNAME = "uname";
-	private static final String PWORD = "pword";
-	private static final String PROJECT = "project";
-	private static final String MODE = "mode";
 
 	private final int port;
 	private OutputStream snd = null;
@@ -65,16 +56,17 @@ public class IntlolaSender {
 		final byte[] buffer = new byte[1024];
 		try {
 			final JsonObject params = new JsonObject();
-			params.addProperty(REQ, LOGIN);
-			params.addProperty(UNAME, uname);
-			params.addProperty(PWORD, password);
-			params.addProperty(PROJECT, project);
-			params.addProperty(MODE, mode.toString());
+			params.addProperty(Const.REQ, Const.LOGIN);
+			params.addProperty(Const.UNAME, uname);
+			params.addProperty(Const.PWORD, password);
+			params.addProperty(Const.PROJECT, project);
+			params.addProperty(Const.MODE, mode.toString());
+			params.addProperty(Const.LANG, Const.JAVA);
 			snd.write(params.toString().getBytes());
 			snd.flush();
 			rcv.read(buffer);
 			final String received = new String(buffer);
-			if (received.startsWith(OK)) {
+			if (received.startsWith(Const.OK)) {
 				loggedIn = true;
 			} else {
 				System.out.println(received);
@@ -88,13 +80,13 @@ public class IntlolaSender {
 	public void logout() {
 		try {
 			final JsonObject params = new JsonObject();
-			params.addProperty(REQ, LOGOUT);
+			params.addProperty(Const.REQ, Const.LOGOUT);
 			snd.write(params.toString().getBytes());
 			snd.flush();
 			final byte[] buffer = new byte[1024];
 			rcv.read(buffer);
 			final String received = new String(buffer);
-			if (!received.startsWith(OK)) {
+			if (!received.startsWith(Const.OK)) {
 				System.out.println(received);
 			}
 		} catch (final IOException e) {
@@ -130,12 +122,12 @@ public class IntlolaSender {
 		FileInputStream fis = null;
 		try {
 			JsonObject fjson = file.toJSON();
-			fjson.addProperty(REQ, SEND);
+			fjson.addProperty(Const.REQ, Const.SEND);
 			snd.write(fjson.toString().getBytes());
 			snd.flush();
 			rcv.read(readBuffer);
 			String received = new String(readBuffer);
-			if (received.startsWith(OK)) {
+			if (received.startsWith(Const.OK)) {
 				if (file.hasContents()) {
 					int count;
 					fis = new FileInputStream(file.getPath());
@@ -143,11 +135,11 @@ public class IntlolaSender {
 						snd.write(writeBuffer, 0, count);
 					}
 				}
-				snd.write(EOF.getBytes());
+				snd.write(Const.EOF.getBytes());
 				snd.flush();
 				rcv.read(readBuffer);
 				received = new String(readBuffer);
-				if (!received.startsWith(OK)) {
+				if (!received.startsWith(Const.OK)) {
 					System.out.println(received);
 				}
 			}

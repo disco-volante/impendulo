@@ -1,39 +1,31 @@
 package fmv.db;
 
-import java.util.Date;
+import com.mongodb.BasicDBList;
+import com.mongodb.DBObject;
 
-public class DBFile implements Comparable<DBFile> {
-	private final byte[] data;
-
+public class DBFile {
 	private final String name;
-	private final long date;
+	private final byte[] data;
+	DBObject info;
+	BasicDBList results;
 
-	public DBFile(final String name, final long date, final byte[] data) {
+	public DBFile(String name, DBObject info, byte[] data, BasicDBList results) {
 		this.name = name;
-		this.date = date;
+		this.info = info;
 		this.data = data;
-	}
-
-	@Override
-	public int compareTo(final DBFile o) {
-		int ret = 0;
-		if (o == null || date < o.date) {
-			ret = -1;
-		} else if (date > o.date) {
-			ret = 1;
-		}
-		return ret;
+		this.results = results;
 	}
 
 	public byte[] getBytes() {
 		return data;
 	}
 
-	public Date getDate() {
-		return new Date(date);
-	}
-
 	public String getName() {
 		return name;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T getInfo(String key, Class<T> clazz) {
+		return (T) info.get(key);
 	}
 }

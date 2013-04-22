@@ -285,37 +285,7 @@ public class PreferencesDialog extends JDialog implements ActionListener {
 		return removeSrc;
 	}
 
-	public void loadProperties() {
-		compilerCmd = FMV
-				.getDirectoryProperty("prefs.compilerCmd", compilerCmd);
-		interpreterCmd = FMV.getDirectoryProperty("prefs.interpreterCmd",
-				interpreterCmd);
-		findbugsJar = FMV
-				.getDirectoryProperty("prefs.findbugsJar", findbugsJar);
-		findbugsSrc = FMV
-				.getDirectoryProperty("prefs.findbugsSrc", findbugsSrc);
-		if (removeSrc) {
-			final String s = FMV
-					.getDirectoryProperty("prefs.removeSrc", "true");
-			removeSrc = s.equals("true");
-		} else {
-			final String s = FMV.getDirectoryProperty("prefs.removeSrc",
-					"false");
-			removeSrc = s.equals("true");
-		}
-		dbHost = FMV.getDirectoryProperty("prefs.dbhost", "http://localhost");
-		setDefaults();
-	}
 
-	public void saveProperties() {
-		FMV.setDirectoryProperty("prefs.compilerCmd", compilerCmd);
-		FMV.setDirectoryProperty("prefs.interpreterCmd", interpreterCmd);
-		FMV.setDirectoryProperty("prefs.findbugsJar", findbugsJar);
-		FMV.setDirectoryProperty("prefs.findbugsSrc", findbugsSrc);
-		FMV.setDirectoryProperty("prefs.removeSrc", removeSrc ? "true"
-				: "false");
-		FMV.setDirectoryProperty("prefs.dbhost", dbHost);
-	}
 
 	private void setDefaults() {
 		if (compilerCmd == null || compilerCmd.isEmpty()) {

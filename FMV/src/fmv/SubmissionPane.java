@@ -20,12 +20,11 @@ import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
 import sun.awt.VerticalBagLayout;
-import fmv.db.DBFile;
 import fmv.db.DataRetriever;
 import fmv.db.Project;
 import fmv.db.Submission;
 
-public class DBPane extends JPanel {
+public class SubmissionPane extends JPanel {
 
 	public enum Level {
 		PROJECTS, SUBMISSIONS;
@@ -38,13 +37,11 @@ public class DBPane extends JPanel {
 		 */
 		private static final long serialVersionUID = -7407750081315305369L;
 		private final HashMap<String, Project> projects;
-		private final HashMap<Submission, Archive> submissionData;
 		private Level level;
 		private Project project;
 		private Submission sub;
 
 		public ProjectListModel(final List<String> projList) {
-			submissionData = new HashMap<Submission, Archive>();
 			projects = new HashMap<String, Project>();
 			for (final String p : projList) {
 				projects.put(p, new Project(p));
@@ -67,22 +64,9 @@ public class DBPane extends JPanel {
 				addAll(project.getSubmissions());
 				label.setText("Submissions");
 				level = Level.SUBMISSIONS;
-			}  else if (level.equals(Level.SUBMISSIONS)) {
+			} else if (level.equals(Level.SUBMISSIONS)) {
 				sub = project.getSubmission(index);
-				if (submissionData.get(sub) == null) {
-					final List<DBFile> files = retriever.retrieveFiles(sub);
-					final boolean archive = sub.getFormat().equals(
-							"SINGLE") ? true : false;
-					System.out.println(archive);
-					submissionData.put(sub,
-							new Archive(project.getName(), sub.toString(),
-									files, archive));
-				}
 			}
-		}
-
-		public Archive getProjectData() {
-			return submissionData.get(sub);
 		}
 
 		private void load(final Project proj) {
@@ -112,7 +96,7 @@ public class DBPane extends JPanel {
 			final DataRetriever ret = new DataRetriever("localhost");
 			final JFrame parent = new JFrame();
 			parent.setSize(new Dimension(300, 400));
-			final DBPane pane = new DBPane(ret);
+			final SubmissionPane pane = new SubmissionPane(ret);
 			parent.add(pane);
 			parent.setVisible(true);
 		} catch (final UnknownHostException e) {
@@ -126,7 +110,7 @@ public class DBPane extends JPanel {
 
 	private JLabel label;
 
-	public DBPane(final DataRetriever retriever) {
+	public SubmissionPane(final DataRetriever retriever) {
 		super(new VerticalBagLayout());
 		this.retriever = retriever;
 		createGUI();
@@ -178,10 +162,6 @@ public class DBPane extends JPanel {
 		top.add(label);
 		add(top);
 		add(itemScrollPane);
-	}
-
-	public Archive getProjectData() {
-		return ((ProjectListModel) itemList.getModel()).getProjectData();
 	}
 
 }

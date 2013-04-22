@@ -1,19 +1,12 @@
 package fmv.db;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import org.bson.types.ObjectId;
 
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -24,32 +17,17 @@ import com.mongodb.Mongo;
 public class DataRetriever {
 	private final Mongo client;
 	private final DB db;
-	private static final String DB_NAME = "impendulo";
-	private static final String PROJECTS = "projects";
-	private static final String FILES = "files";
 
-	@SuppressWarnings("resource")
 	public static void main(final String args[]) {
 		try {
-			final DataRetriever ret = new DataRetriever("localhost");
+			final DataRetriever ret = new DataRetriever(Vals.ADDRESS);
 			final List<String> projects = ret.getProjects();
 			for (final String p : projects) {
-				final byte[] bytes = ret.getTests(p);
-				FileOutputStream fos;
-				try {
-					fos = new FileOutputStream(new File("tests.zip"));
-					fos.write(bytes);
-					final Enumeration<? extends ZipEntry> entries = new ZipFile(
-							"tests.zip").entries();
-					while (entries.hasMoreElements()) {
-						System.out.println(entries.nextElement());
-					}
-				} catch (final FileNotFoundException e) {
-					e.printStackTrace();
-				} catch (final IOException e) {
-					e.printStackTrace();
+				ArrayList<Submission> subs = ret.getSubmissions(p);
+				System.out.println(subs);
+				for (Submission sub : subs) {
+					ret.retrieveFiles(sub);
 				}
-
 			}
 
 		} catch (final UnknownHostException e) {
@@ -59,7 +37,7 @@ public class DataRetriever {
 
 	public DataRetriever(final String url) throws UnknownHostException {
 		client = new Mongo(url);
-		db = client.getDB(DataRetriever.DB_NAME);
+		db = client.getDB(Vals.DB_NAME);
 	}
 
 	private List<?> getDistinct(final String col, final String key) {
@@ -81,19 +59,19 @@ public class DataRetriever {
 
 	@SuppressWarnings("unchecked")
 	public List<String> getProjects() {
-		return (List<String>) getDistinct(DataRetriever.PROJECTS, "project");
+		return (List<String>) getDistinct(Vals.SUBS, Vals.PROJECT);
 	}
 
 	public ArrayList<Submission> getSubmissions(final String project) {
 		final DBObject ref = new BasicDBObject();
-		final BasicDBObject matcher = new BasicDBObject("project", project);
-		final DBCursor cursor = getMultiple(DataRetriever.PROJECTS, matcher,
-				ref);
+		final BasicDBObject matcher = new BasicDBObject(Vals.PROJECT, project)
+				.append(Vals.MODE, Vals.INDIVIDUAL);
+		final DBCursor cursor = getMultiple(Vals.SUBS, matcher, ref);
 		final ArrayList<Submission> ret = new ArrayList<Submission>();
 		for (final DBObject o : cursor) {
 			final Submission submission = new Submission(
-					(ObjectId) o.get("_id"), (String) o.get("user"),
-					(Integer) o.get("number"), (String) o.get("mode"));
+					(ObjectId) o.get(Vals.ID), (String) o.get(Vals.USER),
+					(Long) o.get(Vals.TIME), (String) o.get(Vals.MODE));
 			ret.add(submission);
 		}
 		return ret;
@@ -101,13 +79,15 @@ public class DataRetriever {
 
 	public byte[] getTests(final String project) {
 		byte[] data = null;
-		final DBObject sub = getSingle(DataRetriever.PROJECTS, new BasicDBObject("project", project)
-				.append("mode", "TEST"), new BasicDBObject());
-		List<DBObject> list = getFiles(new BasicDBObject("subid", sub.get("_id")));
+		final DBObject sub = getSingle(Vals.SUBS, new BasicDBObject(
+				Vals.PROJECT, project).append(Vals.MODE, Vals.TEST),
+				new BasicDBObject());
+		List<DBObject> list = getFiles(new BasicDBObject(Vals.SUBID,
+				sub.get(Vals.ID)));
 		if (list != null && list.size() > 0) {
 			DBObject obj = ((DBObject) list.get(0));
 			if (obj != null) {
-				data = (byte[]) obj.get("data");
+				data = (byte[]) obj.get(Vals.DATA);
 			}
 		}
 		return data;
@@ -115,22 +95,25 @@ public class DataRetriever {
 
 	public List<DBObject> getFiles(BasicDBObject matcher) {
 		final DBObject ref = new BasicDBObject();
-		final DBCursor o = getMultiple(DataRetriever.FILES, matcher, ref);
+		final DBCursor o = getMultiple(Vals.FILES, matcher, ref);
 		return o.toArray();
 	}
 
 	public List<DBFile> retrieveFiles(final Submission sub) {
-		final List<DBObject> list = getFiles(new BasicDBObject("subid",
+		final List<DBObject> list = getFiles(new BasicDBObject(Vals.SUBID,
 				sub.getId()));
 		final List<DBFile> files = new ArrayList<DBFile>();
 		if (list != null) {
 			for (final DBObject file : list) {
-				final String name = (String) file.get("name");
-				final long date = (Long) file.get("date");
-				final byte[] data = (byte[]) file.get("data");
-				files.add(new DBFile(name, date, data));
+				final String name = (String) file.get(Vals.NAME);
+				DBObject info = (DBObject) file.get(Vals.INFO);
+				final byte[] data = (byte[]) file.get(Vals.DATA);
+				BasicDBList results = (BasicDBList) file.get(Vals.RESULTS);
+				files.add(new DBFile(name, info, data, results));
+				System.out.println(files.get(files.size() - 1)
+						.getInfo(Vals.TIME, Double.class).longValue());
+				// files.add(new DBFile(name, date, data));
 			}
-			Collections.sort(files);
 		}
 		return files;
 	}

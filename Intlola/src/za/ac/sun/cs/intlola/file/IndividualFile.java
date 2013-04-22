@@ -85,23 +85,23 @@ public class IndividualFile implements IntlolaFile {
 	@Override
 	public JsonObject toJSON() {
 		final JsonObject ret = new JsonObject();
-		ret.addProperty(Args.NAME, name);
+		ret.addProperty(Const.NAME, name);
 		if (hasContents()) {
 			String ext = name.split("\\.")[1];
-			ret.addProperty(Args.FTYPE, ext);
-			if (ext.equals(Args.JAVA)) {
-				ret.addProperty(Args.TYPE, Args.SRC);
-			} else if (ext.equals(Args.CLASS)) {
-				ret.addProperty(Args.TYPE, Args.EXEC);
+			ret.addProperty(Const.FTYPE, ext);
+			if (ext.equals(Const.JAVA)) {
+				ret.addProperty(Const.TYPE, Const.SRC);
+			} else if (ext.equals(Const.CLASS)) {
+				ret.addProperty(Const.TYPE, Const.EXEC);
 			}
 		} else {
-			ret.addProperty(Args.FTYPE, Args.EMPTY);
-			ret.addProperty(Args.TYPE, Args.CHANGE);
+			ret.addProperty(Const.FTYPE, Const.EMPTY);
+			ret.addProperty(Const.TYPE, Const.CHANGE);
 		}
-		ret.addProperty(Args.PKG, pkg);
-		ret.addProperty(Args.MOD, mod);
-		ret.addProperty(Args.NUM, num);
-		ret.addProperty(Args.TIME, time);
+		ret.addProperty(Const.PKG, pkg);
+		ret.addProperty(Const.MOD, mod);
+		ret.addProperty(Const.NUM, num);
+		ret.addProperty(Const.TIME, time);
 		return ret;
 	}
 }

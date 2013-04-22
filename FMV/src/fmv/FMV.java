@@ -13,7 +13,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.FileHandler;
@@ -21,9 +20,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
-import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -45,42 +42,6 @@ import fmv.tools.Tools;
  * @author jaco
  */
 public class FMV {
-
-	public static class CompileListener implements ActionListener {
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public void actionPerformed(final ActionEvent e) {
-			if (FMV.directoryPane.isEnabled()) {
-				final int i = FMV.directoryPane.directoryList
-						.getSelectedIndex();
-				if (i != -1) {
-					final Archive archive = FMV.directory.getArchive(i);
-					if (!archive.isSetup()) {
-						archive.setup();
-					}
-					if (!archive.isCompiled()) {
-						archive.runTool("Tests");
-					}
-					FMV.directoryPane.sourceList.setModel(FMV.directory
-							.getModel(i));
-					FMV.directoryPane.sourceList.setSelectedIndex(0);
-					FMV.directory.setDiff(i, 0);
-				}
-			} else if (FMV.dbPane.isEnabled()) {
-				final Archive archive = FMV.dbPane.getProjectData();
-				if (archive != null) {
-					if (!archive.isSetup()) {
-						archive.setup();
-					}
-					if (!archive.isCompiled()) {
-						archive.runTool("Tests");
-					}
-				}
-
-			}
-		}
-	}
 
 	/**
 	 * Inner class that responds to menu commands.
@@ -104,42 +65,10 @@ public class FMV {
 		 *            the event that caused this action
 		 */
 		@Override
-		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public void actionPerformed(final ActionEvent event) {
-			if ("file.open".equals(event.getActionCommand())) {
-				FMV.saveProperties();
-				FMV.switchContexts(true);
-				if (fc == null) {
-					fc = new JFileChooser();
-					fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-				}
-				if (fc.showOpenDialog(FMV.mainFrame) == JFileChooser.APPROVE_OPTION) {
-					final File f = fc.getSelectedFile();
-					try {
-						FMV.directory = new Directory(f.getCanonicalPath());
-					} catch (final IOException e) {
-						e.printStackTrace();
-					}
-					FMV.tablePane.clear();
-					for (final String n : f.list()) {
-						if (n.endsWith(".zip") && !n.endsWith("TESTING.zip")) {
-							FMV.directory.addArchive(n);
-						}
-					}
-					FMV.prefs.loadProperties();
-					FMV.directoryPane.directoryList.setModel(FMV.directory
-							.getModel());
-					FMV.directoryPane.sourceList
-							.setModel(new DefaultListModel());
-					FMV.splitPane.setRightComponent(FMV.tablePane);
-				}
-			} else if ("server.open".equals(event.getActionCommand())) {
-				FMV.saveProperties();
-				FMV.switchContexts(false);
-			} else if ("file.prefs".equals(event.getActionCommand())) {
+			if ("file.prefs".equals(event.getActionCommand())) {
 				FMV.prefs.activate();
 			} else if ("file.quit".equals(event.getActionCommand())) {
-				FMV.saveProperties();
 				FMV.mainFrame.dispose();
 				System.exit(0);
 			} else if ("view.table".equals(event.getActionCommand())) {
@@ -162,32 +91,6 @@ public class FMV {
 		}
 	}
 
-	public static class ToolListener implements ActionListener {
-
-		@Override
-		public void actionPerformed(final ActionEvent e) {
-			if (FMV.directoryPane.isEnabled()) {
-				final int i = FMV.directoryPane.directoryList
-						.getSelectedIndex();
-				if (i != -1 && FMV.toolBox.getSelectedIndex() != -1) {
-					final Archive archive = FMV.directory.getArchive(i);
-					if (!archive.isSetup()) {
-						archive.setup();
-					}
-					archive.runTool((String) FMV.toolBox.getSelectedItem());
-				}
-			} else if (FMV.dbPane.isEnabled()) {
-				final Archive proj = FMV.dbPane.getProjectData();
-				if (proj != null) {
-					if (!proj.isSetup()) {
-						proj.setup();
-					}
-					proj.runTool((String) FMV.toolBox.getSelectedItem());
-				}
-			}
-		}
-	}
-
 	public static final String TEST_DIR = System.getProperty("user.home")
 			+ File.separator + ".impendulo" + File.separator + "tests";
 	public static final String ZIP_DIR = System.getProperty("user.home")
@@ -203,16 +106,6 @@ public class FMV {
 	 * A dialog for the preferences window.
 	 */
 	public static PreferencesDialog prefs;
-
-	/**
-	 * Dialog for showing the compiler/tester progress.
-	 */
-	public static ToolRunnerDialog toolrunner;
-
-	/**
-	 * A container for a list of zip files inside a directory.
-	 */
-	private static Directory directory;
 
 	private static JSplitPane splitPane;
 
@@ -233,9 +126,7 @@ public class FMV {
 
 	public static DataRetriever retriever;
 
-	private static DirectoryPane directoryPane;
-
-	private static DBPane dbPane;
+	private static SubmissionPane subPane;
 
 	private static Map<String, String> testZips;
 
@@ -254,7 +145,6 @@ public class FMV {
 		FMV.fmvIcon = new ImageIcon(FMV.getMyImage("fmv.gif"));
 		FMV.fmvImage = FMV.fmvIcon.getImage();
 		FMV.mainFrame.setIconImage(FMV.fmvImage);
-		FMV.toolrunner = new ToolRunnerDialog(FMV.mainFrame);
 		FMV.prefs = new PreferencesDialog(FMV.mainFrame);
 		FMV.help = new HelpContents(FMV.mainFrame);
 		FMV.annotateDialog = new AnnotateDialog(FMV.mainFrame);
@@ -270,28 +160,18 @@ public class FMV {
 		FMV.timeGraph = new VersionTimeline(false);
 		FMV.timeGraph.setMinimumSize(new Dimension(650, 400));
 
-		FMV.directoryPane = new DirectoryPane();
-		FMV.dbPane = new DBPane(FMV.retriever);
+		FMV.subPane = new SubmissionPane(FMV.retriever);
 
 		FMV.splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-				FMV.directoryPane, FMV.tablePane);
-
-		FMV.switchContexts(true);
+				FMV.subPane, FMV.tablePane);
 
 		FMV.splitPane.setOneTouchExpandable(true);
 		FMV.splitPane.setResizeWeight(0);
 		FMV.splitPane.setDividerLocation(150);
 
-		final JButton compileBtn = new JButton("Compile");
-		compileBtn.addActionListener(new CompileListener());
 		final JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		controls.add(compileBtn);
 		FMV.toolBox = new JComboBox<String>(Tools.getTools());
 		controls.add(FMV.toolBox);
-		final JButton toolButton = new JButton("Run");
-		toolButton.setToolTipText("Run static analysis tools.");
-		toolButton.addActionListener(new ToolListener());
-		controls.add(toolButton);
 		final JPanel contentPane = new JPanel(new BorderLayout());
 		contentPane.setOpaque(true);
 		contentPane.add(controls, BorderLayout.NORTH);
@@ -353,24 +233,6 @@ public class FMV {
 		return item;
 	}
 
-	public static String getArchiveProperty(final Archive archive,
-			final String defualt) {
-		if (FMV.directory != null) {
-			return FMV.directory.getXArchiveProperty(archive, null, defualt);
-		} else {
-			return defualt;
-		}
-	}
-
-	public static String getArchiveProperty(final Archive archive,
-			final String key, final String defualt) {
-		if (FMV.directory != null) {
-			return FMV.directory.getXArchiveProperty(archive, key, defualt);
-		} else {
-			return defualt;
-		}
-	}
-
 	protected static String getClassName(final Object o) {
 		final String classString = o.getClass().getName();
 		final int dotIndex = classString.lastIndexOf(".");
@@ -379,15 +241,6 @@ public class FMV {
 
 	public static OutputDialog getDialog() {
 		return new OutputDialog(FMV.mainFrame);
-	}
-
-	public static String getDirectoryProperty(final String key,
-			final String defualt) {
-		if (FMV.directory != null) {
-			return FMV.directory.getXDirectoryProperty(key, defualt);
-		} else {
-			return defualt;
-		}
 	}
 
 	public static Image getMyImage(final String imageName) {
@@ -455,17 +308,6 @@ public class FMV {
 		return outfile;
 	}
 
-	public static String getVersionProperty(final Archive archive,
-			final Source source, final Date date, final String key,
-			final String defualt) {
-		if (FMV.directory != null) {
-			return FMV.directory.getXVersionProperty(archive, source, date,
-					key, defualt);
-		} else {
-			return defualt;
-		}
-	}
-
 	public static void log(final String className, final String content) {
 		FMV.logger.log(Level.SEVERE, className + "\n" + content);
 	}
@@ -487,33 +329,6 @@ public class FMV {
 
 	}
 
-	public static void saveProperties() {
-		if (FMV.directory != null) {
-			FMV.prefs.saveProperties();
-			FMV.directory.saveXProperties();
-		}
-	}
-
-	public static void setArchiveProperty(final Archive archive,
-			final String value) {
-		if (FMV.directory != null) {
-			FMV.directory.setXArchiveProperty(archive, null, value);
-		}
-	}
-
-	public static void setArchiveProperty(final Archive archive,
-			final String key, final String value) {
-		if (FMV.directory != null) {
-			FMV.directory.setXArchiveProperty(archive, key, value);
-		}
-	}
-
-	public static void setDirectoryProperty(final String key, final String value) {
-		if (FMV.directory != null) {
-			FMV.directory.setXDirectoryProperty(key, value);
-		}
-	}
-
 	private static void setup() throws SecurityException, IOException {
 		FMV.logger = Logger.getLogger(FMV.class.getName());
 		FMV.logger.setUseParentHandlers(false);
@@ -523,30 +338,6 @@ public class FMV {
 		FMV.logger.addHandler(new FileHandler("fmv.log"));
 		final File dir = new File(FMV.TEST_DIR);
 		dir.mkdirs();
-	}
-
-	public static void setVersionProperty(final Archive archive,
-			final Source source, final Date date, final String key,
-			final String value) {
-		if (FMV.directory != null) {
-			FMV.directory
-					.setXVersionProperty(archive, source, date, key, value);
-		}
-	}
-
-	public static void switchContexts(final boolean dir) {
-		FMV.tablePane.clear();
-		FMV.splitPane.setRightComponent(FMV.tablePane);
-		if (dir) {
-			FMV.directoryPane.setEnabled(true);
-			FMV.dbPane.setEnabled(false);
-			FMV.splitPane.setLeftComponent(FMV.directoryPane);
-
-		} else {
-			FMV.directoryPane.setEnabled(false);
-			FMV.dbPane.setEnabled(true);
-			FMV.splitPane.setLeftComponent(FMV.dbPane);
-		}
 	}
 
 }

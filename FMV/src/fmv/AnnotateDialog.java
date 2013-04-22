@@ -18,6 +18,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.xml.transform.Source;
 
 public class AnnotateDialog extends JDialog {
 
@@ -30,10 +31,6 @@ public class AnnotateDialog extends JDialog {
 	 * Text component for editing the annotation text.
 	 */
 	private final JTextArea noteText;
-
-	private Archive archive;
-
-	private Source source;
 
 	private Map.Entry<Date, Version> version;
 
@@ -61,9 +58,6 @@ public class AnnotateDialog extends JDialog {
 			@Override
 			public void actionPerformed(final ActionEvent event) {
 				version.getValue().setAnnotation(noteText.getText());
-				FMV.setVersionProperty(archive, source, version.getKey(),
-						"note", noteText.getText());
-				FMV.saveProperties();
 				deactivate();
 			}
 
@@ -89,10 +83,7 @@ public class AnnotateDialog extends JDialog {
 	 * @param text
 	 *            text to insert into dialog
 	 */
-	public void activate(final Archive archive, final Source source,
-			final Map.Entry<Date, Version> version) {
-		this.archive = archive;
-		this.source = source;
+	public void activate(final Map.Entry<Date, Version> version) {
 		this.version = version;
 		final Document doc = noteText.getDocument();
 		try {

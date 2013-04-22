@@ -16,6 +16,8 @@ import java.util.NavigableMap;
 
 import javax.swing.JComponent;
 
+import fmv.db.Submission;
+
 public class VersionTimeline extends JComponent implements ActionListener,
 		MouseListener {
 
@@ -55,13 +57,6 @@ public class VersionTimeline extends JComponent implements ActionListener,
 	private static final int DASH_GAP = 3;
 
 	/**
-	 * The source file that this timeline is representing.
-	 */
-	private Source source;
-
-	private Archive archive;
-
-	/**
 	 * Whether or not the timeline is flat or has some height.
 	 */
 	private boolean isFlat = false;
@@ -87,6 +82,8 @@ public class VersionTimeline extends JComponent implements ActionListener,
 	private long currTime = 0;
 
 	private Map.Entry<Date, Version> leftVersion = null, rightVersion = null;
+
+	private Submission sub;
 
 	/**
 	 * Construct a new timeline. If this timeline is flat, we make it sensitive
@@ -116,11 +113,11 @@ public class VersionTimeline extends JComponent implements ActionListener,
 			}
 		} else if ("leftedit".equals(e.getActionCommand())) {
 			if (leftVersion != null) {
-				FMV.annotateDialog.activate(archive, source, leftVersion);
+				FMV.annotateDialog.activate(leftVersion);
 			}
 		} else if ("rightedit".equals(e.getActionCommand())) {
 			if (rightVersion != null) {
-				FMV.annotateDialog.activate(archive, source, rightVersion);
+				FMV.annotateDialog.activate(rightVersion);
 			}
 		} else if ("tool".equals(e.getActionCommand())) {
 			final String tool = FMV.diffPane.getCurrentTool();
@@ -147,11 +144,11 @@ public class VersionTimeline extends JComponent implements ActionListener,
 		if (isFlat) {
 			return x >= 0 && x < w && y >= 0 && y < h;
 		}
-		if (source != null && timeSpan > 0) {
+		if (timeSpan > 0) {
 			final int firstX = VersionTimeline.BORDER;
 			final int finalX = w - VersionTimeline.BORDER;
 			final int xSpan = finalX - firstX;
-			final NavigableMap<Date, Version> m = source.getVersions();
+			final NavigableMap<Date, Version> m = sub.getFiles();
 			for (Map.Entry<Date, Version> e = m.lastEntry(); e != null; e = m
 					.lowerEntry(e.getKey())) {
 				final int ex = (int) (firstX + xSpan
@@ -181,11 +178,9 @@ public class VersionTimeline extends JComponent implements ActionListener,
 
 	@Override
 	public void mouseClicked(final MouseEvent e) {
-		if (source != null) {
-			setDate(new Date(firstTime + timeSpan
-					* (e.getX() - VersionTimeline.BORDER)
-					/ (getWidth() - 2 * VersionTimeline.BORDER)));
-		}
+		setDate(new Date(firstTime + timeSpan
+				* (e.getX() - VersionTimeline.BORDER)
+				/ (getWidth() - 2 * VersionTimeline.BORDER)));
 	}
 
 	@Override
@@ -206,9 +201,6 @@ public class VersionTimeline extends JComponent implements ActionListener,
 
 	@Override
 	public void paintComponent(final Graphics g) {
-		if (source == null) {
-			return;
-		}
 		final int h = getHeight();
 		final int w = getWidth();
 		g.setColor(Color.white);
@@ -226,7 +218,7 @@ public class VersionTimeline extends JComponent implements ActionListener,
 							* (currTime - firstTime) / timeSpan);
 					g.drawLine(x, 0, x, h - 1);
 				}
-				for (final Map.Entry<Date, Version> e : source.getVersions()
+				for (final Map.Entry<Date, Version> e : sub.getFiles()
 						.entrySet()) {
 					final int x = (int) (firstX + xSpan
 							* (e.getKey().getTime() - firstTime) / timeSpan);
@@ -284,7 +276,7 @@ public class VersionTimeline extends JComponent implements ActionListener,
 				g.drawString(d, (finalX + firstX - dw) / 2, dh + 2);
 				g.setColor(Color.black);
 				int px = -1, py = 0;
-				for (final Map.Entry<Date, Version> e : source.getVersions()
+				for (final Map.Entry<Date, Version> e : sub.getFiles()
 						.entrySet()) {
 					final int x = (int) (firstX + xSpan
 							* (e.getKey().getTime() - firstTime) / timeSpan);
@@ -296,7 +288,7 @@ public class VersionTimeline extends JComponent implements ActionListener,
 					px = x;
 					py = y;
 				}
-				for (final Map.Entry<Date, Version> e : source.getVersions()
+				for (final Map.Entry<Date, Version> e : sub.getFiles()
 						.entrySet()) {
 					final int x = (int) (firstX + xSpan
 							* (e.getKey().getTime() - firstTime) / timeSpan);
@@ -326,38 +318,37 @@ public class VersionTimeline extends JComponent implements ActionListener,
 	}
 
 	public void setDate(final Date date) {
-		leftVersion = source.getVersions().floorEntry(date);
-		rightVersion = source.getVersions().ceilingEntry(date);
+		leftVersion = sub.getFiles().floorEntry(date);
+		rightVersion = sub.getFiles().ceilingEntry(date);
 		if (leftVersion == null && rightVersion == null) {
 			return;
 		} else if (leftVersion == null) {
 			currTime = (firstTime + rightVersion.getKey().getTime()) / 2;
-			source.showItem(false, rightVersion, null);
-			source.showEmpty(true);
+			// sub.showItem(false, rightVersion, null);
+			// sub.showEmpty(true);
 		} else if (rightVersion == null) {
 			currTime = (finalTime + leftVersion.getKey().getTime()) / 2;
-			source.showItem(true, leftVersion, null);
-			source.showEmpty(false);
+			// sub.showItem(true, leftVersion, null);
+			// sub.showEmpty(false);
 		} else {
 			currTime = (leftVersion.getKey().getTime() + rightVersion.getKey()
 					.getTime()) / 2;
 			final List<DiffAction> diffs = rightVersion.getValue().getDiff();
-			source.showItem(true, leftVersion, diffs);
-			source.showItem(false, rightVersion, diffs);
+			// sub.showItem(true, leftVersion, diffs);
+			// sub.showItem(false, rightVersion, diffs);
 		}
 		repaint();
 		FMV.diffPane.scrollToTop();
 	}
 
-	public void setSource(final Archive archive, final Source source) {
-		this.archive = archive;
-		this.source = source;
-		firstTime = source.getVersions().firstKey().getTime();
-		finalTime = source.getVersions().lastKey().getTime();
+	public void setSource(final Submission sub) {
+		this.sub = sub;
+		firstTime = sub.getFiles().firstKey().getTime();
+		finalTime = sub.getFiles().lastKey().getTime();
 		timeSpan = finalTime - firstTime;
 		repaint();
 		if (timeSpan > 0) {
-			setDate(new Date(this.source.getVersions().firstKey().getTime() + 1));
+			setDate(new Date(this.sub.getFiles().firstKey().getTime() + 1));
 		}
 	}
 

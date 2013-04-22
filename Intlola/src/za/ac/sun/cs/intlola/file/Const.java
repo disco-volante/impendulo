@@ -1,6 +1,6 @@
 package za.ac.sun.cs.intlola.file;
 
-public class Args {
+public class Const {
 	public static final String TYPE = "type";
 	public static final String SRC = "src";
 	public static final String EXEC = "exec";
@@ -14,7 +14,18 @@ public class Args {
 	public static final String TIME = "time";
 	public static final String MOD = "mod";
 	public static final String EMPTY = "empty";
-	public static final Object CLASS = "class";
-	public static final Object JAVA = "java";
+	public static final String CLASS = "class";
+	public static final String JAVA = "java";
 	public static final String ZIP = "zip";
+	public static final String LANG = "lang";
+	public static final String OK = "ok";
+	public static final String EOF = "eof";
+	public static final String SEND = "send";
+	public static final String LOGIN = "begin";
+	public static final String LOGOUT = "end";
+	public static final String REQ = "req";
+	public static final String UNAME = "uname";
+	public static final String PWORD = "pword";
+	public static final String PROJECT = "project";
+	public static final String MODE = "mode";
 }
