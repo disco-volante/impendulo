@@ -107,7 +107,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 
 	private static void processArchive(final IResource resource,
 			final char kindSuffix) {
-		final String f = resource.getFullPath().toString();
+		final String f = resource.getLocation().toString();
 		final StringBuffer d = new StringBuffer(IntlolaVisitor.storePath);
 		d.append(File.separator);
 		d.append(f.replace(IntlolaVisitor.ECLIPSE_SEP,
@@ -119,8 +119,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 		d.append(IntlolaVisitor.COMPONENT_SEP);
 		d.append(kindSuffix);
 		if (resource.getType() == IResource.FILE) {
-			final String l = resource.getLocation().toString();
-			copy(l, d.toString());
+			copy(f, d.toString());
 		} else {
 			touch(d.toString());
 		}
@@ -129,7 +128,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 
 	private static void processIndividual(final IResource resource,
 			final char kindSuffix) {
-		final String f = resource.getFullPath().toString();
+		final String f = resource.getLocation().toString();
 		Intlola.sender.sendFile(new IndividualFile(f, kindSuffix, counter++,
 				resource.getType() == IResource.FILE));
 	}

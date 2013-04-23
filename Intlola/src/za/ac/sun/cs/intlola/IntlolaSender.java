@@ -130,6 +130,7 @@ public class IntlolaSender {
 			if (received.startsWith(Const.OK)) {
 				if (file.hasContents()) {
 					int count;
+					Intlola.log(null, file.toJSON());
 					fis = new FileInputStream(file.getPath());
 					while ((count = fis.read(writeBuffer)) >= 0) {
 						snd.write(writeBuffer, 0, count);
