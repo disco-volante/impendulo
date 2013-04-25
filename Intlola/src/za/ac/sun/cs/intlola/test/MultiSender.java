@@ -10,8 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import za.ac.sun.cs.intlola.IntlolaSender;
-import za.ac.sun.cs.intlola.SendMode;
+import za.ac.sun.cs.intlola.IntlolaProcessor;
+import za.ac.sun.cs.intlola.IntlolaMode;
 import za.ac.sun.cs.intlola.file.IndividualFile;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
@@ -31,15 +31,14 @@ public class MultiSender {
 
 		@Override
 		public void run() {
-			final IntlolaSender sender = new IntlolaSender(user, "Data",
-					SendMode.INDIVIDUAL, PreferenceConstants.LOCAL_ADDRESS,
+			final IntlolaProcessor sender = new IntlolaProcessor(user, "Data",
+					IntlolaMode.FILE_REMOTE, PreferenceConstants.LOCAL_ADDRESS,
 					PreferenceConstants.PORT);
-			if (sender.openConnection()) {
+			if (sender.init()) {
 				sender.login(user, passwd);
 				if (sender.loggedIn()) {
 					for (final String file : files) {
 						final IntlolaFile ifile = IndividualFile.read(file);
-						System.out.println(ifile.toJSON());
 						sender.sendFile(ifile);
 					}
 					sender.logout();
@@ -112,7 +111,7 @@ public class MultiSender {
 			threads.add(new Thread(new SendThread(e.getKey(), e.getValue(),
 					files)));
 			c++;
-			if (c > 1) {
+			if (c > 0) {
 				break;
 			}
 		}

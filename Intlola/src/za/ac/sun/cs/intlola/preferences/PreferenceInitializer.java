@@ -11,8 +11,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	public void initializeDefaultPreferences() {
 		final IPreferenceStore store = Intlola.getDefault()
 				.getPreferenceStore();
-		store.setDefault(PreferenceConstants.P_SEND,
-				PreferenceConstants.INDIVIDUAL);
+		store.setDefault(PreferenceConstants.P_MODE,
+				PreferenceConstants.FILE_REMOTE);
 		store.setDefault(PreferenceConstants.P_UNAME,
 				PreferenceConstants.DEFAULT);
 		store.setDefault(PreferenceConstants.P_ADDRESS,

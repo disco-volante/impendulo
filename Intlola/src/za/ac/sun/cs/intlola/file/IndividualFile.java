@@ -34,11 +34,16 @@ public class IndividualFile implements IntlolaFile {
 		final int num = Integer.parseInt(elems[elems.length - 2]);
 		final long time = Long.parseLong(elems[elems.length - 3]);
 		String name = null, pkg = null;
+		boolean hasContents = false;
 		if (elems.length > 3) {
 			name = elems[elems.length - 4];
 			pkg = IndividualFile.getPackage(elems, elems.length - 4);
+			System.out.println(name);
+			if (name.contains(NAME_SEP)) {
+				hasContents = true;
+			}
 		}
-		return new IndividualFile(path, name, pkg, mod, num, time);
+		return new IndividualFile(path, name, pkg, mod, num, time, hasContents);
 	}
 
 	private final String path, name, pkg;
@@ -62,11 +67,12 @@ public class IndividualFile implements IntlolaFile {
 	}
 
 	public IndividualFile(final String path, final String name,
-			final String pkg, final char mod, final int num, final long time) {
+			final String pkg, final char mod, final int num, final long time,
+			final boolean hasContents) {
 		this.path = path;
 		this.mod = mod;
 		this.num = num;
-		hasContents = true;
+		this.hasContents = hasContents;
 		this.time = time;
 		this.name = name;
 		this.pkg = pkg;

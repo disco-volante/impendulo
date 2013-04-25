@@ -10,8 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import za.ac.sun.cs.intlola.IntlolaSender;
-import za.ac.sun.cs.intlola.SendMode;
+import za.ac.sun.cs.intlola.IntlolaProcessor;
+import za.ac.sun.cs.intlola.IntlolaMode;
 import za.ac.sun.cs.intlola.file.ArchiveFile;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
@@ -30,10 +30,10 @@ public class ZipSender {
 
 		@Override
 		public void run() {
-			final IntlolaSender sender = new IntlolaSender(user, "Data",
-					SendMode.ARCHIVE, PreferenceConstants.LOCAL_ADDRESS,
+			final IntlolaProcessor sender = new IntlolaProcessor(user, "Data",
+					IntlolaMode.ARCHIVE_REMOTE, PreferenceConstants.LOCAL_ADDRESS,
 					PreferenceConstants.PORT);
-			if (sender.openConnection()) {
+			if (sender.init()) {
 				sender.login(user, passwd);
 				if (sender.loggedIn()) {
 					sender.sendFile(new ArchiveFile(zip));

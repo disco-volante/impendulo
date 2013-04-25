@@ -26,12 +26,12 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 				"Server address:", getFieldEditorParent()));
 		addField(new IntegerFieldEditor(PreferenceConstants.P_PORT,
 				"Server port:", getFieldEditorParent()));
-		addField(new RadioGroupFieldEditor(PreferenceConstants.P_SEND,
-				"Send data to server:", 1, new String[][] {
-						{ "After every save", PreferenceConstants.INDIVIDUAL },
-						{ "When recording is stopped",
-								PreferenceConstants.ARCHIVE },
-						{ "Never", PreferenceConstants.NEVER } },
+		addField(new RadioGroupFieldEditor(PreferenceConstants.P_MODE,
+				"Select the mode to run Intlola in:", 1, new String[][] {
+						{ "Continuously send snapshots to server", PreferenceConstants.FILE_REMOTE },
+						{ "Send all snapshots once recording has stopped",
+								PreferenceConstants.ARCHIVE_REMOTE },
+						{ "Save all snapshots locally", PreferenceConstants.ARCHIVE_LOCAL } },
 				getFieldEditorParent()));
 	}
 

@@ -1,7 +1,7 @@
 package za.ac.sun.cs.intlola.test;
 
-import za.ac.sun.cs.intlola.IntlolaSender;
-import za.ac.sun.cs.intlola.SendMode;
+import za.ac.sun.cs.intlola.IntlolaProcessor;
+import za.ac.sun.cs.intlola.IntlolaMode;
 import za.ac.sun.cs.intlola.file.TestFile;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
@@ -12,10 +12,10 @@ public class TestsSender {
 	}
 
 	private static void sendTests(final String name) {
-		final IntlolaSender sender = new IntlolaSender("username", "Data",
-				SendMode.TEST, PreferenceConstants.LOCAL_ADDRESS,
+		final IntlolaProcessor sender = new IntlolaProcessor("username", "Data",
+				IntlolaMode.ARCHIVE_TEST, PreferenceConstants.LOCAL_ADDRESS,
 				PreferenceConstants.PORT);
-		if (sender.openConnection()) {
+		if (sender.init()) {
 			sender.login("username", "password");
 			if (sender.loggedIn()) {
 				sender.sendFile(new TestFile(name));

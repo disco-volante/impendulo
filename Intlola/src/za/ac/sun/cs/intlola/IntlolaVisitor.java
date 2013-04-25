@@ -1,9 +1,6 @@
 package za.ac.sun.cs.intlola;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.Calendar;
 
@@ -26,35 +23,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 	private static String storePath = Intlola.getDefault().getStateLocation()
 			.toOSString();
 
-	public static void copy(final String fromName, final String toName) {
-		try {
-			final File fromFile = new File(fromName);
-			final File toFile = new File(toName);
-			if (!fromFile.exists()) {
-				throw new IOException("No such file: " + fromName);
-			}
-			if (!fromFile.isFile()) {
-				throw new IOException("Not a file: " + fromName);
-			}
-			if (!fromFile.canRead()) {
-				throw new IOException("Cannot read file: " + fromName);
-			}
-			if (toFile.exists()) {
-				throw new IOException("File already exists: " + fromName);
-			}
-			final FileInputStream from = new FileInputStream(fromFile);
-			final FileOutputStream to = new FileOutputStream(toFile);
-			final byte[] buffer = new byte[4096];
-			int bytesRead;
-			while ((bytesRead = from.read(buffer)) != -1) {
-				to.write(buffer, 0, bytesRead);
-			}
-			from.close();
-			to.close();
-		} catch (final IOException e) {
-			Intlola.log(e);
-		}
-	}
+	
 
 	public static void processChanges(final IResource resource, final int kind) {
 		Intlola.log(null, "Intlola processing resource", resource, kind);
@@ -75,37 +44,14 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 		default:
 			throw new InvalidParameterException();
 		}
-		switch (Intlola.sender.mode) {
-		case INDIVIDUAL:
-			processIndividual(resource, kindSuffix);
-			break;
-		case ARCHIVE:
-			processArchive(resource, kindSuffix);
-			break;
-		case NEVER:
-			break;
-		case TEST:
-			break;
-		default:
-			break;
+		if (Intlola.proc.mode.isArchive()) {
+			save(resource, kindSuffix);
+		} else if(Intlola.proc.mode.isRemote()){
+			send(resource, kindSuffix);
 		}
 	}
 
-	public static void touch(final String toName) {
-		try {
-			final File toFile = new File(toName);
-			if (toFile.exists()) {
-				throw new IOException("File already exists: " + toName);
-			}
-			final FileOutputStream to = new FileOutputStream(toFile);
-			to.write(0);
-			to.close();
-		} catch (final IOException e) {
-			Intlola.log(e);
-		}
-	}
-
-	private static void processArchive(final IResource resource,
+	private static void save(final IResource resource,
 			final char kindSuffix) {
 		final String f = resource.getLocation().toString();
 		final StringBuffer d = new StringBuffer(IntlolaVisitor.storePath);
@@ -119,17 +65,17 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 		d.append(IntlolaVisitor.COMPONENT_SEP);
 		d.append(kindSuffix);
 		if (resource.getType() == IResource.FILE) {
-			copy(f, d.toString());
+			Utils.copy(f, d.toString());
 		} else {
-			touch(d.toString());
+			Utils.touch(d.toString());
 		}
 
 	}
 
-	private static void processIndividual(final IResource resource,
+	private static void send(final IResource resource,
 			final char kindSuffix) {
 		final String f = resource.getLocation().toString();
-		Intlola.sender.sendFile(new IndividualFile(f, kindSuffix, counter++,
+		Intlola.proc.sendFile(new IndividualFile(f, kindSuffix, counter++,
 				resource.getType() == IResource.FILE));
 	}
 

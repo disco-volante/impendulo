@@ -1,19 +1,21 @@
 package za.ac.sun.cs.intlola;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import za.ac.sun.cs.intlola.file.ArchiveFile;
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 
 import com.google.gson.JsonObject;
 
-public class IntlolaSender {
+public class IntlolaProcessor {
 
-	protected final SendMode mode;
+	protected final IntlolaMode mode;
 
 	private String uname;
 
@@ -27,8 +29,8 @@ public class IntlolaSender {
 	private InputStream rcv = null;
 	private boolean loggedIn;
 
-	public IntlolaSender(final String uname, final String project,
-			final SendMode mode, final String address, final int port) {
+	public IntlolaProcessor(final String uname, final String project,
+			final IntlolaMode mode, final String address, final int port) {
 		this.uname = uname;
 		this.project = project;
 		this.mode = mode;
@@ -50,6 +52,9 @@ public class IntlolaSender {
 	}
 
 	public void login(final String username, final String password) {
+		if (!mode.isRemote()) {
+			uname += ":"+password;
+		}
 		if (username != null && !uname.equals(username)) {
 			uname = username;
 		}
@@ -69,7 +74,7 @@ public class IntlolaSender {
 			if (received.startsWith(Const.OK)) {
 				loggedIn = true;
 			} else {
-				System.out.println(received);
+				System.err.println(received);
 			}
 		} catch (final IOException e) {
 			e.printStackTrace();
@@ -103,15 +108,17 @@ public class IntlolaSender {
 		}
 	}
 
-	public boolean openConnection() {
+	public boolean init() {
 		boolean ret = true;
-		try {
-			sock = new Socket(address, port);
-			snd = sock.getOutputStream();
-			rcv = sock.getInputStream();
-		} catch (final IOException e) {
-			e.printStackTrace();
-			ret = false;
+		if (mode.isRemote()) {
+			try {
+				sock = new Socket(address, port);
+				snd = sock.getOutputStream();
+				rcv = sock.getInputStream();
+			} catch (final IOException e) {
+				e.printStackTrace();
+				ret = false;
+			}
 		}
 		return ret;
 	}
@@ -125,6 +132,7 @@ public class IntlolaSender {
 			fjson.addProperty(Const.REQ, Const.SEND);
 			snd.write(fjson.toString().getBytes());
 			snd.flush();
+			System.out.println("sent: " + fjson.toString());
 			rcv.read(readBuffer);
 			String received = new String(readBuffer);
 			if (received.startsWith(Const.OK)) {
@@ -138,11 +146,13 @@ public class IntlolaSender {
 				}
 				snd.write(Const.EOF.getBytes());
 				snd.flush();
+				System.out.println("sent: file");
 				rcv.read(readBuffer);
 				received = new String(readBuffer);
 				if (!received.startsWith(Const.OK)) {
 					System.out.println(received);
 				}
+				System.out.println("done");
 			}
 
 		} catch (final IOException e) {
@@ -171,6 +181,18 @@ public class IntlolaSender {
 		}
 		if (sock != null) {
 			sock.close();
+		}
+	}
+
+	public void handleArchive(final File dirfile) {
+		if (!mode.isRemote()) {
+			final String creds = dirfile + File.separator + "credentials.txt";
+			Utils.saveString(uname, creds);
+		}
+		final String filename = getProject() + ".zip";
+		Utils.saveArchive(dirfile, filename);
+		if (mode.isRemote()) {
+			sendFile(new ArchiveFile(filename));
 		}
 	}
 
