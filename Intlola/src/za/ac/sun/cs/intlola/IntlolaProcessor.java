@@ -15,6 +15,64 @@ import com.google.gson.JsonObject;
 
 public class IntlolaProcessor {
 
+	private static Object sendLock = new Object();
+
+	private class Sender implements Runnable {
+		private IntlolaFile file;
+
+		Sender(IntlolaFile file) {
+			this.file = file;
+		}
+
+		@Override
+		public void run() {
+			synchronized (sendLock) {
+				final byte[] readBuffer = new byte[2048];
+				final byte[] writeBuffer = new byte[2048];
+				FileInputStream fis = null;
+				try {
+					JsonObject fjson = file.toJSON();
+					fjson.addProperty(Const.REQ, Const.SEND);
+					snd.write(fjson.toString().getBytes());
+					snd.flush();
+					rcv.read(readBuffer);
+					String received = new String(readBuffer);
+					if (received.startsWith(Const.OK)) {
+						if (file.hasContents()) {
+							int count;
+							Intlola.log(null, file.toJSON());
+							fis = new FileInputStream(file.getPath());
+							while ((count = fis.read(writeBuffer)) >= 0) {
+								snd.write(writeBuffer, 0, count);
+							}
+						}
+						snd.write(Const.EOF.getBytes());
+						snd.flush();
+						rcv.read(readBuffer);
+						received = new String(readBuffer);
+						if (!received.startsWith(Const.OK)) {
+							Intlola.log(null, "Send error:" + received);
+						}
+					}
+
+				} catch (final IOException e) {
+					Intlola.log(e, "Send error");
+				} finally {
+					try {
+						if (fis != null) {
+							fis.close();
+						}
+					} catch (final IOException e) {
+						Intlola.log(e, "Close error");
+					}
+
+				}
+
+			}
+		}
+
+	}
+
 	protected final IntlolaMode mode;
 
 	private String uname;
@@ -53,7 +111,7 @@ public class IntlolaProcessor {
 
 	public void login(final String username, final String password) {
 		if (!mode.isRemote()) {
-			uname += ":"+password;
+			uname += ":" + password;
 		}
 		if (username != null && !uname.equals(username)) {
 			uname = username;
@@ -74,37 +132,37 @@ public class IntlolaProcessor {
 			if (received.startsWith(Const.OK)) {
 				loggedIn = true;
 			} else {
-				System.err.println(received);
+				Intlola.log(null, received);
 			}
 		} catch (final IOException e) {
-			e.printStackTrace();
-			Intlola.log(e);
+			Intlola.log(e, "Login error");
 		}
+
 	}
 
 	public void logout() {
-		try {
-			final JsonObject params = new JsonObject();
-			params.addProperty(Const.REQ, Const.LOGOUT);
-			snd.write(params.toString().getBytes());
-			snd.flush();
-			final byte[] buffer = new byte[1024];
-			rcv.read(buffer);
-			final String received = new String(buffer);
-			if (!received.startsWith(Const.OK)) {
-				System.out.println(received);
-			}
-		} catch (final IOException e) {
-			e.printStackTrace();
-			Intlola.log(e);
-		} finally {
+		synchronized (sendLock) {
 			try {
-				closeConnection();
+				final JsonObject params = new JsonObject();
+				params.addProperty(Const.REQ, Const.LOGOUT);
+				snd.write(params.toString().getBytes());
+				snd.flush();
+				final byte[] buffer = new byte[1024];
+				rcv.read(buffer);
+				final String received = new String(buffer);
+				if (!received.startsWith(Const.OK)) {
+					Intlola.log(null, received);
+				}
 			} catch (final IOException e) {
-				e.printStackTrace();
 				Intlola.log(e);
-			}
+			} finally {
+				try {
+					closeConnection();
+				} catch (final IOException e) {
+					Intlola.log(e, "Logout error");
+				}
 
+			}
 		}
 	}
 
@@ -116,7 +174,7 @@ public class IntlolaProcessor {
 				snd = sock.getOutputStream();
 				rcv = sock.getInputStream();
 			} catch (final IOException e) {
-				e.printStackTrace();
+				Intlola.log(e, "No server detected");
 				ret = false;
 			}
 		}
@@ -124,63 +182,21 @@ public class IntlolaProcessor {
 	}
 
 	public void sendFile(final IntlolaFile file) {
-		final byte[] readBuffer = new byte[2048];
-		final byte[] writeBuffer = new byte[2048];
-		FileInputStream fis = null;
-		try {
-			JsonObject fjson = file.toJSON();
-			fjson.addProperty(Const.REQ, Const.SEND);
-			snd.write(fjson.toString().getBytes());
-			snd.flush();
-			System.out.println("sent: " + fjson.toString());
-			rcv.read(readBuffer);
-			String received = new String(readBuffer);
-			if (received.startsWith(Const.OK)) {
-				if (file.hasContents()) {
-					int count;
-					Intlola.log(null, file.toJSON());
-					fis = new FileInputStream(file.getPath());
-					while ((count = fis.read(writeBuffer)) >= 0) {
-						snd.write(writeBuffer, 0, count);
-					}
-				}
-				snd.write(Const.EOF.getBytes());
-				snd.flush();
-				System.out.println("sent: file");
-				rcv.read(readBuffer);
-				received = new String(readBuffer);
-				if (!received.startsWith(Const.OK)) {
-					System.out.println(received);
-				}
-				System.out.println("done");
-			}
-
-		} catch (final IOException e) {
-			e.printStackTrace();
-			Intlola.log(e);
-		} finally {
-			try {
-				if (fis != null) {
-					fis.close();
-				}
-			} catch (final IOException e) {
-				e.printStackTrace();
-				Intlola.log(e);
-			}
-
-		}
-
+		Thread sendThread = new Thread(new Sender(file));
+		sendThread.start();
 	}
 
 	private void closeConnection() throws IOException {
-		if (snd != null) {
-			snd.close();
-		}
-		if (rcv != null) {
-			rcv.close();
-		}
-		if (sock != null) {
-			sock.close();
+		synchronized (sendLock) {
+			if (snd != null) {
+				snd.close();
+			}
+			if (rcv != null) {
+				rcv.close();
+			}
+			if (sock != null) {
+				sock.close();
+			}
 		}
 	}
 
@@ -194,6 +210,10 @@ public class IntlolaProcessor {
 		if (mode.isRemote()) {
 			sendFile(new ArchiveFile(filename));
 		}
+	}
+
+	public String getConn() {
+		return address + ":" + port;
 	}
 
 }

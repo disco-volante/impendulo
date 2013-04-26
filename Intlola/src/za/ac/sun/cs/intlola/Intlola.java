@@ -12,6 +12,7 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
@@ -34,7 +35,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	private static final Boolean RECORD_ON = new Boolean(true);
 
 	public static final int LAUNCHED = -6666;
-
 
 	private static Intlola plugin;
 
@@ -108,7 +108,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		Intlola.log(null, "Intlola record stopping", project.getName());
 		if (proc.mode.isArchive()) {
 			proc.handleArchive(Intlola.plugin.getStateLocation().toFile());
-		} 
+		}
 		if (proc.mode.isRemote()) {
 			Intlola.proc.logout();
 		}
@@ -133,10 +133,10 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	private static boolean login(final Shell shell) {
-		if (Intlola.proc.init()) {
-			final LoginDialog dialog = new LoginDialog(shell,
-					Intlola.proc.getUsername());
-			while (!Intlola.proc.loggedIn()) {
+		final LoginDialog dialog = new LoginDialog(shell,
+				Intlola.proc.getUsername());
+		while (!Intlola.proc.loggedIn()) {
+			if (Intlola.proc.init()) {
 				final int code = dialog.open();
 				if (code == Window.OK) {
 					Intlola.proc.login(dialog.getUserName(),
@@ -144,6 +144,9 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 				} else {
 					break;
 				}
+			} else {
+				MessageDialog.openError(shell, "Connection error",
+						"Could not connect to server on: " + proc.getConn());
 			}
 		}
 		return Intlola.proc.loggedIn();
@@ -161,10 +164,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			file.delete();
 		}
 	}
-
-	
-
-
 
 	private IResourceChangeListener changeListener = null;
 

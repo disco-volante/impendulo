@@ -1,17 +1,7 @@
 package za.ac.sun.cs.intlola.gui;
 
-/*
- SWT/JFace in Action
- GUI Design with Eclipse 3.0
- Matthew Scarpino, Stephen Holder, Stanford Ng, and Laurent Mihalkovic
-
- ISBN: 1932394273
-
- Publisher: Manning
- */
 
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -22,7 +12,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 public class LoginDialog extends Dialog {
-	private static final int RESET_ID = IDialogConstants.NO_TO_ALL_ID + 1;
 
 	private Text usernameField;
 
@@ -53,22 +42,6 @@ public class LoginDialog extends Dialog {
 	}
 
 	@Override
-	protected void buttonPressed(final int buttonId) {
-		if (buttonId == RESET_ID) {
-			usernameField.setText("");
-			passwordField.setText("");
-		} else {
-			super.buttonPressed(buttonId);
-		}
-	}
-
-	@Override
-	protected void createButtonsForButtonBar(final Composite parent) {
-		super.createButtonsForButtonBar(parent);
-		createButton(parent, RESET_ID, "Reset All", false);
-	}
-
-	@Override
 	protected Control createDialogArea(final Composite parent) {
 		final Composite comp = (Composite) super.createDialogArea(parent);
 
@@ -89,6 +62,7 @@ public class LoginDialog extends Dialog {
 		passwordField = new Text(comp, SWT.SINGLE | SWT.PASSWORD);
 		data = new GridData(GridData.FILL_HORIZONTAL);
 		passwordField.setLayoutData(data);
+		passwordField.setFocus();
 
 		return comp;
 	}

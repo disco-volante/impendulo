@@ -32,7 +32,7 @@ public class MultiSender {
 		@Override
 		public void run() {
 			final IntlolaProcessor sender = new IntlolaProcessor(user, "Data",
-					IntlolaMode.FILE_REMOTE, PreferenceConstants.LOCAL_ADDRESS,
+					IntlolaMode.FILE_REMOTE, PreferenceConstants.REMOTE_ADDRESS,
 					PreferenceConstants.PORT);
 			if (sender.init()) {
 				sender.login(user, passwd);
