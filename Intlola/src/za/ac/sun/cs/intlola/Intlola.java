@@ -12,7 +12,7 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
@@ -108,8 +108,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		Intlola.log(null, "Intlola record stopping", project.getName());
 		if (proc.mode.isArchive()) {
 			proc.handleArchive(Intlola.plugin.getStateLocation().toFile());
-		}
-		if (proc.mode.isRemote()) {
+		} else if (proc.mode.isRemote()) {
 			Intlola.proc.logout();
 		}
 		try {
@@ -145,8 +144,18 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 					break;
 				}
 			} else {
-				MessageDialog.openError(shell, "Connection error",
-						"Could not connect to server on: " + proc.getConn());
+				InputDialog connDialog = new InputDialog(
+						shell,
+						"Connection error",
+						"Could not connect to server on: " + proc.getConn()
+								+ ".\nPlease specify an open address and port.",
+						"0.0.0.0:1000", new ConnValidator());
+				if(connDialog.open() == InputDialog.OK){
+					Intlola.proc.setConn(connDialog.getValue());
+				} else{
+					break;
+				}
+
 			}
 		}
 		return Intlola.proc.loggedIn();

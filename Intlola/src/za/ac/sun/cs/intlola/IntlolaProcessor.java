@@ -69,8 +69,10 @@ public class IntlolaProcessor {
 				}
 
 			}
+			if (mode.isArchive()) {
+				logout();
+			}
 		}
-
 	}
 
 	protected final IntlolaMode mode;
@@ -79,9 +81,9 @@ public class IntlolaProcessor {
 
 	private final String project;
 
-	private final String address;
+	private String address;
 
-	private final int port;
+	private int port;
 	private OutputStream snd = null;
 	private Socket sock = null;
 	private InputStream rcv = null;
@@ -112,6 +114,8 @@ public class IntlolaProcessor {
 	public void login(final String username, final String password) {
 		if (!mode.isRemote()) {
 			uname += ":" + password;
+			loggedIn = true;
+			return;
 		}
 		if (username != null && !uname.equals(username)) {
 			uname = username;
@@ -187,16 +191,14 @@ public class IntlolaProcessor {
 	}
 
 	private void closeConnection() throws IOException {
-		synchronized (sendLock) {
-			if (snd != null) {
-				snd.close();
-			}
-			if (rcv != null) {
-				rcv.close();
-			}
-			if (sock != null) {
-				sock.close();
-			}
+		if (snd != null) {
+			snd.close();
+		}
+		if (rcv != null) {
+			rcv.close();
+		}
+		if (sock != null) {
+			sock.close();
 		}
 	}
 
@@ -214,6 +216,12 @@ public class IntlolaProcessor {
 
 	public String getConn() {
 		return address + ":" + port;
+	}
+
+	public void setConn(String value) {
+		String[] args = value.split(":");
+		address = args[0];
+		port = Integer.parseInt(args[1]);
 	}
 
 }

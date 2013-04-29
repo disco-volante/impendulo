@@ -7,7 +7,7 @@ public class PreferenceConstants {
 	public static final String P_ADDRESS = "addressPreference";
 	public static final String P_PORT = "portPreference";
 
-	public static final String REMOTE_ADDRESS = "ec2-23-22-216-19.compute-1.amazonaws.com";
+	public static final String REMOTE_ADDRESS = "146.232.212.130";// "ec2-23-22-216-19.compute-1.amazonaws.com";
 	public static final String LOCAL_ADDRESS = "localhost";
 	public static final int PORT = 9000;
 	public static final String DEFAULT = "username";

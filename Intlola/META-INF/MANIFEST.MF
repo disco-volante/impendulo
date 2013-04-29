@@ -6,7 +6,8 @@ Bundle-Version: 1.0.0.1
 Bundle-Vendor: Computer Science, Stellenbosch University
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ClassPath: lib/gson-2.2.2.jar,
- .
+ .,
+ lib/commons-validator-1.4.0.jar
 Service-Component: plugin.xml
 Import-Package: org.eclipse.core.commands,
  org.eclipse.core.resources,
