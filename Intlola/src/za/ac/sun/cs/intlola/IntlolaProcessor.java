@@ -145,6 +145,7 @@ public class IntlolaProcessor {
 	}
 
 	public void logout() {
+		loggedIn = false;
 		synchronized (sendLock) {
 			try {
 				final JsonObject params = new JsonObject();

@@ -19,7 +19,7 @@ public class TestsSender {
 			sender.login("pjordaan", "1brandwag");
 			if (sender.loggedIn()) {
 				sender.sendFile(new TestFile(name));
-				sender.logout();
+				while(sender.loggedIn()){};
 			}
 		}
 	}
