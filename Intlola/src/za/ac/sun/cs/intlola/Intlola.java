@@ -62,18 +62,22 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	public static IProject getSelectedProject(final ExecutionEvent event) {
 		final IStructuredSelection selection = (IStructuredSelection) HandlerUtil
-				.getActiveMenuSelection(event);
-		final Object element = selection.getFirstElement();
-		IProject ret = null;
-		if (element instanceof IProject) {
-			ret = (IProject) element;
+				.getCurrentSelection(event);
+		// final IStructuredSelection selection = (IStructuredSelection)
+		// HandlerUtil
+		// .getActiveMenuSelection(event);
+		for (Object element : selection.toList()) {
+			// final Object element = selection.getFirstElement();
+			if (element instanceof IProject) {
+				return (IProject) element;
+			}
+			if (element instanceof IAdaptable) {
+				final IAdaptable adaptable = (IAdaptable) element;
+				final Object adapter = adaptable.getAdapter(IProject.class);
+				return (IProject) adapter;
+			}
 		}
-		if (element instanceof IAdaptable) {
-			final IAdaptable adaptable = (IAdaptable) element;
-			final Object adapter = adaptable.getAdapter(IProject.class);
-			ret = (IProject) adapter;
-		}
-		return ret;
+		return null;
 	}
 
 	public static IWorkspace getWorkspace() {
@@ -150,9 +154,9 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 						"Could not connect to server on: " + proc.getConn()
 								+ ".\nPlease specify an open address and port.",
 						"0.0.0.0:1000", new ConnValidator());
-				if(connDialog.open() == InputDialog.OK){
+				if (connDialog.open() == InputDialog.OK) {
 					Intlola.proc.setConn(connDialog.getValue());
-				} else{
+				} else {
 					break;
 				}
 

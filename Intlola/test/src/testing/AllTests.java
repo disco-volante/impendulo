@@ -64,14 +64,18 @@ public class AllTests {
 		}
 	}
 
+	private static final String dir = System.getProperty("java.io.tmpdir") + File.separator + "tests"
+			+ File.separator + "Triangle" + File.separator + "src"
+			+ File.separator + "testing" + File.separator + "data";
+
 	public static Test suite() {
 		TestSuite suite = new TestSuite("Test for WTC");
-		File f = new File("src/testing/data");
+		File f = new File(dir);
 		String s[] = f.list();
 		for (int i = 0; i < s.length; i++) {
 			String n = s[i];
 			if (n.endsWith(".txt")) {
-				suite.addTest(new FileTest("src/testing/data/" + n));
+				suite.addTest(new FileTest(dir + File.separator + n));
 			}
 		}
 		return suite;
