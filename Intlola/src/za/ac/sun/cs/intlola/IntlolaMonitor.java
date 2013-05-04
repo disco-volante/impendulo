@@ -10,11 +10,9 @@ import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 
 public class IntlolaMonitor implements ILaunchListener {
 
-	@Override
 	public void launchAdded(final ILaunch launch) {
 	}
 
-	@Override
 	public void launchChanged(final ILaunch launch) {
 		final ILaunchConfiguration config = launch.getLaunchConfiguration();
 		String projectName = "";
@@ -33,7 +31,6 @@ public class IntlolaMonitor implements ILaunchListener {
 		}
 	}
 
-	@Override
 	public void launchRemoved(final ILaunch launch) {
 	}
 

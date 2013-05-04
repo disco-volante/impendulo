@@ -28,7 +28,6 @@ public class ZipSender {
 			this.zip = zip;
 		}
 
-		@Override
 		public void run() {
 			final IntlolaProcessor sender = new IntlolaProcessor(user, "Data",
 					IntlolaMode.ARCHIVE_REMOTE, PreferenceConstants.LOCAL_ADDRESS,
@@ -69,7 +68,7 @@ public class ZipSender {
 	}
 
 	public static void main(final String argv[]) {
-		ZipSender.sendZip("data/data.zip");
+		ZipSender.sendZip("data.zip");
 	}
 
 	public static String randString() {
@@ -93,6 +92,7 @@ public class ZipSender {
 		for (final Map.Entry<String, String> e : users.entrySet()) {
 			threads.add(new Thread(
 					new SendThread(e.getKey(), e.getValue(), zip)));
+			break;
 		}
 		for (final Thread th : threads) {
 			th.start();

@@ -111,7 +111,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	public static void stopRecord(final IProject project, final Shell shell) {
 		Intlola.log(null, "Intlola record stopping", project.getName());
 		if (proc.mode.isArchive()) {
-			proc.handleArchive(Intlola.plugin.getStateLocation().toFile());
+			proc.handleArchive(Utils.FILE_DIR);
 		} else if (proc.mode.isRemote()) {
 			Intlola.proc.logout();
 		}
@@ -199,7 +199,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 						e));
 	}
 
-	@Override
 	public void earlyStartup() {
 	}
 

@@ -6,7 +6,6 @@ import org.eclipse.core.runtime.CoreException;
 
 public class IntlolaListener implements IResourceChangeListener {
 
-	@Override
 	public void resourceChanged(final IResourceChangeEvent event) {
 		try {
 			event.getDelta().accept(new IntlolaVisitor());

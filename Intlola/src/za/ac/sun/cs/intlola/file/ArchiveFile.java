@@ -9,22 +9,21 @@ public class ArchiveFile implements IntlolaFile {
 		this.path = path;
 	}
 
-	@Override
 	public String getPath() {
 		return path;
 	}
 
-	@Override
 	public boolean hasContents() {
 		return true;
 	}
 
-	@Override
 	public JsonObject toJSON() {
 		final JsonObject ret = new JsonObject();
 		ret.addProperty(Const.TYPE, Const.ARCHIVE);
 		ret.addProperty(Const.FTYPE, Const.ZIP);
 		return ret;
 	}
+
+
 
 }

@@ -3,48 +3,14 @@ package za.ac.sun.cs.intlola.file;
 import java.io.File;
 import java.util.Calendar;
 
+import za.ac.sun.cs.intlola.Utils;
+
 import com.google.gson.JsonObject;
 
 public class IndividualFile implements IntlolaFile {
-	private static final String INTLOLA_SEP = "_";
-	private static final String NAME_SEP = ".";
 
-	public static String getPackage(final String[] holder, final int len) {
-		String pkg = "";
-		boolean start = false;
-		for (int i = 0; i < len; i++) {
-			if (start) {
-				pkg += holder[i];
-				if (i < len - 1) {
-					pkg += NAME_SEP;
-				}
-			}
-			if (holder[i].equals("src") || holder[i].equals("bin")) {
-				start = true;
-			}
-		}
-		return pkg;
-	}
-
-	public static IntlolaFile read(final String path) {
-		String[] elems = path.split(File.separator);
-		final String fdata = elems[elems.length - 1];
-		elems = fdata.split(INTLOLA_SEP);
-		final char mod = elems[elems.length - 1].charAt(0);
-		final int num = Integer.parseInt(elems[elems.length - 2]);
-		final long time = Long.parseLong(elems[elems.length - 3]);
-		String name = null, pkg = null;
-		boolean hasContents = false;
-		if (elems.length > 3) {
-			name = elems[elems.length - 4];
-			pkg = IndividualFile.getPackage(elems, elems.length - 4);
-			System.out.println(name);
-			if (name.contains(NAME_SEP)) {
-				hasContents = true;
-			}
-		}
-		return new IndividualFile(path, name, pkg, mod, num, time, hasContents);
-	}
+	
+	
 
 	private final String path, name, pkg;
 	private final char mod;
@@ -63,7 +29,7 @@ public class IndividualFile implements IntlolaFile {
 		time = Calendar.getInstance().getTimeInMillis();
 		final String[] spd = path.split(File.separator);
 		name = spd[spd.length - 1];
-		pkg = getPackage(spd, spd.length - 1);
+		pkg = Utils.getPackage(spd, spd.length - 1, Utils.NAME_SEP);
 	}
 
 	public IndividualFile(final String path, final String name,
@@ -78,17 +44,14 @@ public class IndividualFile implements IntlolaFile {
 		this.pkg = pkg;
 	}
 
-	@Override
 	public String getPath() {
 		return path;
 	}
 
-	@Override
 	public boolean hasContents() {
 		return hasContents;
 	}
 
-	@Override
 	public JsonObject toJSON() {
 		final JsonObject ret = new JsonObject();
 		ret.addProperty(Const.NAME, name);

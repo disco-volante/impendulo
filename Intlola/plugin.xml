@@ -62,7 +62,7 @@
             </command>
          </menu>
       </menuContribution> 
-      <menuContribution
+     <!-- <menuContribution
             locationURI="toolbar:org.eclipse.ui.main.toolbar">
             <toolbar id="za.ac.sun.cs.intlola.toolbar">
             <visibleWhen
@@ -93,7 +93,7 @@
                   tooltip="Record Stop">
             </command>
          </toolbar>
-      </menuContribution>
+      </menuContribution> !-->
     </extension>
    <extension
          point="org.eclipse.ui.handlers">
@@ -102,7 +102,7 @@
             commandId="za.ac.sun.cs.Intlola.record">
          <enabledWhen>
             <with
-                  variable="selection">
+                  variable="activeMenuSelection">
                <iterate
                      ifEmpty="false">
                   <adapt
@@ -123,7 +123,7 @@
             commandId="za.ac.sun.cs.Intlola.recordstop">
          <enabledWhen>
             <with
-                  variable="selection">
+                  variable="activeMenuSelection">
                <iterate
                      ifEmpty="false">
                   <adapt

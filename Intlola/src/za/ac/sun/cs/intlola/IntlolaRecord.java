@@ -8,7 +8,6 @@ import org.eclipse.ui.handlers.HandlerUtil;
 
 public class IntlolaRecord extends AbstractHandler {
 
-	@Override
 	public Object execute(final ExecutionEvent event) throws ExecutionException {
 		final IProject project = Intlola.getSelectedProject(event);
 		if (!Intlola.getRecordStatus(project)) {

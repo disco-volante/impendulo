@@ -10,9 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import za.ac.sun.cs.intlola.IntlolaProcessor;
 import za.ac.sun.cs.intlola.IntlolaMode;
-import za.ac.sun.cs.intlola.file.IndividualFile;
+import za.ac.sun.cs.intlola.IntlolaProcessor;
+import za.ac.sun.cs.intlola.Utils;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
@@ -29,7 +29,6 @@ public class MultiSender {
 			this.files = files;
 		}
 
-		@Override
 		public void run() {
 			final IntlolaProcessor sender = new IntlolaProcessor(user, "Data",
 					IntlolaMode.FILE_REMOTE, PreferenceConstants.REMOTE_ADDRESS,
@@ -38,7 +37,7 @@ public class MultiSender {
 				sender.login(user, passwd);
 				if (sender.loggedIn()) {
 					for (final String file : files) {
-						final IntlolaFile ifile = IndividualFile.read(file);
+						final IntlolaFile ifile = Utils.decodeName(file);
 						sender.sendFile(ifile);
 					}
 					sender.logout();

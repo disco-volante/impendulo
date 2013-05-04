@@ -24,7 +24,6 @@ public class IntlolaProcessor {
 			this.file = file;
 		}
 
-		@Override
 		public void run() {
 			synchronized (sendLock) {
 				final byte[] readBuffer = new byte[2048];
@@ -203,13 +202,14 @@ public class IntlolaProcessor {
 		}
 	}
 
-	public void handleArchive(final File dirfile) {
+	public void handleArchive(final String location) {
 		if (!mode.isRemote()) {
-			final String creds = dirfile + File.separator + "credentials.txt";
+			final String creds = location + File.separator + "credentials.txt";
 			Utils.saveString(uname, creds);
 		}
-		final String filename = getProject() + ".zip";
-		Utils.saveArchive(dirfile, filename);
+		final String filename = Utils.STORE_PATH + File.separator
+				+ getProject() + ".zip";
+		Utils.saveArchive(location, filename);
 		if (mode.isRemote()) {
 			sendFile(new ArchiveFile(filename));
 		}
