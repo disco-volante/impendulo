@@ -39,7 +39,6 @@ public class IntlolaProcessor {
 					if (received.startsWith(Const.OK)) {
 						if (file.hasContents()) {
 							int count;
-							Intlola.log(null, file.toJSON());
 							fis = new FileInputStream(file.getPath());
 							while ((count = fis.read(writeBuffer)) >= 0) {
 								snd.write(writeBuffer, 0, count);
@@ -67,9 +66,6 @@ public class IntlolaProcessor {
 
 				}
 
-			}
-			if (mode.isArchive()) {
-				logout();
 			}
 		}
 	}
@@ -145,6 +141,9 @@ public class IntlolaProcessor {
 
 	public void logout() {
 		loggedIn = false;
+		if (!mode.isRemote()) {
+			return;
+		}
 		synchronized (sendLock) {
 			try {
 				final JsonObject params = new JsonObject();
@@ -185,9 +184,10 @@ public class IntlolaProcessor {
 		return ret;
 	}
 
-	public void sendFile(final IntlolaFile file) {
+	public Thread sendFile(final IntlolaFile file) {
 		Thread sendThread = new Thread(new Sender(file));
 		sendThread.start();
+		return sendThread;
 	}
 
 	private void closeConnection() throws IOException {
@@ -202,17 +202,22 @@ public class IntlolaProcessor {
 		}
 	}
 
-	public void handleArchive(final String location) {
+	public void handleArchive(final String location, final String zipLoc) {
 		if (!mode.isRemote()) {
 			final String creds = location + File.separator + "credentials.txt";
 			Utils.saveString(uname, creds);
 		}
-		final String filename = Utils.STORE_PATH + File.separator
-				+ getProject() + ".zip";
-		Utils.saveArchive(location, filename);
+		final String filename = zipLoc + File.separator + getProject() + "_"
+				+ System.currentTimeMillis() + ".zip";
+		Utils.createZip(location, filename);
 		if (mode.isRemote()) {
-			sendFile(new ArchiveFile(filename));
+			try {
+				sendFile(new ArchiveFile(filename)).join();
+			} catch (InterruptedException e) {
+				Intlola.log(e, "Interrupted sending of archive: ", location);
+			}
 		}
+		logout();
 	}
 
 	public String getConn() {

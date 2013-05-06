@@ -62,38 +62,6 @@
             </command>
          </menu>
       </menuContribution> 
-     <!-- <menuContribution
-            locationURI="toolbar:org.eclipse.ui.main.toolbar">
-            <toolbar id="za.ac.sun.cs.intlola.toolbar">
-            <visibleWhen
-                  checkEnabled="false">
-               <with
-                     variable="selection">
-                  <and>
-                     <count
-                           value="1">
-                     </count>
-                     <iterate
-                           ifEmpty="false">
-                        <adapt
-                              type="org.eclipse.core.resources.IProject">
-                        </adapt>
-                     </iterate>
-                  </and>
-               </with>
-            </visibleWhen>
-            <command
-                  commandId="za.ac.sun.cs.Intlola.record"
-                  icon="icons/intlola.gif"
-                  tooltip="Record">
-            </command>
-            <command
-                  commandId="za.ac.sun.cs.Intlola.recordstop"
-                  icon="icons/stop.gif"
-                  tooltip="Record Stop">
-            </command>
-         </toolbar>
-      </menuContribution> !-->
     </extension>
    <extension
          point="org.eclipse.ui.handlers">

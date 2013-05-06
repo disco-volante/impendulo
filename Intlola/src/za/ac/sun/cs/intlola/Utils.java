@@ -6,9 +6,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.InvalidParameterException;
 import java.util.Calendar;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import org.eclipse.core.resources.IResourceDelta;
 
 import za.ac.sun.cs.intlola.file.IndividualFile;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
@@ -22,14 +25,15 @@ public class Utils {
 	private static final CharSequence BIN = "bin";
 	private static final String JAVA = ".java";
 	private static final String CLASS = ".class";
-	public static final String STORE_PATH = Intlola.getDefault()
-			.getStateLocation().toOSString();
-	public static final String FILE_DIR = STORE_PATH + File.separator + "tmp";
-	static{
-		File f = new File(FILE_DIR);
-		f.mkdirs();
-	}
 
+	/**
+	 * Copies the contents of a file to a new file location.
+	 * 
+	 * @param fromName
+	 *            The file to be copied.
+	 * @param toName
+	 *            The path of the new file.
+	 */
 	public static void copy(final String fromName, final String toName) {
 		try {
 
@@ -61,6 +65,12 @@ public class Utils {
 		}
 	}
 
+	/**
+	 * Creates a new empty file.
+	 * 
+	 * @param toName
+	 *            The path of the empty file.
+	 */
 	public static void touch(final String toName) {
 		try {
 			final File toFile = new File(toName);
@@ -75,7 +85,15 @@ public class Utils {
 		}
 	}
 
-	public static void saveArchive(final String location, final String fname) {
+	/**
+	 * Creates a zip archive from all the files found in the specified location.
+	 * 
+	 * @param location
+	 *            The location of the files to be zipped.
+	 * @param fname
+	 *            The absolute file name of the zip file to be created.
+	 */
+	public static void createZip(final String location, final String fname) {
 		try {
 			final File dir = new File(location);
 			final FileOutputStream outfile = new FileOutputStream(fname);
@@ -93,11 +111,21 @@ public class Utils {
 
 	}
 
+	/**
+	 * Recursively zips a directory. Iterates through the current directory
+	 * adding files to zip file if they are regular files. If the file is a
+	 * directory, {@link #zipDir(ZipOutputStream, File)} is called on it.
+	 * 
+	 * @param outzip
+	 *            The zip file.
+	 * @param dirfile
+	 *            The current directory.
+	 */
 	private static void zipDir(final ZipOutputStream outzip, final File dirfile) {
 		for (final File file : dirfile.listFiles()) {
 			if (file.isDirectory()) {
 				zipDir(outzip, file);
-			} else {
+			} else if (isIntlolaFile(file.toString())) {
 				try {
 					final byte[] data = new byte[ZIP_BUFFER_SIZE];
 					final FileInputStream origin = new FileInputStream(file);
@@ -111,11 +139,19 @@ public class Utils {
 				} catch (final IOException e) {
 					Intlola.log(e);
 				}
+				file.delete();
 			}
-			//file.delete();
 		}
 	}
 
+	/**
+	 * Saves a string to a file specified by <code>fname</code>.
+	 * 
+	 * @param string
+	 *            The string to be saved.
+	 * @param fname
+	 *            The name of the file it is to be saved in.
+	 */
 	public static void saveString(String string, String fname) {
 		try {
 			FileOutputStream outfile = new FileOutputStream(fname);
@@ -129,6 +165,18 @@ public class Utils {
 
 	}
 
+	/**
+	 * Retrieve file metadata encoded in a file name. These file names must have
+	 * the format:
+	 * <code>[[{package descriptor}"_"]*{file name}"_"]{time in nanoseconds}"_"{file number in current submission}"_"{modification char}</code>
+	 * Where values between '[ ]' are optional, '*' indicates 0 to many, values
+	 * inside '""' are literals and values inside '{ }' describe the contents at
+	 * that position.
+	 * 
+	 * @param encodedName
+	 *            The name from which to retrieve the metadata.
+	 * @return A new {@link IntlolaFile} with containing the retrieved metadata.
+	 */
 	public static IntlolaFile decodeName(final String encodedName) {
 		String[] elems = encodedName.split(File.separator);
 		final String fdata = elems[elems.length - 1];
@@ -150,6 +198,18 @@ public class Utils {
 				hasContents);
 	}
 
+	/**
+	 * Stores file metadata in its name in the format described by
+	 * {@link #decodeName(String)}.
+	 * 
+	 * @param path
+	 *            The actual name of the file.
+	 * @param kindSuffix
+	 *            The type of file modification.
+	 * @param count
+	 *            The number of the file in the current recording.
+	 * @return A name containing file metadata.
+	 */
 	public static String encodeName(String path, char kindSuffix, int count) {
 		final StringBuffer d = new StringBuffer();
 		String[] args = path.split(File.separator);
@@ -171,6 +231,14 @@ public class Utils {
 		return d.toString();
 	}
 
+	/**
+	 * Retrieves a file's name from an array containing other data such as the
+	 * path to the file or file metadata.
+	 * 
+	 * @param args
+	 *            Array containing a file name among other information.
+	 * @return A file name.
+	 */
 	private static String getFileName(String[] args) {
 		String name = "";
 		for (String arg : args) {
@@ -182,21 +250,32 @@ public class Utils {
 		return name;
 	}
 
-	public static String getPackage(final String[] holder, final int len,
+	/**
+	 * Retrieves a file's package from an array containing other data such as
+	 * the path to the file or file metadata.
+	 * 
+	 * @param args
+	 *            Array containing a file's package among other information.
+	 * @param len
+	 * @param sep
+	 *            Seperator to place between package components.
+	 * @return A file's package.
+	 */
+	public static String getPackage(final String[] args, final int len,
 			String sep) {
 		String pkg = "";
 		boolean start = false;
 		for (int i = 0; i < len; i++) {
-			if (isFileName(holder[i])) {
+			if (isFileName(args[i])) {
 				return pkg;
 			}
 			if (start) {
-				pkg += holder[i];
+				pkg += args[i];
 				if (i < len - 1) {
 					pkg += sep;
 				}
 			}
-			if (holder[i].equals(SRC) || holder[i].equals(BIN)) {
+			if (isOutFolder(args[i])) {
 				start = true;
 			}
 		}
@@ -206,8 +285,56 @@ public class Utils {
 		return pkg;
 	}
 
+	/**
+	 * Determines whether a given string is a java file (source or compiled).
+	 * 
+	 * @param arg
+	 *            The string to be checked.
+	 * @return <code>true</code> if it is, <code>false</code> if not.
+	 */
 	private static boolean isFileName(String arg) {
 		return arg.endsWith(JAVA) || arg.endsWith(CLASS);
+	}
+
+	/**
+	 * Determines whether a given string is an output folder (src or bin).
+	 * 
+	 * @param arg
+	 *            The string to be checked.
+	 * @return <code>true</code> if it is, <code>false</code> if not.
+	 */
+	private static boolean isOutFolder(String arg) {
+		return arg.equals(SRC) || arg.equals(BIN);
+	}
+
+	private static boolean isIntlolaFile(String fname) {
+		if (fname.charAt(fname.length() - 2) == '_') {
+			char modChar = fname.charAt(fname.length() - 1);
+			return modChar == 'a' || modChar == 'c' || modChar == 'r'
+					|| modChar == 'l';
+		}
+		return false;
+	}
+
+	public static char getKind(int kind) {
+		char kindSuffix = ' ';
+		switch (kind) {
+		case IResourceDelta.ADDED:
+			kindSuffix = 'a';
+			break;
+		case IResourceDelta.CHANGED:
+			kindSuffix = 'c';
+			break;
+		case IResourceDelta.REMOVED:
+			kindSuffix = 'r';
+			break;
+		case Intlola.LAUNCHED:
+			kindSuffix = 'l';
+			break;
+		default:
+			throw new InvalidParameterException();
+		}
+		return kindSuffix;
 	}
 
 }

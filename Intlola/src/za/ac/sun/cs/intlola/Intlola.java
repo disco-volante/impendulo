@@ -1,6 +1,7 @@
 package za.ac.sun.cs.intlola;
 
 import java.io.File;
+import java.util.Arrays;
 
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.resources.IProject;
@@ -28,6 +29,8 @@ import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	public static final String PLUGIN_ID = "za.ac.sun.cs.goanna";
+	public static String STORE_PATH;
+	//public static String FILE_DIR;
 
 	private static final QualifiedName RECORD_KEY = new QualifiedName(
 			"intlola", "record");
@@ -87,6 +90,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	public static void log(final Exception e, final Object... msgs) {
 		if (Intlola.getDefault() != null) {
 			Intlola.getDefault()._log(e, msgs);
+		} else {
+			System.out.println(Arrays.toString(msgs)+ e.getMessage());
 		}
 	}
 
@@ -111,7 +116,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	public static void stopRecord(final IProject project, final Shell shell) {
 		Intlola.log(null, "Intlola record stopping", project.getName());
 		if (proc.mode.isArchive()) {
-			proc.handleArchive(Utils.FILE_DIR);
+			proc.handleArchive(STORE_PATH, STORE_PATH);
 		} else if (proc.mode.isRemote()) {
 			Intlola.proc.logout();
 		}
@@ -184,6 +189,9 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	public Intlola() {
 		Intlola.plugin = this;
+		STORE_PATH = Intlola.getDefault().getStateLocation().toOSString();
+		//FILE_DIR = STORE_PATH + File.separator + "tmp";
+	//	log(null, new File(STORE_PATH).mkdirs(), STORE_PATH);
 	}
 
 	public void _log(final Exception e, final Object... msgs) {

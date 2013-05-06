@@ -10,9 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import za.ac.sun.cs.intlola.IntlolaProcessor;
 import za.ac.sun.cs.intlola.IntlolaMode;
-import za.ac.sun.cs.intlola.file.ArchiveFile;
+import za.ac.sun.cs.intlola.IntlolaProcessor;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
 public class ZipSender {
@@ -35,7 +34,7 @@ public class ZipSender {
 			if (sender.init()) {
 				sender.login(user, passwd);
 				if (sender.loggedIn()) {
-					sender.sendFile(new ArchiveFile(zip));
+					sender.handleArchive(zip, "icons");
 				}
 			}
 		}
@@ -68,7 +67,7 @@ public class ZipSender {
 	}
 
 	public static void main(final String argv[]) {
-		ZipSender.sendZip("data.zip");
+		ZipSender.sendZip("data");
 	}
 
 	public static String randString() {

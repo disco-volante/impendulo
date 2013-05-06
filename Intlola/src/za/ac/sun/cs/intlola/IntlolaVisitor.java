@@ -1,7 +1,6 @@
 package za.ac.sun.cs.intlola;
 
 import java.io.File;
-import java.security.InvalidParameterException;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -17,23 +16,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 
 	public static void processChanges(final IResource resource, final int kind) {
 		Intlola.log(null, "Intlola processing resource", resource, kind);
-		char kindSuffix = ' ';
-		switch (kind) {
-		case IResourceDelta.ADDED:
-			kindSuffix = 'a';
-			break;
-		case IResourceDelta.CHANGED:
-			kindSuffix = 'c';
-			break;
-		case IResourceDelta.REMOVED:
-			kindSuffix = 'r';
-			break;
-		case Intlola.LAUNCHED:
-			kindSuffix = 'l';
-			break;
-		default:
-			throw new InvalidParameterException();
-		}
+		char kindSuffix = Utils.getKind(kind);
 		if (Intlola.proc.mode.isArchive()) {
 			save(resource, kindSuffix);
 		} else if (Intlola.proc.mode.isRemote()) {
@@ -43,7 +26,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 
 	private static void save(final IResource resource, final char kindSuffix) {
 		final String f = resource.getLocation().toString();
-		String name = Utils.FILE_DIR + File.separator
+		String name = Intlola.STORE_PATH + File.separator
 				+ Utils.encodeName(f, kindSuffix, counter++);
 		if (resource.getType() == IResource.FILE) {
 			Utils.copy(f, name);
