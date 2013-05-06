@@ -1,0 +1,91 @@
+package kselection;
+
+import java.util.ArrayList;
+
+public class KSelection {
+	int currentPos = 0;
+	int pos = 0;
+	ArrayList<Value> sortedArray;
+	
+	public int kselect(int k, int[] values) 
+	{
+		sortedArray = new ArrayList<Value>();
+		Value temp;
+		
+		//Checks if k is 0 or if the absolute value of k is smaller than the length of k
+		if(k != 0 || Math.abs(k) <= values.length )
+		{
+			for(int i = 0; i < values.length; i = i + 2)
+			{
+			    sortedArray.add( new Value(values[currentPos], 
+										     values[currentPos+1], 
+										     currentPos) );
+				
+				if(sortedArray.size()> 1)
+				{
+					for(int x = 0; x < sortedArray.size(); x++)
+					{
+						for(int y = 0; y < sortedArray.size(); y++)
+						{
+							if(sortedArray.get(x).getA() < sortedArray.get(y).getA())
+							{
+								temp = sortedArray.get(y);
+								sortedArray.add(y, sortedArray.get(y));
+								sortedArray.add(x, temp);
+							}
+							else if(sortedArray.get(x).getA() == sortedArray.get(y).getA()
+										&& sortedArray.get(x).getB() < sortedArray.get(y).getB())
+							{
+								temp = sortedArray.get(y);
+								sortedArray.add(y, sortedArray.get(y));
+								sortedArray.add(x, temp);
+							}
+						}
+					}
+				}
+				
+				pos++;
+			}
+	
+			return sortedArray[k].getPos();
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	
+}
+
+class Value{
+	int a;
+	int b;
+	int pos;
+	
+	public Value(int a, int b, int pos)
+	{
+		this.a = a;
+		this.b = b;
+		this.pos = pos;
+	}
+	
+	public int getA()
+	{
+		return a;
+	}
+	
+	public int getB()
+	{
+		return b;
+	}
+	
+	public int getPos()
+	{
+		return pos;
+	}
+	
+	public String toString()
+	{
+		return "(" + a + ", " + b + ", " + pos + ")";
+	}
+}

@@ -1,0 +1,41 @@
+package kselection;
+
+public class KSelection {
+	int currentPos = 0;
+	value[] arrayOfSmallest;
+	
+	public int kselect(int k, int[] values) 
+	{
+		arrayOfSmallest = new value[values.length];
+		
+		int posOfSmallest;
+		
+		//Checks if k is 0 or if the absolute value of k is smaller than the length of k
+		if(k != 0 || Math.abs(k) <= values.length )
+		{
+			
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	
+	private int[] readNextPair(int[] values)
+	{
+		return new int[]{values[currentPos], values[currentPos+1]};
+	}
+}
+
+class Value{
+	int a;
+	int b;
+	int pos;
+	
+	public Value(int a, int b, int pos)
+	{
+		this.a = a;
+		this.b = b;
+		this.pos = pos;
+	}
+}
