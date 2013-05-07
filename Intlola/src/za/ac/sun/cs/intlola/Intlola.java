@@ -13,7 +13,6 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
@@ -25,12 +24,13 @@ import org.osgi.framework.BundleContext;
 
 import za.ac.sun.cs.intlola.gui.LoginDialog;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
+import za.ac.sun.cs.intlola.processing.Processor;
 
 public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	public static final String PLUGIN_ID = "za.ac.sun.cs.goanna";
 	public static String STORE_PATH;
-	//public static String FILE_DIR;
+	// public static String FILE_DIR;
 
 	private static final QualifiedName RECORD_KEY = new QualifiedName(
 			"intlola", "record");
@@ -41,7 +41,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private static Intlola plugin;
 
-	protected static IntlolaProcessor proc;
+	protected static Processor proc;
 
 	public static Intlola getDefault() {
 		return Intlola.plugin;
@@ -66,11 +66,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	public static IProject getSelectedProject(final ExecutionEvent event) {
 		final IStructuredSelection selection = (IStructuredSelection) HandlerUtil
 				.getCurrentSelection(event);
-		// final IStructuredSelection selection = (IStructuredSelection)
-		// HandlerUtil
-		// .getActiveMenuSelection(event);
 		for (Object element : selection.toList()) {
-			// final Object element = selection.getFirstElement();
 			if (element instanceof IProject) {
 				return (IProject) element;
 			}
@@ -91,7 +87,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		if (Intlola.getDefault() != null) {
 			Intlola.getDefault()._log(e, msgs);
 		} else {
-			System.out.println(Arrays.toString(msgs)+ e.getMessage());
+			System.out.println(Arrays.toString(msgs) + e.getMessage());
 		}
 	}
 
@@ -103,7 +99,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		try {
 			Intlola.removeDir(Intlola.plugin.getStateLocation().toString(),
 					false);
-			Intlola.proc = Intlola.getProcessor(project.getName());
+			proc = getProcessor(project.getName());
 			if (Intlola.login(shell)) {
 				project.setSessionProperty(Intlola.RECORD_KEY,
 						Intlola.RECORD_ON);
@@ -115,9 +111,9 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	public static void stopRecord(final IProject project, final Shell shell) {
 		Intlola.log(null, "Intlola record stopping", project.getName());
-		if (proc.mode.isArchive()) {
+		if (proc.getMode().isArchive()) {
 			proc.handleArchive(STORE_PATH, STORE_PATH);
-		} else if (proc.mode.isRemote()) {
+		} else if (proc.getMode().isRemote()) {
 			Intlola.proc.logout();
 		}
 		try {
@@ -128,7 +124,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	}
 
-	private static IntlolaProcessor getProcessor(final String project) {
+	private static Processor getProcessor(final String project) {
 		final IntlolaMode mode = IntlolaMode.getMode(Intlola.getDefault()
 				.getPreferenceStore().getString(PreferenceConstants.P_MODE));
 		final String uname = Intlola.getDefault().getPreferenceStore()
@@ -137,37 +133,27 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 				.getString(PreferenceConstants.P_ADDRESS);
 		final int port = Intlola.getDefault().getPreferenceStore()
 				.getInt(PreferenceConstants.P_PORT);
-		return new IntlolaProcessor(uname, project, mode, address, port);
+		return new Processor(uname, project, mode, address, port);
 	}
 
 	private static boolean login(final Shell shell) {
 		final LoginDialog dialog = new LoginDialog(shell,
-				Intlola.proc.getUsername());
-		while (!Intlola.proc.loggedIn()) {
-			if (Intlola.proc.init()) {
-				final int code = dialog.open();
-				if (code == Window.OK) {
-					Intlola.proc.login(dialog.getUserName(),
-							dialog.getPassword());
-				} else {
-					break;
-				}
+				"Intlola login configuration", Intlola.proc.getUsername(),
+				proc.getProject(), proc.getMode(), proc.getAddress(),
+				proc.getPort());
+		IntlolaError err = IntlolaError.DEFAULT;
+		while (!err.equals(IntlolaError.SUCCESS)) {
+			final int code = dialog.open(err);
+			if (code == Window.OK) {
+				err = Intlola.proc
+						.login(dialog.getUserName(), dialog.getPassword(),
+								dialog.getProject(), dialog.getMode(),
+								dialog.getAddress(), dialog.getPort());
 			} else {
-				InputDialog connDialog = new InputDialog(
-						shell,
-						"Connection error",
-						"Could not connect to server on: " + proc.getConn()
-								+ ".\nPlease specify an open address and port.",
-						"0.0.0.0:1000", new ConnValidator());
-				if (connDialog.open() == InputDialog.OK) {
-					Intlola.proc.setConn(connDialog.getValue());
-				} else {
-					break;
-				}
-
+				break;
 			}
 		}
-		return Intlola.proc.loggedIn();
+		return err.equals(IntlolaError.SUCCESS);
 	}
 
 	private static void removeDirRecur(final File file, final boolean removeRoot) {
@@ -190,8 +176,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	public Intlola() {
 		Intlola.plugin = this;
 		STORE_PATH = Intlola.getDefault().getStateLocation().toOSString();
-		//FILE_DIR = STORE_PATH + File.separator + "tmp";
-	//	log(null, new File(STORE_PATH).mkdirs(), STORE_PATH);
 	}
 
 	public void _log(final Exception e, final Object... msgs) {

@@ -10,9 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import za.ac.sun.cs.intlola.IntlolaError;
 import za.ac.sun.cs.intlola.IntlolaMode;
-import za.ac.sun.cs.intlola.IntlolaProcessor;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
+import za.ac.sun.cs.intlola.processing.Processor;
 
 public class ZipSender {
 	static class SendThread implements Runnable {
@@ -28,14 +29,14 @@ public class ZipSender {
 		}
 
 		public void run() {
-			final IntlolaProcessor sender = new IntlolaProcessor(user, "Data",
-					IntlolaMode.ARCHIVE_REMOTE, PreferenceConstants.LOCAL_ADDRESS,
-					PreferenceConstants.PORT);
-			if (sender.init()) {
-				sender.login(user, passwd);
-				if (sender.loggedIn()) {
-					sender.handleArchive(zip, "icons");
-				}
+			final Processor sender = new Processor(user, "Data",
+					IntlolaMode.ARCHIVE_REMOTE,
+					PreferenceConstants.LOCAL_ADDRESS, PreferenceConstants.PORT);
+			IntlolaError err = sender.login(sender.getUsername(), passwd,
+					sender.getProject(), sender.getMode(), sender.getAddress(),
+					sender.getPort());
+			if (err.equals(IntlolaError.SUCCESS)) {
+				sender.handleArchive(zip, "icons");
 			}
 		}
 

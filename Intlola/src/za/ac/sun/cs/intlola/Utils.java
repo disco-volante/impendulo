@@ -189,7 +189,6 @@ public class Utils {
 		if (elems.length > 3) {
 			name = elems[elems.length - 4];
 			pkg = getPackage(elems, elems.length - 4, NAME_SEP);
-			System.out.println(name);
 			if (name.contains(NAME_SEP)) {
 				hasContents = true;
 			}

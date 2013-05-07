@@ -17,9 +17,9 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 	public static void processChanges(final IResource resource, final int kind) {
 		Intlola.log(null, "Intlola processing resource", resource, kind);
 		char kindSuffix = Utils.getKind(kind);
-		if (Intlola.proc.mode.isArchive()) {
+		if (Intlola.proc.getMode().isArchive()) {
 			save(resource, kindSuffix);
-		} else if (Intlola.proc.mode.isRemote()) {
+		} else if (Intlola.proc.getMode().isRemote()) {
 			send(resource, kindSuffix);
 		}
 	}

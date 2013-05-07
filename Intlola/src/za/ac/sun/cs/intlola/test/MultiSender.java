@@ -10,11 +10,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import za.ac.sun.cs.intlola.IntlolaError;
 import za.ac.sun.cs.intlola.IntlolaMode;
-import za.ac.sun.cs.intlola.IntlolaProcessor;
 import za.ac.sun.cs.intlola.Utils;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
+import za.ac.sun.cs.intlola.processing.Processor;
 
 public class MultiSender {
 	static class SendThread implements Runnable {
@@ -30,19 +31,19 @@ public class MultiSender {
 		}
 
 		public void run() {
-			final IntlolaProcessor sender = new IntlolaProcessor(user, "Data",
-					IntlolaMode.FILE_REMOTE, PreferenceConstants.REMOTE_ADDRESS,
+			final Processor sender = new Processor(user, "Data",
+					IntlolaMode.FILE_REMOTE,
+					PreferenceConstants.REMOTE_ADDRESS,
 					PreferenceConstants.PORT);
-			if (sender.init()) {
-				sender.login(user, passwd);
-				if (sender.loggedIn()) {
-					for (final String file : files) {
-						final IntlolaFile ifile = Utils.decodeName(file);
-						sender.sendFile(ifile);
-					}
-					sender.logout();
-					System.out.println("Success");
+			IntlolaError err = sender.login(sender.getUsername(), passwd,
+					sender.getProject(), sender.getMode(), sender.getAddress(),
+					sender.getPort());
+			if (err.equals(IntlolaError.SUCCESS)) {
+				for (final String file : files) {
+					final IntlolaFile ifile = Utils.decodeName(file);
+					sender.sendFile(ifile);
 				}
+				sender.logout();
 			}
 		}
 	}
@@ -116,6 +117,14 @@ public class MultiSender {
 		}
 		for (final Thread th : threads) {
 			th.start();
+		}
+		for (final Thread th : threads) {
+			try {
+				th.join();
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
 	}
 }

@@ -8,6 +8,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import za.ac.sun.cs.intlola.Intlola;
+import za.ac.sun.cs.intlola.IntlolaMode;
 
 public class PreferencePage extends FieldEditorPreferencePage implements
 		IWorkbenchPreferencePage {
@@ -28,10 +29,12 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 				"Server port:", getFieldEditorParent()));
 		addField(new RadioGroupFieldEditor(PreferenceConstants.P_MODE,
 				"Select the mode to run Intlola in:", 1, new String[][] {
-						{ "Continuously send snapshots to server", PreferenceConstants.FILE_REMOTE },
-						{ "Send all snapshots once recording has stopped",
+						{ IntlolaMode.FILE_REMOTE.getDescription(),
+								PreferenceConstants.FILE_REMOTE },
+						{ IntlolaMode.ARCHIVE_REMOTE.getDescription(),
 								PreferenceConstants.ARCHIVE_REMOTE },
-						{ "Save all snapshots locally", PreferenceConstants.ARCHIVE_LOCAL } },
+						{ IntlolaMode.ARCHIVE_LOCAL.getDescription(),
+								PreferenceConstants.ARCHIVE_LOCAL } },
 				getFieldEditorParent()));
 	}
 

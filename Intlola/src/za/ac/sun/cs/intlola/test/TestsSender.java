@@ -1,9 +1,10 @@
 package za.ac.sun.cs.intlola.test;
 
-import za.ac.sun.cs.intlola.IntlolaProcessor;
+import za.ac.sun.cs.intlola.IntlolaError;
 import za.ac.sun.cs.intlola.IntlolaMode;
 import za.ac.sun.cs.intlola.file.TestFile;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
+import za.ac.sun.cs.intlola.processing.Processor;
 
 public class TestsSender {
 
@@ -12,14 +13,16 @@ public class TestsSender {
 	}
 
 	private static void sendTests(final String name) {
-		final IntlolaProcessor sender = new IntlolaProcessor("pjordaan", "Triangle",
-				IntlolaMode.ARCHIVE_TEST, PreferenceConstants.REMOTE_ADDRESS,
-				PreferenceConstants.PORT);
+		final Processor sender = new Processor("pjordaan",
+				"Triangle", IntlolaMode.ARCHIVE_TEST,
+				PreferenceConstants.REMOTE_ADDRESS, PreferenceConstants.PORT);
 		if (sender.init()) {
-			sender.login("pjordaan", "1brandwag");
-			if (sender.loggedIn()) {
+			IntlolaError err = sender.login(sender.getUsername(), "1brandwag",
+					sender.getProject(), sender.getMode(), sender.getAddress(),
+					sender.getPort());
+			if (err.equals(IntlolaError.SUCCESS)) {
 				sender.sendFile(new TestFile(name));
-				while(sender.loggedIn()){};
+				sender.logout();
 			}
 		}
 	}

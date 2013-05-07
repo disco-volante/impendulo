@@ -3,7 +3,16 @@ package za.ac.sun.cs.intlola;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
 public enum IntlolaMode {
-	ARCHIVE_REMOTE, ARCHIVE_LOCAL, FILE_REMOTE, ARCHIVE_TEST;
+	ARCHIVE_REMOTE("Send all snapshots to server once recording has stopped."), ARCHIVE_LOCAL(
+			"Save all snapshots locally in archive."), FILE_REMOTE(
+			"Continuously send snapshots to server."), ARCHIVE_TEST(
+			"Send project tests to server.");
+
+	private String description;
+
+	IntlolaMode(String description) {
+		this.description = description;
+	}
 
 	public static IntlolaMode getMode(final String mpref) {
 		IntlolaMode ret = null;
@@ -21,16 +30,22 @@ public enum IntlolaMode {
 		return ret;
 	}
 
+	public String getDescription() {
+		return description;
+	}
+
 	@Override
 	public String toString() {
 		return super.toString().toLowerCase();
 	}
 
 	public boolean isRemote() {
-		return this.equals(ARCHIVE_REMOTE) || this.equals(FILE_REMOTE) || this.equals(ARCHIVE_TEST);
+		return this.equals(ARCHIVE_REMOTE) || this.equals(FILE_REMOTE)
+				|| this.equals(ARCHIVE_TEST);
 	}
 
 	public boolean isArchive() {
-		return this.equals(ARCHIVE_REMOTE) || this.equals(ARCHIVE_LOCAL) || this.equals(ARCHIVE_TEST);
+		return this.equals(ARCHIVE_REMOTE) || this.equals(ARCHIVE_LOCAL)
+				|| this.equals(ARCHIVE_TEST);
 	}
 }
