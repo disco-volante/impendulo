@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import za.ac.sun.cs.intlola.Intlola;
 import za.ac.sun.cs.intlola.IntlolaError;
@@ -30,7 +32,7 @@ public class Processor {
 	private Socket sock = null;
 	private InputStream rcv = null;
 
-	private SendQueue queue;
+	private ExecutorService executor;
 
 	/**
 	 * Construct processor with default values.
@@ -44,7 +46,8 @@ public class Processor {
 	public Processor(final String username, final String project,
 			final IntlolaMode mode, final String address, final int port) {
 		setFields(username, project, mode, address, port);
-		queue = new SendQueue();
+		//Only one thread worker. Interaction with server should be sequential.
+		executor = Executors.newFixedThreadPool(1);
 	}
 
 	public String getProject() {
@@ -59,15 +62,7 @@ public class Processor {
 			String project, IntlolaMode mode, String address, int port) {
 		// Set fields to values specified by user.
 		setFields(username, project, mode, address, port);
-		if (!init()) {
-			return IntlolaError.CONN;
-		}
-		if (!mode.isRemote()) {
-			username += ":" + password;
-			return IntlolaError.SUCCESS;
-		}
-		final byte[] buffer = new byte[1024];
-		try {
+		if (mode.isRemote()) {
 			final JsonObject params = new JsonObject();
 			params.addProperty(Const.REQ, Const.LOGIN);
 			params.addProperty(Const.UNAME, username);
@@ -75,19 +70,42 @@ public class Processor {
 			params.addProperty(Const.PROJECT, project);
 			params.addProperty(Const.MODE, mode.toString());
 			params.addProperty(Const.LANG, Const.JAVA);
-			snd.write(params.toString().getBytes());
-			snd.flush();
-			rcv.read(buffer);
-			final String received = new String(buffer);
-			if (received.startsWith(Const.OK)) {
-				return IntlolaError.SUCCESS;
+			if (!init()) {
+				return IntlolaError.CONN;
 			} else {
-				Intlola.log(null, received);
+				final byte[] buffer = new byte[1024];
+				try {
+					snd.write(params.toString().getBytes());
+					snd.flush();
+					rcv.read(buffer);
+					final String received = new String(buffer);
+					if (received.startsWith(Const.OK)) {
+						return IntlolaError.SUCCESS;
+					} else {
+						Intlola.log(null, received);
+						return IntlolaError.LOGIN;
+					}
+				} catch (final IOException e) {
+					Intlola.log(e, "Login error");
+					return IntlolaError.LOGIN;
+				}
 			}
-		} catch (final IOException e) {
-			Intlola.log(e, "Login error");
+		} else {
+			username += ":" + password;
+			return IntlolaError.SUCCESS;
 		}
-		return IntlolaError.LOGIN;
+	}
+
+	private boolean init() {
+		try {
+			sock = new Socket(address, port);
+			snd = sock.getOutputStream();
+			rcv = sock.getInputStream();
+			return true;
+		} catch (final IOException e) {
+			Intlola.log(e, "No server detected");
+			return false;
+		}
 	}
 
 	private void setFields(String username, String project, IntlolaMode mode,
@@ -101,44 +119,22 @@ public class Processor {
 
 	public void logout() {
 		if (mode.isRemote()) {
-			queue.execute(new Quiter(sock, snd, rcv));
+			executor.execute(new SessionEnder(sock, snd, rcv));
+			executor.shutdown();
 		}
-	}
-
-	public boolean init() {
-		boolean ret = true;
-		if (mode.isRemote()) {
-			try {
-				sock = new Socket(address, port);
-				snd = sock.getOutputStream();
-				rcv = sock.getInputStream();
-			} catch (final IOException e) {
-				Intlola.log(e, "No server detected");
-				ret = false;
-			}
-		}
-		return ret;
 	}
 
 	public void sendFile(final IntlolaFile file) {
-		queue.execute(new Sender(file, snd, rcv));
+		executor.execute(new FileSender(file, snd, rcv));
 	}
-
-	
 
 	public void handleArchive(final String location, final String zipLoc) {
 		final String filename = zipLoc + File.separator + getProject() + "_"
 				+ System.currentTimeMillis() + ".zip";
-		queue.execute(new Archiver(location, filename));
+		executor.execute(new ArchiveBuilder(location, filename));
 		if (mode.isRemote()) {
 			sendFile(new ArchiveFile(filename));
 		}
-		/*
-		 * Utils.createZip(location, filename); if (mode.isRemote()) { try {
-		 * sendFile(new ArchiveFile(filename)).join(); } catch
-		 * (InterruptedException e) { Intlola.log(e,
-		 * "Interrupted sending of archive: ", location); } }
-		 */
 		logout();
 	}
 

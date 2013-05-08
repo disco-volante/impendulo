@@ -13,17 +13,15 @@ public class TestsSender {
 	}
 
 	private static void sendTests(final String name) {
-		final Processor sender = new Processor("pjordaan",
-				"Triangle", IntlolaMode.ARCHIVE_TEST,
-				PreferenceConstants.REMOTE_ADDRESS, PreferenceConstants.PORT);
-		if (sender.init()) {
-			IntlolaError err = sender.login(sender.getUsername(), "1brandwag",
-					sender.getProject(), sender.getMode(), sender.getAddress(),
-					sender.getPort());
-			if (err.equals(IntlolaError.SUCCESS)) {
-				sender.sendFile(new TestFile(name));
-				sender.logout();
-			}
+		final Processor sender = new Processor("username", "Triangle",
+				IntlolaMode.ARCHIVE_TEST, PreferenceConstants.REMOTE_ADDRESS,
+				PreferenceConstants.PORT);
+		IntlolaError err = sender.login(sender.getUsername(), "password",
+				sender.getProject(), sender.getMode(), sender.getAddress(),
+				sender.getPort());
+		if (err.equals(IntlolaError.SUCCESS)) {
+			sender.sendFile(new TestFile(name));
+			sender.logout();
 		}
 	}
 }

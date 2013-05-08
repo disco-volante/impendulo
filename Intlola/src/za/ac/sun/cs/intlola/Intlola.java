@@ -27,7 +27,6 @@ import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 import za.ac.sun.cs.intlola.processing.Processor;
 
 public class Intlola extends AbstractUIPlugin implements IStartup {
-
 	public static final String PLUGIN_ID = "za.ac.sun.cs.goanna";
 	public static String STORE_PATH;
 	// public static String FILE_DIR;
@@ -96,17 +95,36 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	public static void startRecord(final IProject project, final Shell shell) {
-		try {
-			Intlola.removeDir(Intlola.plugin.getStateLocation().toString(),
-					false);
-			proc = getProcessor(project.getName());
-			if (Intlola.login(shell)) {
+		Intlola.removeDir(Intlola.plugin.getStateLocation().toString(), false);
+		proc = getProcessor(project.getName());
+		if (getDefault().login(shell)) {
+			try {
 				project.setSessionProperty(Intlola.RECORD_KEY,
 						Intlola.RECORD_ON);
+			} catch (CoreException e) {
+				Intlola.log(e);
 			}
-		} catch (final CoreException e) {
-			Intlola.log(e);
+			;
 		}
+	}
+
+	private boolean login(final Shell shell) {
+		LoginDialog dialog = new LoginDialog(shell,
+				"Intlola login configuration", proc.getUsername(),
+				proc.getProject(), proc.getMode(), proc.getAddress(),
+				proc.getPort());
+		IntlolaError err = IntlolaError.DEFAULT;
+		while (err.equals(IntlolaError.SUCCESS)) {
+			final int code = dialog.open(err);
+			if (code == Window.OK) {
+				err = proc.login(dialog.getUserName(), dialog.getPassword(),
+						dialog.getProject(), dialog.getMode(),
+						dialog.getAddress(), dialog.getPort());
+			} else {
+				break;
+			}
+		}
+		return err.equals(IntlolaError.SUCCESS);
 	}
 
 	public static void stopRecord(final IProject project, final Shell shell) {
@@ -134,26 +152,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		final int port = Intlola.getDefault().getPreferenceStore()
 				.getInt(PreferenceConstants.P_PORT);
 		return new Processor(uname, project, mode, address, port);
-	}
-
-	private static boolean login(final Shell shell) {
-		final LoginDialog dialog = new LoginDialog(shell,
-				"Intlola login configuration", Intlola.proc.getUsername(),
-				proc.getProject(), proc.getMode(), proc.getAddress(),
-				proc.getPort());
-		IntlolaError err = IntlolaError.DEFAULT;
-		while (!err.equals(IntlolaError.SUCCESS)) {
-			final int code = dialog.open(err);
-			if (code == Window.OK) {
-				err = Intlola.proc
-						.login(dialog.getUserName(), dialog.getPassword(),
-								dialog.getProject(), dialog.getMode(),
-								dialog.getAddress(), dialog.getPort());
-			} else {
-				break;
-			}
-		}
-		return err.equals(IntlolaError.SUCCESS);
 	}
 
 	private static void removeDirRecur(final File file, final boolean removeRoot) {

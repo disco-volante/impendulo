@@ -2,9 +2,9 @@ package za.ac.sun.cs.intlola.processing;
 
 import za.ac.sun.cs.intlola.Utils;
 
-public class Archiver implements Runnable {
+public class ArchiveBuilder implements Runnable {
 	private String fileLocation, savePath;
-	public Archiver(String fileLocation, String savePath){
+	public ArchiveBuilder(String fileLocation, String savePath){
 		this.fileLocation = fileLocation;
 		this.savePath = savePath;
 	}

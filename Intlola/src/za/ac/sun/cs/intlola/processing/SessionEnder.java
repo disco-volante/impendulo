@@ -10,12 +10,12 @@ import za.ac.sun.cs.intlola.file.Const;
 
 import com.google.gson.JsonObject;
 
-public class Quiter implements Runnable {
+public class SessionEnder implements Runnable {
 	private OutputStream snd;
 	private InputStream rcv;
 	private Socket sock;
 
-	Quiter(Socket sock, OutputStream snd, InputStream rcv) {
+	SessionEnder(Socket sock, OutputStream snd, InputStream rcv) {
 		this.sock = sock;
 		this.snd = snd;
 		this.rcv = rcv;

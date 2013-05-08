@@ -11,12 +11,12 @@ import za.ac.sun.cs.intlola.file.IntlolaFile;
 
 import com.google.gson.JsonObject;
 
-public class Sender implements Runnable {
+public class FileSender implements Runnable {
 	private IntlolaFile file;
 	private OutputStream snd;
 	private InputStream rcv;
 
-	Sender(IntlolaFile file, OutputStream snd, InputStream rcv) {
+	FileSender(IntlolaFile file, OutputStream snd, InputStream rcv) {
 		this.file = file;
 		this.snd = snd;
 		this.rcv = rcv;
