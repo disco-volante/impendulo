@@ -1,9 +1,9 @@
 package za.ac.sun.cs.intlola.test;
 
-import za.ac.sun.cs.intlola.IntlolaError;
-import za.ac.sun.cs.intlola.IntlolaMode;
 import za.ac.sun.cs.intlola.file.TestFile;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
+import za.ac.sun.cs.intlola.processing.IntlolaError;
+import za.ac.sun.cs.intlola.processing.IntlolaMode;
 import za.ac.sun.cs.intlola.processing.Processor;
 
 public class TestsSender {

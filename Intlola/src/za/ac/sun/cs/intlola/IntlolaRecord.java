@@ -9,7 +9,7 @@ import org.eclipse.ui.handlers.HandlerUtil;
 public class IntlolaRecord extends AbstractHandler {
 
 	public Object execute(final ExecutionEvent event) throws ExecutionException {
-		final IProject project = Intlola.getSelectedProject(event);
+		final IProject project = PluginUtils.getSelectedProject(event);
 		if (!Intlola.getRecordStatus(project)) {
 			Intlola.startRecord(project, HandlerUtil.getActiveShell(event));
 		}

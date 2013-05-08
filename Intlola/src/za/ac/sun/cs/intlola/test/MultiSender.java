@@ -10,11 +10,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import za.ac.sun.cs.intlola.IntlolaError;
-import za.ac.sun.cs.intlola.IntlolaMode;
-import za.ac.sun.cs.intlola.Utils;
+import za.ac.sun.cs.intlola.file.FileUtils;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
+import za.ac.sun.cs.intlola.processing.IntlolaError;
+import za.ac.sun.cs.intlola.processing.IntlolaMode;
 import za.ac.sun.cs.intlola.processing.Processor;
 
 public class MultiSender {
@@ -40,7 +40,7 @@ public class MultiSender {
 					sender.getPort());
 			if (err.equals(IntlolaError.SUCCESS)) {
 				for (final String file : files) {
-					final IntlolaFile ifile = Utils.decodeName(file);
+					final IntlolaFile ifile = FileUtils.decodeName(file);
 					sender.sendFile(ifile);
 				}
 				sender.logout();

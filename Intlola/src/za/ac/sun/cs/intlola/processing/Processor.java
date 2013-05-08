@@ -9,10 +9,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import za.ac.sun.cs.intlola.Intlola;
-import za.ac.sun.cs.intlola.IntlolaError;
-import za.ac.sun.cs.intlola.IntlolaMode;
 import za.ac.sun.cs.intlola.file.ArchiveFile;
 import za.ac.sun.cs.intlola.file.Const;
+import za.ac.sun.cs.intlola.file.FileUtils;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 
 import com.google.gson.JsonObject;
@@ -134,6 +133,7 @@ public class Processor {
 		executor.execute(new ArchiveBuilder(location, filename));
 		if (mode.isRemote()) {
 			sendFile(new ArchiveFile(filename));
+			FileUtils.delete(filename);
 		}
 		logout();
 	}

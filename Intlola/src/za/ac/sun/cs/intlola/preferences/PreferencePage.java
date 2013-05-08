@@ -8,14 +8,14 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import za.ac.sun.cs.intlola.Intlola;
-import za.ac.sun.cs.intlola.IntlolaMode;
+import za.ac.sun.cs.intlola.processing.IntlolaMode;
 
 public class PreferencePage extends FieldEditorPreferencePage implements
 		IWorkbenchPreferencePage {
 
 	public PreferencePage() {
 		super(FieldEditorPreferencePage.GRID);
-		setPreferenceStore(Intlola.getDefault().getPreferenceStore());
+		setPreferenceStore(Intlola.getActive().getPreferenceStore());
 		setDescription("Intlola configuration");
 	}
 

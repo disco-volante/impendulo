@@ -2,6 +2,7 @@ package za.ac.sun.cs.intlola.gui;
 
 import java.util.regex.Pattern;
 
+import org.apache.commons.validator.routines.UrlValidator;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -18,20 +19,20 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.core.databinding.validation.ValidationStatus;
 
-import za.ac.sun.cs.intlola.IntlolaError;
-import za.ac.sun.cs.intlola.IntlolaMode;
+import za.ac.sun.cs.intlola.processing.IntlolaError;
+import za.ac.sun.cs.intlola.processing.IntlolaMode;
 
 public class LoginDialog extends Dialog {
 
-	private Text usernameField, passwordField, projectField, addressField,
-			portField;
+	private Text				usernameField, passwordField, projectField,
+			addressField, portField;
 
-	private SelectionListener modeListener;
+	private SelectionListener	modeListener;
 
-	private String title, username, password, project, address;
-	private int port;
+	private String				title, username, password, project, address;
+	private int					port;
 
-	private IntlolaMode mode;
+	private IntlolaMode			mode;
 
 	public LoginDialog(final Shell parentShell, final String title,
 			final String username, final String project,
@@ -76,7 +77,7 @@ public class LoginDialog extends Dialog {
 			showError("Invalid username", msg);
 		} else if ((msg = validString("Project", projectField.getText().trim())) != null) {
 			showError("Invalid project", msg);
-		} else if ((msg = validIP(addressField.getText().trim())) != null) {
+		} else if ((msg = validAddress(addressField.getText().trim())) != null) {
 			showError("Invalid address", msg);
 		} else if ((msg = validPort(portField.getText().trim())) != null) {
 			showError("Invalid port", msg);
@@ -102,14 +103,18 @@ public class LoginDialog extends Dialog {
 		return null;
 	}
 
-	private String validIP(String ip) {
+	private String validAddress(String ip) {
 		String IP_PATTERN = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
 				+ "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
 				+ "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
 				+ "([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
 		Pattern ipPattern = Pattern.compile(IP_PATTERN);
-		if (!ipPattern.matcher(ip).matches() && !ip.equals("localhost")) {
-			return "Invalid ip address " + ip + ".";
+		UrlValidator validator = new UrlValidator(UrlValidator.ALLOW_2_SLASHES
+				+ UrlValidator.ALLOW_ALL_SCHEMES
+				+ UrlValidator.ALLOW_LOCAL_URLS);
+		if (!validator.isValid("http://" + ip)
+				&& !ipPattern.matcher(ip).matches()) {
+			return "Invalid address " + ip + ".";
 		}
 		return null;
 	}
@@ -224,19 +229,19 @@ public class LoginDialog extends Dialog {
 		btnAL.addSelectionListener(modeListener);
 
 		switch (mode) {
-		case FILE_REMOTE:
-			btnFR.setSelection(true);
-			break;
-		case ARCHIVE_LOCAL:
-			btnAL.setSelection(true);
-			break;
-		case ARCHIVE_REMOTE:
-			btnAR.setSelection(true);
-			break;
-		case ARCHIVE_TEST:
-			break;
-		default:
-			break;
+			case FILE_REMOTE:
+				btnFR.setSelection(true);
+				break;
+			case ARCHIVE_LOCAL:
+				btnAL.setSelection(true);
+				break;
+			case ARCHIVE_REMOTE:
+				btnAR.setSelection(true);
+				break;
+			case ARCHIVE_TEST:
+				break;
+			default:
+				break;
 
 		}
 		return comp;

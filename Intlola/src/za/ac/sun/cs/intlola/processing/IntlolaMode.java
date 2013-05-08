@@ -1,4 +1,4 @@
-package za.ac.sun.cs.intlola;
+package za.ac.sun.cs.intlola.processing;
 
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 

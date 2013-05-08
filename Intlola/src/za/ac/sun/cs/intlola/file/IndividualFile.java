@@ -3,7 +3,6 @@ package za.ac.sun.cs.intlola.file;
 import java.io.File;
 import java.util.Calendar;
 
-import za.ac.sun.cs.intlola.Utils;
 
 import com.google.gson.JsonObject;
 
@@ -29,7 +28,7 @@ public class IndividualFile implements IntlolaFile {
 		time = Calendar.getInstance().getTimeInMillis();
 		final String[] spd = path.split(File.separator);
 		name = spd[spd.length - 1];
-		pkg = Utils.getPackage(spd, spd.length - 1, Utils.NAME_SEP);
+		pkg = FileUtils.getPackage(spd, spd.length - 1, FileUtils.NAME_SEP);
 	}
 
 	public IndividualFile(final String path, final String name,

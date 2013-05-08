@@ -1,6 +1,6 @@
 package za.ac.sun.cs.intlola.processing;
 
-import za.ac.sun.cs.intlola.Utils;
+import za.ac.sun.cs.intlola.file.FileUtils;
 
 public class ArchiveBuilder implements Runnable {
 	private String fileLocation, savePath;
@@ -10,7 +10,7 @@ public class ArchiveBuilder implements Runnable {
 	}
 	@Override
 	public void run() {
-		Utils.createZip(fileLocation, savePath);
+		FileUtils.createZip(fileLocation, savePath);
 	}
 
 }

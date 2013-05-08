@@ -1,4 +1,4 @@
-package za.ac.sun.cs.intlola;
+package za.ac.sun.cs.intlola.file;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -13,10 +13,9 @@ import java.util.zip.ZipOutputStream;
 
 import org.eclipse.core.resources.IResourceDelta;
 
-import za.ac.sun.cs.intlola.file.IndividualFile;
-import za.ac.sun.cs.intlola.file.IntlolaFile;
+import za.ac.sun.cs.intlola.Intlola;
 
-public class Utils {
+public class FileUtils {
 	private static final int ZIP_BUFFER_SIZE = 2048;
 	public static final String COMPONENT_SEP = "_";
 	public static final String NAME_SEP = ".";
@@ -139,7 +138,7 @@ public class Utils {
 				} catch (final IOException e) {
 					Intlola.log(e);
 				}
-				file.delete();
+				file.deleteOnExit();
 			}
 		}
 	}
@@ -335,5 +334,11 @@ public class Utils {
 		}
 		return kindSuffix;
 	}
+
+	public static void delete(String filename) {
+		new File(filename).deleteOnExit();
+	}
+	
+	
 
 }
