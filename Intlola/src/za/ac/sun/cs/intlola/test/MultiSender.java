@@ -19,9 +19,9 @@ import za.ac.sun.cs.intlola.processing.Processor;
 
 public class MultiSender {
 	static class SendThread implements Runnable {
-		private final String user;
-		private final String passwd;
-		private final ArrayList<String> files;
+		private final ArrayList<String>	files;
+		private final String			passwd;
+		private final String			user;
 
 		public SendThread(final String user, final String passwd,
 				final ArrayList<String> files) {
@@ -30,12 +30,13 @@ public class MultiSender {
 			this.files = files;
 		}
 
+		@Override
 		public void run() {
 			final Processor sender = new Processor(user, "Data",
 					IntlolaMode.FILE_REMOTE,
 					PreferenceConstants.REMOTE_ADDRESS,
 					PreferenceConstants.PORT);
-			IntlolaError err = sender.login(sender.getUsername(), passwd,
+			final IntlolaError err = sender.login(sender.getUsername(), passwd,
 					sender.getProject(), sender.getMode(), sender.getAddress(),
 					sender.getPort());
 			if (err.equals(IntlolaError.SUCCESS)) {
@@ -48,10 +49,10 @@ public class MultiSender {
 		}
 	}
 
-	private static Random rand = new Random();
-	private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	private static final int LENGTH = 30;
-	private static HashMap<String, Boolean> strings = new HashMap<String, Boolean>();
+	private static final String				CHARACTERS	= "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	private static final int				LENGTH		= 30;
+	private static Random					rand		= new Random();
+	private static HashMap<String, Boolean>	strings		= new HashMap<String, Boolean>();
 
 	public static ArrayList<String> getFiles(final File dir) {
 		final ArrayList<String> files = new ArrayList<String>();
@@ -121,7 +122,7 @@ public class MultiSender {
 		for (final Thread th : threads) {
 			try {
 				th.join();
-			} catch (InterruptedException e1) {
+			} catch (final InterruptedException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}

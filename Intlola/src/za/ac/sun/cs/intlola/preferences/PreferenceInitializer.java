@@ -9,8 +9,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
 	@Override
 	public void initializeDefaultPreferences() {
-		final IPreferenceStore store = Intlola.getActive()
-				.getPreferenceStore();
+		final IPreferenceStore store = Intlola.getActive().getPreferenceStore();
 		store.setDefault(PreferenceConstants.P_MODE,
 				PreferenceConstants.FILE_REMOTE);
 		store.setDefault(PreferenceConstants.P_UNAME,

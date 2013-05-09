@@ -17,9 +17,9 @@ import za.ac.sun.cs.intlola.processing.Processor;
 
 public class ZipSender {
 	static class SendThread implements Runnable {
-		private final String user;
-		private final String passwd;
-		private final String zip;
+		private final String	passwd;
+		private final String	user;
+		private final String	zip;
 
 		public SendThread(final String user, final String passwd,
 				final String zip) {
@@ -28,11 +28,12 @@ public class ZipSender {
 			this.zip = zip;
 		}
 
+		@Override
 		public void run() {
 			final Processor sender = new Processor(user, "Data",
 					IntlolaMode.ARCHIVE_REMOTE,
 					PreferenceConstants.LOCAL_ADDRESS, PreferenceConstants.PORT);
-			IntlolaError err = sender.login(sender.getUsername(), passwd,
+			final IntlolaError err = sender.login(sender.getUsername(), passwd,
 					sender.getProject(), sender.getMode(), sender.getAddress(),
 					sender.getPort());
 			if (err.equals(IntlolaError.SUCCESS)) {
@@ -42,10 +43,10 @@ public class ZipSender {
 
 	}
 
-	private static Random rand = new Random();
-	private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	private static final int LENGTH = 30;
-	private static HashMap<String, Boolean> strings = new HashMap<String, Boolean>();
+	private static final String				CHARACTERS	= "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	private static final int				LENGTH		= 30;
+	private static Random					rand		= new Random();
+	private static HashMap<String, Boolean>	strings		= new HashMap<String, Boolean>();
 
 	public static Map<String, String> getUsers(final String fname) {
 		final Map<String, String> users = new HashMap<String, String>();

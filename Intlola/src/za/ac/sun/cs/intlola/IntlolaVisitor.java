@@ -13,10 +13,10 @@ import za.ac.sun.cs.intlola.file.IndividualFile;
 
 public class IntlolaVisitor implements IResourceDeltaVisitor {
 
-	private static int counter = 0;
+	private static int	counter	= 0;
 
 	public static void processChanges(final IResource resource, final int kind) {
-		char kindSuffix = FileUtils.getKind(kind);
+		final char kindSuffix = FileUtils.getKind(kind);
 		if (Intlola.getActive().getProcessor().getMode().isArchive()) {
 			save(resource, kindSuffix);
 		} else if (Intlola.getActive().getProcessor().getMode().isRemote()) {
@@ -26,7 +26,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 
 	private static void save(final IResource resource, final char kindSuffix) {
 		final String f = resource.getLocation().toString();
-		String name = Intlola.STORE_PATH + File.separator
+		final String name = Intlola.STORE_PATH + File.separator
 				+ FileUtils.encodeName(f, kindSuffix, counter++);
 		if (resource.getType() == IResource.FILE) {
 			FileUtils.copy(f, name);
@@ -45,6 +45,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 								.getType() == IResource.FILE));
 	}
 
+	@Override
 	public boolean visit(final IResourceDelta delta) throws CoreException {
 		final IResource resource = delta.getResource();
 		final IProject project = resource.getProject();

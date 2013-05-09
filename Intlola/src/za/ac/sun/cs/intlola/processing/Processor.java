@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,20 +19,19 @@ import com.google.gson.JsonObject;
 
 public class Processor {
 
-	protected IntlolaMode mode;
+	private InetSocketAddress		address;
 
-	private String username;
+	private final ExecutorService	executor;
 
-	private String project;
+	protected IntlolaMode			mode;
 
-	private String address;
+	private String					project;
 
-	private int port;
-	private OutputStream snd = null;
-	private Socket sock = null;
-	private InputStream rcv = null;
+	private InputStream				rcv		= null;
+	private OutputStream			snd		= null;
+	private Socket					sock	= null;
 
-	private ExecutorService executor;
+	private String					username;
 
 	/**
 	 * Construct processor with default values.
@@ -45,8 +45,20 @@ public class Processor {
 	public Processor(final String username, final String project,
 			final IntlolaMode mode, final String address, final int port) {
 		setFields(username, project, mode, address, port);
-		//Only one thread worker. Interaction with server should be sequential.
+		// Only one thread worker. Interaction with server should be sequential.
 		executor = Executors.newFixedThreadPool(1);
+	}
+
+	public String getAddress() {
+		return address.getHostName();
+	}
+
+	public IntlolaMode getMode() {
+		return mode;
+	}
+
+	public int getPort() {
+		return address.getPort();
 	}
 
 	public String getProject() {
@@ -57,8 +69,33 @@ public class Processor {
 		return username;
 	}
 
+	public void handleArchive(final String location, final String zipLoc) {
+		final String filename = zipLoc + File.separator + getProject() + "_"
+				+ System.currentTimeMillis() + ".zip";
+		executor.execute(new ArchiveBuilder(location, filename));
+		if (mode.isRemote()) {
+			sendFile(new ArchiveFile(filename));
+			FileUtils.delete(filename);
+		}
+		logout();
+	}
+
+	private boolean init() {
+		try {
+			sock = new Socket();
+			sock.connect(address, 5000);
+			snd = sock.getOutputStream();
+			rcv = sock.getInputStream();
+			return true;
+		} catch (final IOException e) {
+			Intlola.log(e, "No server detected");
+			return false;
+		}
+	}
+
 	public IntlolaError login(String username, final String password,
-			String project, IntlolaMode mode, String address, int port) {
+			final String project, final IntlolaMode mode, final String address,
+			final int port) {
 		// Set fields to values specified by user.
 		setFields(username, project, mode, address, port);
 		if (mode.isRemote()) {
@@ -70,7 +107,7 @@ public class Processor {
 			params.addProperty(Const.MODE, mode.toString());
 			params.addProperty(Const.LANG, Const.JAVA);
 			if (!init()) {
-				return IntlolaError.CONN;
+				return IntlolaError.CONNECTION;
 			} else {
 				final byte[] buffer = new byte[1024];
 				try {
@@ -95,59 +132,24 @@ public class Processor {
 		}
 	}
 
-	private boolean init() {
-		try {
-			sock = new Socket(address, port);
-			snd = sock.getOutputStream();
-			rcv = sock.getInputStream();
-			return true;
-		} catch (final IOException e) {
-			Intlola.log(e, "No server detected");
-			return false;
-		}
-	}
-
-	private void setFields(String username, String project, IntlolaMode mode,
-			String address, int port) {
-		this.username = username;
-		this.project = project;
-		this.mode = mode;
-		this.address = address;
-		this.port = port;
-	}
-
 	public void logout() {
-		if (mode.isRemote()) {
-			executor.execute(new SessionEnder(sock, snd, rcv));
-			executor.shutdown();
+		if (!mode.isRemote()) {
+			return;
 		}
+		executor.execute(new SessionEnder(sock, snd, rcv));
+		executor.shutdown();
 	}
 
 	public void sendFile(final IntlolaFile file) {
-		executor.execute(new FileSender(file, snd, rcv));
+		executor.execute(new FileSender(file, sock, snd, rcv));
 	}
 
-	public void handleArchive(final String location, final String zipLoc) {
-		final String filename = zipLoc + File.separator + getProject() + "_"
-				+ System.currentTimeMillis() + ".zip";
-		executor.execute(new ArchiveBuilder(location, filename));
-		if (mode.isRemote()) {
-			sendFile(new ArchiveFile(filename));
-			FileUtils.delete(filename);
-		}
-		logout();
-	}
-
-	public String getAddress() {
-		return address;
-	}
-
-	public IntlolaMode getMode() {
-		return mode;
-	}
-
-	public int getPort() {
-		return port;
+	private void setFields(final String username, final String project,
+			final IntlolaMode mode, final String address, final int port) {
+		this.username = username;
+		this.project = project;
+		this.mode = mode;
+		this.address = new InetSocketAddress(address, port);
 	}
 
 }

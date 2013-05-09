@@ -11,14 +11,27 @@ import za.ac.sun.cs.intlola.file.Const;
 import com.google.gson.JsonObject;
 
 public class SessionEnder implements Runnable {
-	private OutputStream snd;
-	private InputStream rcv;
-	private Socket sock;
+	private final InputStream	rcv;
+	private final OutputStream	snd;
+	private final Socket		sock;
 
-	SessionEnder(Socket sock, OutputStream snd, InputStream rcv) {
+	SessionEnder(final Socket sock, final OutputStream snd,
+			final InputStream rcv) {
 		this.sock = sock;
 		this.snd = snd;
 		this.rcv = rcv;
+	}
+
+	private void closeConnection() throws IOException {
+		if (snd != null) {
+			snd.close();
+		}
+		if (rcv != null) {
+			rcv.close();
+		}
+		if (sock != null) {
+			sock.close();
+		}
 	}
 
 	@Override
@@ -42,18 +55,6 @@ public class SessionEnder implements Runnable {
 			} catch (final IOException e) {
 				Intlola.log(e, "Logout error");
 			}
-		}
-	}
-
-	private void closeConnection() throws IOException {
-		if (snd != null) {
-			snd.close();
-		}
-		if (rcv != null) {
-			rcv.close();
-		}
-		if (sock != null) {
-			sock.close();
 		}
 	}
 }

@@ -16,14 +16,14 @@ import org.eclipse.core.resources.IResourceDelta;
 import za.ac.sun.cs.intlola.Intlola;
 
 public class FileUtils {
-	private static final int ZIP_BUFFER_SIZE = 2048;
-	public static final String COMPONENT_SEP = "_";
-	public static final String NAME_SEP = ".";
-	private static final String FORMAT = "%1$tY%1$tm%1$td%1$tH%1$tM%1$tS%1$tL";
-	private static final CharSequence SRC = "src";
-	private static final CharSequence BIN = "bin";
-	private static final String JAVA = ".java";
-	private static final String CLASS = ".class";
+	private static final CharSequence	BIN				= "bin";
+	private static final String			CLASS			= ".class";
+	public static final String			COMPONENT_SEP	= "_";
+	private static final String			FORMAT			= "%1$tY%1$tm%1$td%1$tH%1$tM%1$tS%1$tL";
+	private static final String			JAVA			= ".java";
+	public static final String			NAME_SEP		= ".";
+	private static final CharSequence	SRC				= "src";
+	private static final int			ZIP_BUFFER_SIZE	= 2048;
 
 	/**
 	 * Copies the contents of a file to a new file location.
@@ -65,26 +65,6 @@ public class FileUtils {
 	}
 
 	/**
-	 * Creates a new empty file.
-	 * 
-	 * @param toName
-	 *            The path of the empty file.
-	 */
-	public static void touch(final String toName) {
-		try {
-			final File toFile = new File(toName);
-			if (toFile.exists()) {
-				throw new IOException("File already exists: " + toName);
-			}
-			final FileOutputStream to = new FileOutputStream(toFile);
-			to.write(0);
-			to.close();
-		} catch (final IOException e) {
-			Intlola.log(e);
-		}
-	}
-
-	/**
 	 * Creates a zip archive from all the files found in the specified location.
 	 * 
 	 * @param location
@@ -106,60 +86,6 @@ public class FileUtils {
 			Intlola.log(e);
 		} catch (final IOException e) {
 			Intlola.log(e);
-		}
-
-	}
-
-	/**
-	 * Recursively zips a directory. Iterates through the current directory
-	 * adding files to zip file if they are regular files. If the file is a
-	 * directory, {@link #zipDir(ZipOutputStream, File)} is called on it.
-	 * 
-	 * @param outzip
-	 *            The zip file.
-	 * @param dirfile
-	 *            The current directory.
-	 */
-	private static void zipDir(final ZipOutputStream outzip, final File dirfile) {
-		for (final File file : dirfile.listFiles()) {
-			if (file.isDirectory()) {
-				zipDir(outzip, file);
-			} else if (isIntlolaFile(file.toString())) {
-				try {
-					final byte[] data = new byte[ZIP_BUFFER_SIZE];
-					final FileInputStream origin = new FileInputStream(file);
-					outzip.putNextEntry(new ZipEntry(file.getName()));
-					int count;
-					while ((count = origin.read(data, 0, ZIP_BUFFER_SIZE)) != -1) {
-						outzip.write(data, 0, count);
-					}
-					outzip.closeEntry();
-					origin.close();
-				} catch (final IOException e) {
-					Intlola.log(e);
-				}
-				file.deleteOnExit();
-			}
-		}
-	}
-
-	/**
-	 * Saves a string to a file specified by <code>fname</code>.
-	 * 
-	 * @param string
-	 *            The string to be saved.
-	 * @param fname
-	 *            The name of the file it is to be saved in.
-	 */
-	public static void saveString(String string, String fname) {
-		try {
-			FileOutputStream outfile = new FileOutputStream(fname);
-			final BufferedOutputStream out = new BufferedOutputStream(outfile);
-			out.write(string.getBytes());
-			out.flush();
-			out.close();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 
 	}
@@ -196,6 +122,10 @@ public class FileUtils {
 				hasContents);
 	}
 
+	public static void delete(final String filename) {
+		new File(filename).deleteOnExit();
+	}
+
 	/**
 	 * Stores file metadata in its name in the format described by
 	 * {@link #decodeName(String)}.
@@ -208,15 +138,16 @@ public class FileUtils {
 	 *            The number of the file in the current recording.
 	 * @return A name containing file metadata.
 	 */
-	public static String encodeName(String path, char kindSuffix, int count) {
+	public static String encodeName(final String path, final char kindSuffix,
+			final int count) {
 		final StringBuffer d = new StringBuffer();
-		String[] args = path.split(File.separator);
-		String pkg = getPackage(args, args.length, COMPONENT_SEP);
+		final String[] args = path.split(File.separator);
+		final String pkg = getPackage(args, args.length, COMPONENT_SEP);
 		if (pkg.length() > 0) {
 			d.append(pkg);
 			d.append(COMPONENT_SEP);
 		}
-		String name = getFileName(args);
+		final String name = getFileName(args);
 		if (name.length() > 0) {
 			d.append(name);
 			d.append(COMPONENT_SEP);
@@ -237,15 +168,36 @@ public class FileUtils {
 	 *            Array containing a file name among other information.
 	 * @return A file name.
 	 */
-	private static String getFileName(String[] args) {
+	private static String getFileName(final String[] args) {
 		String name = "";
-		for (String arg : args) {
+		for (final String arg : args) {
 			if (isFileName(arg)) {
 				name = arg;
 				break;
 			}
 		}
 		return name;
+	}
+
+	public static char getKind(final int kind) {
+		char kindSuffix = ' ';
+		switch (kind) {
+			case IResourceDelta.ADDED:
+				kindSuffix = 'a';
+				break;
+			case IResourceDelta.CHANGED:
+				kindSuffix = 'c';
+				break;
+			case IResourceDelta.REMOVED:
+				kindSuffix = 'r';
+				break;
+			case Intlola.LAUNCHED:
+				kindSuffix = 'l';
+				break;
+			default:
+				throw new InvalidParameterException();
+		}
+		return kindSuffix;
 	}
 
 	/**
@@ -260,7 +212,7 @@ public class FileUtils {
 	 * @return A file's package.
 	 */
 	public static String getPackage(final String[] args, final int len,
-			String sep) {
+			final String sep) {
 		String pkg = "";
 		boolean start = false;
 		for (int i = 0; i < len; i++) {
@@ -290,8 +242,17 @@ public class FileUtils {
 	 *            The string to be checked.
 	 * @return <code>true</code> if it is, <code>false</code> if not.
 	 */
-	private static boolean isFileName(String arg) {
+	private static boolean isFileName(final String arg) {
 		return arg.endsWith(JAVA) || arg.endsWith(CLASS);
+	}
+
+	private static boolean isIntlolaFile(final String fname) {
+		if (fname.charAt(fname.length() - 2) == '_') {
+			final char modChar = fname.charAt(fname.length() - 1);
+			return modChar == 'a' || modChar == 'c' || modChar == 'r'
+					|| modChar == 'l';
+		}
+		return false;
 	}
 
 	/**
@@ -301,44 +262,82 @@ public class FileUtils {
 	 *            The string to be checked.
 	 * @return <code>true</code> if it is, <code>false</code> if not.
 	 */
-	private static boolean isOutFolder(String arg) {
+	private static boolean isOutFolder(final String arg) {
 		return arg.equals(SRC) || arg.equals(BIN);
 	}
 
-	private static boolean isIntlolaFile(String fname) {
-		if (fname.charAt(fname.length() - 2) == '_') {
-			char modChar = fname.charAt(fname.length() - 1);
-			return modChar == 'a' || modChar == 'c' || modChar == 'r'
-					|| modChar == 'l';
+	/**
+	 * Saves a string to a file specified by <code>fname</code>.
+	 * 
+	 * @param string
+	 *            The string to be saved.
+	 * @param fname
+	 *            The name of the file it is to be saved in.
+	 */
+	public static void saveString(final String string, final String fname) {
+		try {
+			final FileOutputStream outfile = new FileOutputStream(fname);
+			final BufferedOutputStream out = new BufferedOutputStream(outfile);
+			out.write(string.getBytes());
+			out.flush();
+			out.close();
+		} catch (final IOException e) {
+			e.printStackTrace();
 		}
-		return false;
+
 	}
 
-	public static char getKind(int kind) {
-		char kindSuffix = ' ';
-		switch (kind) {
-		case IResourceDelta.ADDED:
-			kindSuffix = 'a';
-			break;
-		case IResourceDelta.CHANGED:
-			kindSuffix = 'c';
-			break;
-		case IResourceDelta.REMOVED:
-			kindSuffix = 'r';
-			break;
-		case Intlola.LAUNCHED:
-			kindSuffix = 'l';
-			break;
-		default:
-			throw new InvalidParameterException();
+	/**
+	 * Creates a new empty file.
+	 * 
+	 * @param toName
+	 *            The path of the empty file.
+	 */
+	public static void touch(final String toName) {
+		try {
+			final File toFile = new File(toName);
+			if (toFile.exists()) {
+				throw new IOException("File already exists: " + toName);
+			}
+			final FileOutputStream to = new FileOutputStream(toFile);
+			to.write(0);
+			to.close();
+		} catch (final IOException e) {
+			Intlola.log(e);
 		}
-		return kindSuffix;
 	}
 
-	public static void delete(String filename) {
-		new File(filename).deleteOnExit();
+	/**
+	 * Recursively zips a directory. Iterates through the current directory
+	 * adding files to zip file if they are regular files. If the file is a
+	 * directory, {@link #zipDir(ZipOutputStream, File)} is called on it.
+	 * 
+	 * @param outzip
+	 *            The zip file.
+	 * @param dirfile
+	 *            The current directory.
+	 */
+	private static void zipDir(final ZipOutputStream outzip, final File dirfile) {
+		for (final File file : dirfile.listFiles()) {
+			if (file.isDirectory()) {
+				zipDir(outzip, file);
+			} else if (isIntlolaFile(file.toString())) {
+				try {
+					final byte[] data = new byte[ZIP_BUFFER_SIZE];
+					final FileInputStream origin = new FileInputStream(file);
+					outzip.putNextEntry(new ZipEntry(file.getName()));
+					int count;
+					while ((count = origin.read(data, 0, ZIP_BUFFER_SIZE)) != -1) {
+						outzip.write(data, 0, count);
+					}
+					outzip.closeEntry();
+					origin.close();
+				} catch (final IOException e) {
+					Intlola.log(e);
+				}
+				file.deleteOnExit();
+			}
+		}
 	}
-	
-	
 
 }

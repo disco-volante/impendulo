@@ -6,9 +6,9 @@ import java.util.Calendar;
 import com.google.gson.JsonObject;
 
 public class TestFile implements IntlolaFile {
-	private final String path;
-	private final String name;
-	private final long time;
+	private final String	name;
+	private final String	path;
+	private final long		time;
 
 	public TestFile(final String path) {
 		this.path = path;
@@ -17,14 +17,17 @@ public class TestFile implements IntlolaFile {
 		time = Calendar.getInstance().getTimeInMillis();
 	}
 
+	@Override
 	public String getPath() {
 		return path;
 	}
 
+	@Override
 	public boolean hasContents() {
 		return true;
 	}
 
+	@Override
 	public JsonObject toJSON() {
 		final JsonObject ret = new JsonObject();
 		ret.addProperty(Const.TYPE, Const.TEST);

@@ -3,16 +3,10 @@ package za.ac.sun.cs.intlola.processing;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
 public enum IntlolaMode {
-	ARCHIVE_REMOTE("Send all snapshots to server once recording has stopped."), ARCHIVE_LOCAL(
-			"Save all snapshots locally in archive."), FILE_REMOTE(
-			"Continuously send snapshots to server."), ARCHIVE_TEST(
-			"Send project tests to server.");
-
-	private String description;
-
-	IntlolaMode(String description) {
-		this.description = description;
-	}
+	ARCHIVE_LOCAL("Save all snapshots locally in archive."), ARCHIVE_REMOTE(
+			"Send all snapshots to server once recording has stopped."), ARCHIVE_TEST(
+			"Send project tests to server."), FILE_REMOTE(
+			"Continuously send snapshots to server.");
 
 	public static IntlolaMode getMode(final String mpref) {
 		IntlolaMode ret = null;
@@ -30,22 +24,28 @@ public enum IntlolaMode {
 		return ret;
 	}
 
+	private String	description;
+
+	IntlolaMode(final String description) {
+		this.description = description;
+	}
+
 	public String getDescription() {
 		return description;
+	}
+
+	public boolean isArchive() {
+		return equals(ARCHIVE_REMOTE) || equals(ARCHIVE_LOCAL)
+				|| equals(ARCHIVE_TEST);
+	}
+
+	public boolean isRemote() {
+		return equals(ARCHIVE_REMOTE) || equals(FILE_REMOTE)
+				|| equals(ARCHIVE_TEST);
 	}
 
 	@Override
 	public String toString() {
 		return super.toString().toLowerCase();
-	}
-
-	public boolean isRemote() {
-		return this.equals(ARCHIVE_REMOTE) || this.equals(FILE_REMOTE)
-				|| this.equals(ARCHIVE_TEST);
-	}
-
-	public boolean isArchive() {
-		return this.equals(ARCHIVE_REMOTE) || this.equals(ARCHIVE_LOCAL)
-				|| this.equals(ARCHIVE_TEST);
 	}
 }

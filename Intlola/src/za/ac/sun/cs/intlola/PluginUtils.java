@@ -18,7 +18,7 @@ public class PluginUtils {
 	public static IProject getSelectedProject(final ExecutionEvent event) {
 		final IStructuredSelection selection = (IStructuredSelection) HandlerUtil
 				.getCurrentSelection(event);
-		for (Object element : selection.toList()) {
+		for (final Object element : selection.toList()) {
 			if (element instanceof IProject) {
 				return (IProject) element;
 			}

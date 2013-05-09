@@ -4,8 +4,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.validator.routines.UrlValidator;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -17,125 +17,59 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.core.databinding.validation.ValidationStatus;
 
 import za.ac.sun.cs.intlola.processing.IntlolaError;
 import za.ac.sun.cs.intlola.processing.IntlolaMode;
 
 public class LoginDialog extends Dialog {
 
-	private Text				usernameField, passwordField, projectField,
-			addressField, portField;
-
-	private SelectionListener	modeListener;
-
-	private String				title, username, password, project, address;
-	private int					port;
+	private String				address;
 
 	private IntlolaMode			mode;
 
+	private SelectionListener	modeListener;
+
+	private String				password;
+
+	private int					port;
+
+	private String				project;
+
+	private final String		title;
+	private String				username;
+
+	private Text				usernameField, passwordField, projectField,
+			addressField, portField;
+
 	public LoginDialog(final Shell parentShell, final String title,
 			final String username, final String project,
-			final IntlolaMode mode, String address, int port) {
+			final IntlolaMode mode, final String address, final int port) {
 		super(parentShell);
 		setFields(username, "", project, mode, address, port);
 		this.title = title;
 
 	}
 
-	public void setFields(final String username, final String password,
-			final String project, final IntlolaMode mode, String address,
-			int port) {
-		this.username = username;
-		this.password = password;
-		this.project = project;
-		this.mode = mode;
-		this.address = address;
-		this.port = port;
-	}
-
 	@Override
-	public void configureShell(Shell newShell) {
+	public void configureShell(final Shell newShell) {
 		super.configureShell(newShell);
 		newShell.setText(title);
 	}
 
+	public void connError(final IntlolaError err) {
+		if (err.equals(IntlolaError.CONNECTION)) {
+			showError("Connection error", "Could not connect to server on: "
+					+ address + ":" + port);
+		} else if (err.equals(IntlolaError.LOGIN)) {
+			showError("Login error", "Invalid username or password.");
+		}
+	}
+
 	@Override
-	public Control createButtonBar(Composite parent) {
-		Control ret = super.createButtonBar(parent);
+	public Control createButtonBar(final Composite parent) {
+		final Control ret = super.createButtonBar(parent);
 		getButton(IDialogConstants.OK_ID).setText("Login");
 		return ret;
-	}
-
-	@Override
-	public void okPressed() {
-		String msg;
-		if ((msg = validString("Password", passwordField.getText().trim())) != null) {
-			showError("Invalid password", msg);
-		} else if ((msg = validString("Username", usernameField.getText()
-				.trim())) != null) {
-			showError("Invalid username", msg);
-		} else if ((msg = validString("Project", projectField.getText().trim())) != null) {
-			showError("Invalid project", msg);
-		} else if ((msg = validAddress(addressField.getText().trim())) != null) {
-			showError("Invalid address", msg);
-		} else if ((msg = validPort(portField.getText().trim())) != null) {
-			showError("Invalid port", msg);
-		} else {
-			username = usernameField.getText().trim();
-			project = projectField.getText().trim();
-			password = passwordField.getText().trim();
-			port = Integer.parseInt(portField.getText().trim());
-			address = addressField.getText().trim();
-			super.okPressed();
-		}
-	}
-
-	private void showError(String title, String msg) {
-		ErrorDialog.openError(getShell(), title, "",
-				ValidationStatus.error(msg));
-	}
-
-	private String validString(String type, String arg) {
-		if (arg.length() == 0) {
-			return type + " too short;";
-		}
-		return null;
-	}
-
-	private String validAddress(String ip) {
-		String IP_PATTERN = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
-				+ "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
-				+ "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
-				+ "([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
-		Pattern ipPattern = Pattern.compile(IP_PATTERN);
-		UrlValidator validator = new UrlValidator(UrlValidator.ALLOW_2_SLASHES
-				+ UrlValidator.ALLOW_ALL_SCHEMES
-				+ UrlValidator.ALLOW_LOCAL_URLS);
-		if (!validator.isValid("http://" + ip)
-				&& !ipPattern.matcher(ip).matches()) {
-			return "Invalid address " + ip + ".";
-		}
-		return null;
-	}
-
-	private String validPort(String port) {
-		try {
-			if (Integer.parseInt(portField.getText().trim()) < 0) {
-				return port + " is not a valid port number.";
-			}
-		} catch (NumberFormatException ne) {
-			return port + " is not an integer.";
-		}
-		return null;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public String getUserName() {
-		return username;
 	}
 
 	@Override
@@ -202,7 +136,12 @@ public class LoginDialog extends Dialog {
 		modeListener = new SelectionListener() {
 
 			@Override
-			public void widgetSelected(SelectionEvent event) {
+			public void widgetDefaultSelected(final SelectionEvent event) {
+				widgetSelected(event);
+			}
+
+			@Override
+			public void widgetSelected(final SelectionEvent event) {
 				if (btnFR.getSelection()) {
 					btnAR.setSelection(false);
 					btnAL.setSelection(false);
@@ -216,11 +155,6 @@ public class LoginDialog extends Dialog {
 					btnAR.setSelection(false);
 					mode = IntlolaMode.ARCHIVE_LOCAL;
 				}
-			}
-
-			@Override
-			public void widgetDefaultSelected(SelectionEvent event) {
-				widgetSelected(event);
 			}
 		};
 
@@ -247,33 +181,105 @@ public class LoginDialog extends Dialog {
 		return comp;
 	}
 
-	public String getProject() {
-		return project;
+	public String getAddress() {
+		return address;
 	}
 
 	public IntlolaMode getMode() {
 		return mode;
 	}
 
-	public String getAddress() {
-		return address;
+	public String getPassword() {
+		return password;
 	}
 
 	public int getPort() {
 		return port;
 	}
 
-	public void connError(IntlolaError err) {
-		if (err.equals(IntlolaError.CONN)) {
-			showError("Connection error", "Could not connect to server on: "
-					+ address + ":" + port);
-		} else if (err.equals(IntlolaError.LOGIN)) {
-			showError("Login error", "Invalid username or password.");
+	public String getProject() {
+		return project;
+	}
+
+	public String getUserName() {
+		return username;
+	}
+
+	@Override
+	public void okPressed() {
+		String msg;
+		if ((msg = validString("Password", passwordField.getText().trim())) != null) {
+			showError("Invalid password", msg);
+		} else if ((msg = validString("Username", usernameField.getText()
+				.trim())) != null) {
+			showError("Invalid username", msg);
+		} else if ((msg = validString("Project", projectField.getText().trim())) != null) {
+			showError("Invalid project", msg);
+		} else if ((msg = validAddress(addressField.getText().trim())) != null) {
+			showError("Invalid address", msg);
+		} else if ((msg = validPort(portField.getText().trim())) != null) {
+			showError("Invalid port", msg);
+		} else {
+			username = usernameField.getText().trim();
+			project = projectField.getText().trim();
+			password = passwordField.getText().trim();
+			port = Integer.parseInt(portField.getText().trim());
+			address = addressField.getText().trim();
+			super.okPressed();
 		}
 	}
 
-	public int open(IntlolaError err) {
+	public int open(final IntlolaError err) {
 		connError(err);
 		return super.open();
+	}
+
+	public void setFields(final String username, final String password,
+			final String project, final IntlolaMode mode, final String address,
+			final int port) {
+		this.username = username;
+		this.password = password;
+		this.project = project;
+		this.mode = mode;
+		this.address = address;
+		this.port = port;
+	}
+
+	private void showError(final String title, final String msg) {
+		MessageDialog.openError(getShell(), title, msg);
+	}
+
+	private String validAddress(final String ip) {
+		final String IP_PATTERN = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
+				+ "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
+				+ "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
+				+ "([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
+		final Pattern ipPattern = Pattern.compile(IP_PATTERN);
+		final UrlValidator validator = new UrlValidator(
+				UrlValidator.ALLOW_2_SLASHES + UrlValidator.ALLOW_ALL_SCHEMES
+						+ UrlValidator.ALLOW_LOCAL_URLS);
+		if (!validator.isValid("http://" + ip)
+				&& !ipPattern.matcher(ip).matches()) {
+			return "Invalid address " + ip + ".";
+		}
+		return null;
+	}
+
+	private String validPort(final String port) {
+		try {
+			if (Integer.parseInt(portField.getText().trim()) < 0) {
+				return port + " is not a valid port number.";
+			}
+		} catch (final NumberFormatException ne) {
+			return port + " is not an integer.";
+		}
+		return null;
+	}
+
+	private String validString(final String type, final String arg) {
+		if (arg.length() == 0) {
+			return type + " too short;";
+		}
+		return null;
 	}
 }

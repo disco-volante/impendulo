@@ -16,7 +16,7 @@ public class TestsSender {
 		final Processor sender = new Processor("username", "Triangle",
 				IntlolaMode.ARCHIVE_TEST, PreferenceConstants.REMOTE_ADDRESS,
 				PreferenceConstants.PORT);
-		IntlolaError err = sender.login(sender.getUsername(), "password",
+		final IntlolaError err = sender.login(sender.getUsername(), "password",
 				sender.getProject(), sender.getMode(), sender.getAddress(),
 				sender.getPort());
 		if (err.equals(IntlolaError.SUCCESS)) {

@@ -20,21 +20,37 @@ import za.ac.sun.cs.intlola.processing.IntlolaMode;
 import za.ac.sun.cs.intlola.processing.Processor;
 
 public class Intlola extends AbstractUIPlugin implements IStartup {
-	public static String				STORE_PATH;
-
 	public static final int				LAUNCHED	= -6666;
+
+	private static Intlola				plugin;
 	protected static final String		PLUGIN_ID	= "za.ac.sun.cs.goanna";
 	private static final QualifiedName	RECORD_KEY	= new QualifiedName(
 															"intlola", "record");
 
 	private static final Boolean		RECORD_ON	= new Boolean(true);
 
-	private static Intlola				plugin;
+	public static String				STORE_PATH;
 
-	private Processor					proc;
+	// private static IProject project;
+
+	// private static Shell shell;
 
 	public static Intlola getActive() {
 		return Intlola.plugin;
+	}
+
+	private static String getLogMessage(final Exception e, final Object[] msgs) {
+		String logMsg = "";
+		for (Object msg : msgs) {
+			if (msg == null) {
+				msg = "NULL";
+			}
+			logMsg += " " + msg.toString();
+		}
+		if (e != null) {
+			logMsg += e.getMessage();
+		}
+		return logMsg;
 	}
 
 	public static boolean getRecordStatus(final IProject project) {
@@ -58,34 +74,73 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
-	private static String getLogMessage(Exception e, Object[] msgs) {
-		String logMsg = "";
-		for (Object msg : msgs) {
-			if (msg == null) {
-				msg = "NULL";
-			}
-			logMsg += " " + msg.toString();
-		}
-		if (e != null) {
-			logMsg += e.getMessage();
-		}
-		return logMsg;
-	}
-
 	public static void startRecord(final IProject project, final Shell shell) {
 		getActive().setProcessor(project.getName());
+		// Intlola.project = project;
+		// Intlola.shell = shell;
 		if (getActive().start(shell)) {
 			try {
-				project.setSessionProperty(RECORD_KEY,
-						RECORD_ON);
-			} catch (CoreException e) {
+				project.setSessionProperty(RECORD_KEY, RECORD_ON);
+			} catch (final CoreException e) {
 				Intlola.log(e);
 			}
 		}
 	}
 
+	public static void stopRecord(final IProject project, final Shell shell) {
+		getActive().stop();
+		try {
+			project.setSessionProperty(Intlola.RECORD_KEY, null);
+		} catch (final CoreException e) {
+			e.printStackTrace();
+		}
+		Intlola.log(null, "Intlola record stopping", project.getName());
+	}
+
+	private IResourceChangeListener	changeListener	= null;
+
+	private boolean					listenersAdded	= false;
+
+	private Processor				proc;
+
+	public Intlola() {
+		Intlola.plugin = this;
+		STORE_PATH = Intlola.getActive().getStateLocation().toOSString();
+	}
+
+	@Override
+	public void earlyStartup() {
+	}
+
+	public Processor getProcessor() {
+		return proc;
+	}
+
+	private void setProcessor(final String project) {
+		final IntlolaMode mode = IntlolaMode.getMode(getPreferenceStore()
+				.getString(PreferenceConstants.P_MODE));
+		final String uname = getPreferenceStore().getString(
+				PreferenceConstants.P_UNAME);
+		final String address = getPreferenceStore().getString(
+				PreferenceConstants.P_ADDRESS);
+		final int port = getPreferenceStore()
+				.getInt(PreferenceConstants.P_PORT);
+		proc = new Processor(uname, project, mode, address, port);
+	}
+
+	@Override
+	public void start(final BundleContext context) throws Exception {
+		super.start(context);
+		if (!listenersAdded) {
+			changeListener = new IntlolaListener();
+			PluginUtils.getWorkspace().addResourceChangeListener(
+					changeListener, IResourceChangeEvent.POST_CHANGE);
+			listenersAdded = true;
+		}
+	}
+
 	private boolean start(final Shell shell) {
-		LoginDialog dialog = new LoginDialog(shell,
+		final LoginDialog dialog = new LoginDialog(shell,
 				"Intlola login configuration", proc.getUsername(),
 				proc.getProject(), proc.getMode(), proc.getAddress(),
 				proc.getPort());
@@ -103,57 +158,11 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		return err.equals(IntlolaError.SUCCESS);
 	}
 
-	public static void stopRecord(final IProject project, final Shell shell) {
-		Intlola.log(null, "Intlola record stopping", project.getName());
-		getActive().stop();
-		try {
-			project.setSessionProperty(Intlola.RECORD_KEY, null);
-		} catch (final CoreException e) {
-			e.printStackTrace();
-		}
-
-	}
-
 	private void stop() {
 		if (proc.getMode().isArchive()) {
 			proc.handleArchive(STORE_PATH, STORE_PATH);
 		} else if (proc.getMode().isRemote()) {
 			proc.logout();
-		}
-	}
-
-	private void setProcessor(final String project) {
-		final IntlolaMode mode = IntlolaMode.getMode(getPreferenceStore()
-				.getString(PreferenceConstants.P_MODE));
-		final String uname = getPreferenceStore().getString(
-				PreferenceConstants.P_UNAME);
-		final String address = getPreferenceStore().getString(
-				PreferenceConstants.P_ADDRESS);
-		final int port = getPreferenceStore()
-				.getInt(PreferenceConstants.P_PORT);
-		proc = new Processor(uname, project, mode, address, port);
-	}
-
-	private IResourceChangeListener	changeListener	= null;
-
-	private boolean					listenersAdded	= false;
-
-	public Intlola() {
-		Intlola.plugin = this;
-		STORE_PATH = Intlola.getActive().getStateLocation().toOSString();
-	}
-
-	public void earlyStartup() {
-	}
-
-	@Override
-	public void start(final BundleContext context) throws Exception {
-		super.start(context);
-		if (!listenersAdded) {
-			changeListener = new IntlolaListener();
-			PluginUtils.getWorkspace().addResourceChangeListener(
-					changeListener, IResourceChangeEvent.POST_CHANGE);
-			listenersAdded = true;
 		}
 	}
 
@@ -163,7 +172,11 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		super.stop(context);
 	}
 
-	public Processor getProcessor() {
-		return proc;
-	}
+	/*
+	 * public static void handleError(IntlolaError err, Exception e, boolean
+	 * stop, boolean show) { log(e, err.toString()); if (show) {
+	 * MessageDialog.openError(shell, err.toString(), e.getMessage()); } if
+	 * (stop) { stopRecord(project, shell); } }
+	 */
+
 }

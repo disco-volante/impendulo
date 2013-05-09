@@ -3,21 +3,17 @@ package za.ac.sun.cs.intlola.file;
 import java.io.File;
 import java.util.Calendar;
 
-
 import com.google.gson.JsonObject;
 
 public class IndividualFile implements IntlolaFile {
 
-	
-	
+	private final boolean	hasContents;
+	private final char		mod;
+	private final int		num;
 
-	private final String path, name, pkg;
-	private final char mod;
-	private final int num;
+	private final String	path, name, pkg;
 
-	private final long time;
-
-	private final boolean hasContents;
+	private final long		time;
 
 	public IndividualFile(final String path, final char mod, final int num,
 			final boolean hasContents) {
@@ -43,19 +39,22 @@ public class IndividualFile implements IntlolaFile {
 		this.pkg = pkg;
 	}
 
+	@Override
 	public String getPath() {
 		return path;
 	}
 
+	@Override
 	public boolean hasContents() {
 		return hasContents;
 	}
 
+	@Override
 	public JsonObject toJSON() {
 		final JsonObject ret = new JsonObject();
 		ret.addProperty(Const.NAME, name);
 		if (hasContents()) {
-			String ext = name.split("\\.")[1];
+			final String ext = name.split("\\.")[1];
 			ret.addProperty(Const.FTYPE, ext);
 			if (ext.equals(Const.JAVA)) {
 				ret.addProperty(Const.TYPE, Const.SRC);

@@ -1,5 +1,5 @@
 package za.ac.sun.cs.intlola.processing;
 
 public enum IntlolaError {
-	DEFAULT, CONN, LOGIN, SUCCESS;
+	ARCHIVE, CONNECTION, CORE, DEFAULT, FILE, LOGIN, SERVER, SOCKET, SUCCESS;
 }
