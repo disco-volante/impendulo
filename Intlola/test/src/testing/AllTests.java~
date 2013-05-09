@@ -65,7 +65,7 @@ public class AllTests {
 	}
 
 	private static final String dir = System.getProperty("java.io.tmpdir") + File.separator + "tests"
-			+ File.separator + "za.ac.sun.cs.Triangle" + File.separator + "src"
+			+ File.separator + "Triangle" + File.separator + "src"
 			+ File.separator + "testing" + File.separator + "data";
 
 	public static Test suite() {

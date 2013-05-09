@@ -1,6 +1,7 @@
 package za.ac.sun.cs.intlola.processing;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -53,10 +54,14 @@ public class FileSender implements Runnable {
 			String received = new String(readBuffer);
 			if (received.startsWith(Const.OK)) {
 				if (file.hasContents()) {
-					int count;
-					fis = new FileInputStream(file.getPath());
-					while ((count = fis.read(writeBuffer)) >= 0) {
-						snd.write(writeBuffer, 0, count);
+					try {
+						fis = new FileInputStream(file.getPath());
+						int count;
+						while ((count = fis.read(writeBuffer)) >= 0) {
+							snd.write(writeBuffer, 0, count);
+						}
+					} catch (FileNotFoundException fe) {
+						Intlola.log(fe);
 					}
 				}
 				snd.write(Const.EOF.getBytes());

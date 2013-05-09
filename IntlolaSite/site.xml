@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <description name="Intlola change recorder" url="http://star.sun.ac.za/~pjordaan/intlola">
+   <description name="Intlola change recorder" url="http://star.sun.ac.za/~pjordaan/IntlolaSite">
       Provides the Intlola plug-in, which is part of the
 Impendulo system.
    </description>
-   <feature url="features/za.ac.sun.cs.IntlolaFeature_1.0.0.1.jar" id="za.ac.sun.cs.IntlolaFeature" version="1.0.0.1">
+   <feature url="features/za.ac.sun.cs.IntlolaFeature_1.0.0.3.jar" id="za.ac.sun.cs.IntlolaFeature" version="1.0.0.3">
       <category name="za.ac.sun.cs.Intlola"/>
    </feature>
    <category-def name="za.ac.sun.cs.Intlola" label="Intlola">
       <description>
-         Intlola change recorder.
+         Intlola change recorder for the Impendulo system.
       </description>
    </category-def>
 </site>

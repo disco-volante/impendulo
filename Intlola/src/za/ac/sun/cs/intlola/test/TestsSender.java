@@ -9,11 +9,11 @@ import za.ac.sun.cs.intlola.processing.Processor;
 public class TestsSender {
 
 	public static void main(final String argv[]) {
-		TestsSender.sendTests("test.zip");
+		TestsSender.sendTests("za.ac.sun.cs.Triangle.zip");
 	}
 
 	private static void sendTests(final String name) {
-		final Processor sender = new Processor("username", "Triangle",
+		final Processor sender = new Processor("username", "za.ac.sun.cs.Triangle",
 				IntlolaMode.ARCHIVE_TEST, PreferenceConstants.REMOTE_ADDRESS,
 				PreferenceConstants.PORT);
 		final IntlolaError err = sender.login(sender.getUsername(), "password",

@@ -185,14 +185,20 @@ public class FileUtils {
 			case IResourceDelta.ADDED:
 				kindSuffix = 'a';
 				break;
-			case IResourceDelta.CHANGED:
-				kindSuffix = 'c';
-				break;
 			case IResourceDelta.REMOVED:
 				kindSuffix = 'r';
 				break;
 			case Intlola.LAUNCHED:
 				kindSuffix = 'l';
+				break;
+			case IResourceDelta.MOVED_FROM:
+				kindSuffix = 'f';
+				break;
+			case IResourceDelta.MOVED_TO:
+				kindSuffix = 't';
+				break;
+			case IResourceDelta.CHANGED:
+				kindSuffix = 'c';
 				break;
 			default:
 				throw new InvalidParameterException();
@@ -220,16 +226,13 @@ public class FileUtils {
 				return pkg;
 			}
 			if (start) {
-				pkg += args[i];
-				if (i < len - 1) {
-					pkg += sep;
-				}
+				pkg += args[i] + sep;
 			}
 			if (isOutFolder(args[i])) {
 				start = true;
 			}
 		}
-		if (pkg.length() > 0) {
+		if (pkg.endsWith(sep)) {
 			pkg = pkg.substring(0, pkg.length() - 1);
 		}
 		return pkg;

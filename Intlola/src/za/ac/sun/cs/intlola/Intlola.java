@@ -23,17 +23,13 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	public static final int				LAUNCHED	= -6666;
 
 	private static Intlola				plugin;
-	protected static final String		PLUGIN_ID	= "za.ac.sun.cs.goanna";
+	protected static final String		PLUGIN_ID	= "za.ac.sun.cs.intlola";
 	private static final QualifiedName	RECORD_KEY	= new QualifiedName(
 															"intlola", "record");
 
 	private static final Boolean		RECORD_ON	= new Boolean(true);
 
 	public static String				STORE_PATH;
-
-	// private static IProject project;
-
-	// private static Shell shell;
 
 	public static Intlola getActive() {
 		return Intlola.plugin;
@@ -75,9 +71,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	public static void startRecord(final IProject project, final Shell shell) {
+		Intlola.log(null, "Intlola record started", project.getName());
 		getActive().setProcessor(project.getName());
-		// Intlola.project = project;
-		// Intlola.shell = shell;
 		if (getActive().start(shell)) {
 			try {
 				project.setSessionProperty(RECORD_KEY, RECORD_ON);
@@ -141,7 +136,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private boolean start(final Shell shell) {
 		final LoginDialog dialog = new LoginDialog(shell,
-				"Intlola login configuration", proc.getUsername(),
+				"Intlola login", proc.getUsername(),
 				proc.getProject(), proc.getMode(), proc.getAddress(),
 				proc.getPort());
 		IntlolaError err = IntlolaError.DEFAULT;
@@ -171,12 +166,5 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		Intlola.plugin = null;
 		super.stop(context);
 	}
-
-	/*
-	 * public static void handleError(IntlolaError err, Exception e, boolean
-	 * stop, boolean show) { log(e, err.toString()); if (show) {
-	 * MessageDialog.openError(shell, err.toString(), e.getMessage()); } if
-	 * (stop) { stopRecord(project, shell); } }
-	 */
 
 }
