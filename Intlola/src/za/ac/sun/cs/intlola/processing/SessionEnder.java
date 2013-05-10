@@ -7,6 +7,7 @@ import java.net.Socket;
 
 import za.ac.sun.cs.intlola.Intlola;
 import za.ac.sun.cs.intlola.file.Const;
+import za.ac.sun.cs.intlola.file.FileUtils;
 
 import com.google.gson.JsonObject;
 
@@ -41,7 +42,7 @@ public class SessionEnder implements Runnable {
 			params.addProperty(Const.REQ, Const.LOGOUT);
 			snd.write(params.toString().getBytes());
 			snd.flush();
-			final byte[] buffer = new byte[1024];
+			final byte[] buffer = new byte[FileUtils.BUFFER_SIZE];
 			rcv.read(buffer);
 			final String received = new String(buffer);
 			if (!received.startsWith(Const.OK)) {

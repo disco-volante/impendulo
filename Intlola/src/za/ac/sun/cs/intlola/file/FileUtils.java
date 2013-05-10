@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.InvalidParameterException;
-import java.util.Calendar;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -16,14 +15,21 @@ import org.eclipse.core.resources.IResourceDelta;
 import za.ac.sun.cs.intlola.Intlola;
 
 public class FileUtils {
-	private static final CharSequence	BIN				= "bin";
-	private static final String			CLASS			= ".class";
-	public static final String			COMPONENT_SEP	= "_";
-	private static final String			FORMAT			= "%1$tY%1$tm%1$td%1$tH%1$tM%1$tS%1$tL";
-	private static final String			JAVA			= ".java";
-	public static final String			NAME_SEP		= ".";
-	private static final CharSequence	SRC				= "src";
-	private static final int			ZIP_BUFFER_SIZE	= 2048;
+	private static final String BIN = "bin";
+	private static final String CLASS = ".class";
+	public static final String COMPONENT_SEP = "_";
+	//private static final String FORMAT = "%1$tY%1$tm%1$td%1$tH%1$tM%1$tS%1$tL";
+	private static final String JAVA = ".java";
+	public static final String NAME_SEP = ".";
+	private static final String SRC = "src";
+	public static final int BUFFER_SIZE = 2048;
+	public static final char ADD = 'a';
+	public static final char REMOVE = 'r';
+	public static final char LAUNCH = 'l';
+	public static final char FROM = 'f';
+	public static final char TO = 't';
+	public static final char CHANGE = 'c';
+	private static final byte NOTHING = 0;
 
 	/**
 	 * Copies the contents of a file to a new file location.
@@ -52,7 +58,7 @@ public class FileUtils {
 			}
 			final FileInputStream from = new FileInputStream(fromFile);
 			final FileOutputStream to = new FileOutputStream(toFile);
-			final byte[] buffer = new byte[4096];
+			final byte[] buffer = new byte[BUFFER_SIZE];
 			int bytesRead;
 			while ((bytesRead = from.read(buffer)) != -1) {
 				to.write(buffer, 0, bytesRead);
@@ -107,18 +113,15 @@ public class FileUtils {
 		final String fdata = elems[elems.length - 1];
 		elems = fdata.split(COMPONENT_SEP);
 		final char mod = elems[elems.length - 1].charAt(0);
+		if (!isKindSuffix(mod)) {
+			throw new InvalidParameterException("Unknown kind: " + mod);
+		}
 		final int num = Integer.parseInt(elems[elems.length - 2]);
 		final long time = Long.parseLong(elems[elems.length - 3]);
-		String name = null, pkg = null;
-		boolean hasContents = false;
-		if (elems.length > 3) {
-			name = elems[elems.length - 4];
-			pkg = getPackage(elems, elems.length - 4, NAME_SEP);
-			if (name.contains(NAME_SEP)) {
-				hasContents = true;
-			}
-		}
-		return new IndividualFile(encodedName, name, pkg, mod, num, time,
+		String name = getFileName(elems);
+		boolean hasContents = name.contains(NAME_SEP);
+		String pkg = getPackage(elems, NAME_SEP);
+		return new IndividualFile(encodedName, name, pkg, time, num, mod,
 				hasContents);
 	}
 
@@ -138,11 +141,11 @@ public class FileUtils {
 	 *            The number of the file in the current recording.
 	 * @return A name containing file metadata.
 	 */
-	public static String encodeName(final String path, final char kindSuffix,
-			final int count) {
+	public static String encodeName(final String path, final long time,
+			final int count, final char kindSuffix) {
 		final StringBuffer d = new StringBuffer();
 		final String[] args = path.split(File.separator);
-		final String pkg = getPackage(args, args.length, COMPONENT_SEP);
+		final String pkg = getPackage(args, COMPONENT_SEP);
 		if (pkg.length() > 0) {
 			d.append(pkg);
 			d.append(COMPONENT_SEP);
@@ -152,7 +155,7 @@ public class FileUtils {
 			d.append(name);
 			d.append(COMPONENT_SEP);
 		}
-		d.append(String.format(FORMAT, Calendar.getInstance()));
+		d.append(time);
 		d.append(COMPONENT_SEP);
 		d.append(count);
 		d.append(COMPONENT_SEP);
@@ -168,7 +171,7 @@ public class FileUtils {
 	 *            Array containing a file name among other information.
 	 * @return A file name.
 	 */
-	private static String getFileName(final String[] args) {
+	public static String getFileName(final String[] args) {
 		String name = "";
 		for (final String arg : args) {
 			if (isFileName(arg)) {
@@ -179,26 +182,31 @@ public class FileUtils {
 		return name;
 	}
 
+	public static boolean isKindSuffix(char modChar) {
+		return modChar == ADD || modChar == REMOVE || modChar == LAUNCH
+				|| modChar == FROM || modChar == TO || modChar == CHANGE;
+	}
+
 	public static char getKind(final int kind) {
 		char kindSuffix = ' ';
 		switch (kind) {
 			case IResourceDelta.ADDED:
-				kindSuffix = 'a';
+				kindSuffix = ADD;
 				break;
 			case IResourceDelta.REMOVED:
-				kindSuffix = 'r';
+				kindSuffix = REMOVE;
 				break;
 			case Intlola.LAUNCHED:
-				kindSuffix = 'l';
+				kindSuffix = LAUNCH;
 				break;
 			case IResourceDelta.MOVED_FROM:
-				kindSuffix = 'f';
+				kindSuffix = FROM;
 				break;
 			case IResourceDelta.MOVED_TO:
-				kindSuffix = 't';
+				kindSuffix = TO;
 				break;
 			case IResourceDelta.CHANGED:
-				kindSuffix = 'c';
+				kindSuffix = CHANGE;
 				break;
 			default:
 				throw new InvalidParameterException();
@@ -212,18 +220,16 @@ public class FileUtils {
 	 * 
 	 * @param args
 	 *            Array containing a file's package among other information.
-	 * @param len
 	 * @param sep
 	 *            Seperator to place between package components.
 	 * @return A file's package.
 	 */
-	public static String getPackage(final String[] args, final int len,
-			final String sep) {
+	public static String getPackage(final String[] args, final String sep) {
 		String pkg = "";
 		boolean start = false;
-		for (int i = 0; i < len; i++) {
+		for (int i = 0; i < args.length; i++) {
 			if (isFileName(args[i])) {
-				return pkg;
+				break;
 			}
 			if (start) {
 				pkg += args[i] + sep;
@@ -245,15 +251,14 @@ public class FileUtils {
 	 *            The string to be checked.
 	 * @return <code>true</code> if it is, <code>false</code> if not.
 	 */
-	private static boolean isFileName(final String arg) {
+	public static boolean isFileName(final String arg) {
 		return arg.endsWith(JAVA) || arg.endsWith(CLASS);
 	}
 
 	private static boolean isIntlolaFile(final String fname) {
-		if (fname.charAt(fname.length() - 2) == '_') {
+		if (fname.length() > 1 && fname.charAt(fname.length() - 2) == '_') {
 			final char modChar = fname.charAt(fname.length() - 1);
-			return modChar == 'a' || modChar == 'c' || modChar == 'r'
-					|| modChar == 'l';
+			return isKindSuffix(modChar);
 		}
 		return false;
 	}
@@ -303,7 +308,7 @@ public class FileUtils {
 				throw new IOException("File already exists: " + toName);
 			}
 			final FileOutputStream to = new FileOutputStream(toFile);
-			to.write(0);
+			to.write(NOTHING);
 			to.close();
 		} catch (final IOException e) {
 			Intlola.log(e);
@@ -320,17 +325,17 @@ public class FileUtils {
 	 * @param dirfile
 	 *            The current directory.
 	 */
-	private static void zipDir(final ZipOutputStream outzip, final File dirfile) {
+	public static void zipDir(final ZipOutputStream outzip, final File dirfile) {
 		for (final File file : dirfile.listFiles()) {
 			if (file.isDirectory()) {
 				zipDir(outzip, file);
 			} else if (isIntlolaFile(file.toString())) {
 				try {
-					final byte[] data = new byte[ZIP_BUFFER_SIZE];
+					final byte[] data = new byte[BUFFER_SIZE];
 					final FileInputStream origin = new FileInputStream(file);
 					outzip.putNextEntry(new ZipEntry(file.getName()));
 					int count;
-					while ((count = origin.read(data, 0, ZIP_BUFFER_SIZE)) != -1) {
+					while ((count = origin.read(data)) != -1) {
 						outzip.write(data, 0, count);
 					}
 					outzip.closeEntry();

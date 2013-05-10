@@ -29,8 +29,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private static final Boolean		RECORD_ON	= new Boolean(true);
 
-	public static String				STORE_PATH;
-
 	public static Intlola getActive() {
 		return Intlola.plugin;
 	}
@@ -100,7 +98,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	public Intlola() {
 		Intlola.plugin = this;
-		STORE_PATH = Intlola.getActive().getStateLocation().toOSString();
 	}
 
 	@Override
@@ -135,10 +132,9 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	private boolean start(final Shell shell) {
-		final LoginDialog dialog = new LoginDialog(shell,
-				"Intlola login", proc.getUsername(),
-				proc.getProject(), proc.getMode(), proc.getAddress(),
-				proc.getPort());
+		final LoginDialog dialog = new LoginDialog(shell, "Intlola login",
+				proc.getUsername(), proc.getProject(), proc.getMode(),
+				proc.getAddress(), proc.getPort());
 		IntlolaError err = IntlolaError.DEFAULT;
 		while (!err.equals(IntlolaError.SUCCESS)) {
 			final int code = dialog.open(err);
@@ -155,10 +151,14 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private void stop() {
 		if (proc.getMode().isArchive()) {
-			proc.handleArchive(STORE_PATH, STORE_PATH);
+			proc.handleArchive(getActive().getStorePath(), getStorePath());
 		} else if (proc.getMode().isRemote()) {
 			proc.logout();
 		}
+	}
+
+	public String getStorePath() {
+		return getStateLocation().toOSString();
 	}
 
 	@Override

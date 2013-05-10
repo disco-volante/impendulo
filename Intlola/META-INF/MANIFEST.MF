@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Intlola
 Bundle-SymbolicName: Intlola;singleton:=true
-Bundle-Version: 1.0.0.3
+Bundle-Version: 1.0.0.4
 Bundle-Vendor: Computer Science, Stellenbosch University
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: lib/gson-2.2.2.jar,
@@ -24,6 +24,7 @@ Import-Package: org.eclipse.core.commands,
  org.eclipse.ui.handlers,
  org.eclipse.ui.plugin,
  org.osgi.framework
-Require-Bundle: org.eclipse.jface
+Require-Bundle: org.eclipse.jface,
+ org.junit
 Bundle-Activator: za.ac.sun.cs.intlola.Intlola
 Bundle-ActivationPolicy: lazy

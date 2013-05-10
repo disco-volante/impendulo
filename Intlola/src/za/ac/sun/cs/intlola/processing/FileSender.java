@@ -9,6 +9,7 @@ import java.net.Socket;
 
 import za.ac.sun.cs.intlola.Intlola;
 import za.ac.sun.cs.intlola.file.Const;
+import za.ac.sun.cs.intlola.file.FileUtils;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 
 import com.google.gson.JsonObject;
@@ -41,8 +42,8 @@ public class FileSender implements Runnable {
 
 	@Override
 	public void run() {
-		final byte[] readBuffer = new byte[2048];
-		final byte[] writeBuffer = new byte[2048];
+		final byte[] readBuffer = new byte[FileUtils.BUFFER_SIZE];
+		final byte[] writeBuffer = new byte[FileUtils.BUFFER_SIZE];
 		FileInputStream fis = null;
 		boolean ok = true;
 		try {
