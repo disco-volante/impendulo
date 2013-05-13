@@ -20,14 +20,14 @@ import za.ac.sun.cs.intlola.processing.IntlolaMode;
 import za.ac.sun.cs.intlola.processing.Processor;
 
 public class Intlola extends AbstractUIPlugin implements IStartup {
-	public static final int				LAUNCHED	= -6666;
+	public static final int LAUNCHED = -6666;
 
-	private static Intlola				plugin;
-	protected static final String		PLUGIN_ID	= "za.ac.sun.cs.intlola";
-	private static final QualifiedName	RECORD_KEY	= new QualifiedName(
-															"intlola", "record");
+	private static Intlola plugin;
+	protected static final String PLUGIN_ID = "za.ac.sun.cs.intlola";
+	private static final QualifiedName RECORD_KEY = new QualifiedName(
+			"intlola", "record");
 
-	private static final Boolean		RECORD_ON	= new Boolean(true);
+	private static final Boolean RECORD_ON = new Boolean(true);
 
 	public static Intlola getActive() {
 		return Intlola.plugin;
@@ -74,6 +74,9 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		if (getActive().start(shell)) {
 			try {
 				project.setSessionProperty(RECORD_KEY, RECORD_ON);
+			//	project.setLocalTimeStamp(System.currentTimeMillis());
+			//	project.refreshLocal(IResource.DEPTH_INFINITE, null);
+				PluginUtils.touchAll(project);
 			} catch (final CoreException e) {
 				Intlola.log(e);
 			}
@@ -90,11 +93,11 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		Intlola.log(null, "Intlola record stopping", project.getName());
 	}
 
-	private IResourceChangeListener	changeListener	= null;
+	private IResourceChangeListener changeListener = null;
 
-	private boolean					listenersAdded	= false;
+	private boolean listenersAdded = false;
 
-	private Processor				proc;
+	private Processor proc;
 
 	public Intlola() {
 		Intlola.plugin = this;

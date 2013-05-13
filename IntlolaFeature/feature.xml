@@ -2,11 +2,11 @@
 <feature
       id="za.ac.sun.cs.IntlolaFeature"
       label="IntlolaFeature"
-      version="1.0.0.4"
+      version="1.0.0.5"
       provider-name="Computer Science, Stellenbosch University"
       plugin="Intlola">
 
-   <description url="http://www.cs.sun.ac.za/~jaco/IMPENDULO">
+   <description url="http://www.cs.sun.ac.za/~pjordaan/IntlolaSite">
       This feature provides the Intlola plug-in, which is part of the
 Impendulo system.
    </description>
@@ -49,7 +49,7 @@ along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
          id="Intlola"
          download-size="0"
          install-size="0"
-         version="1.0.0.4"
+         version="1.0.0.5"
          unpack="false"/>
 
 </feature>

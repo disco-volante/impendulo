@@ -1,8 +1,11 @@
 package za.ac.sun.cs.intlola;
 
 import org.eclipse.core.commands.ExecutionEvent;
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -33,5 +36,22 @@ public class PluginUtils {
 
 	public static IWorkspace getWorkspace() {
 		return org.eclipse.core.resources.ResourcesPlugin.getWorkspace();
+	}
+
+	/**
+	 * Recursively marks an {@link IContainer}'s contents as changed.
+	 * @param container
+	 */
+	public static void touchAll(IContainer container) {
+		try {
+			for (IResource resource : container.members()) {
+				resource.touch(null);
+				if (resource instanceof IContainer) {
+					touchAll((IContainer) resource);
+				} 
+			}
+		} catch (CoreException e) {
+			Intlola.log(e);
+		}
 	}
 }
