@@ -46,6 +46,7 @@ public class PluginUtils {
 		try {
 			for (IResource resource : container.members()) {
 				resource.touch(null);
+				System.out.println(resource);
 				if (resource instanceof IContainer) {
 					touchAll((IContainer) resource);
 				} 
