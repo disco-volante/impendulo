@@ -101,8 +101,8 @@ public class Processor {
 		if (mode.isRemote()) {
 			final JsonObject params = new JsonObject();
 			params.addProperty(Const.REQ, Const.LOGIN);
-			params.addProperty(Const.UNAME, username);
-			params.addProperty(Const.PWORD, password);
+			params.addProperty(Const.USER, username);
+			params.addProperty(Const.PASSWORD, password);
 			params.addProperty(Const.PROJECT, project);
 			params.addProperty(Const.MODE, mode.toString());
 			params.addProperty(Const.LANG, Const.JAVA);
@@ -112,7 +112,7 @@ public class Processor {
 				final byte[] buffer = new byte[1024];
 				try {
 					snd.write(params.toString().getBytes());
-					snd.write(Const.EOF.getBytes());
+					snd.write(Const.EOF);
 					snd.flush();
 					rcv.read(buffer);
 					final String received = new String(buffer);
@@ -142,7 +142,6 @@ public class Processor {
 	}
 
 	public void sendFile(final IntlolaFile file) {
-		System.out.println("Sending"+file.toString());
 		executor.execute(new FileSender(file, sock, snd, rcv));
 	}
 

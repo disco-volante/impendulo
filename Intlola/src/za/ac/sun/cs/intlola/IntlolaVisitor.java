@@ -1,8 +1,6 @@
 package za.ac.sun.cs.intlola;
 
 import java.io.File;
-import java.util.Calendar;
-
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceDelta;
@@ -29,8 +27,8 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 		final String f = resource.getLocation().toString();
 		final String name = Intlola.getActive().getStorePath()
 				+ File.separator
-				+ FileUtils.encodeName(f, Calendar.getInstance()
-						.getTimeInMillis(), counter++, kindSuffix);
+				+ FileUtils.encodeName(f, System.nanoTime(), counter++,
+						kindSuffix);
 		if (resource.getType() == IResource.FILE) {
 			FileUtils.copy(f, name);
 		} else {

@@ -1,20 +1,18 @@
 package za.ac.sun.cs.intlola.file;
 
-import java.io.File;
-import java.util.Calendar;
-
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 public class TestFile implements IntlolaFile {
-	private final String	name;
-	private final String	path;
-	private final long		time;
+	private final String path, project;
+	private final String[] names;
 
-	public TestFile(final String path) {
+	public TestFile(final String path, final String project,
+			final String[] names) {
 		this.path = path;
-		final String[] spd = path.split(File.separator);
-		name = spd[spd.length - 1];
-		time = Calendar.getInstance().getTimeInMillis();
+		this.project = project;
+		this.names = names;
 	}
 
 	@Override
@@ -30,10 +28,13 @@ public class TestFile implements IntlolaFile {
 	@Override
 	public JsonObject toJSON() {
 		final JsonObject ret = new JsonObject();
-		ret.addProperty(Const.TYPE, Const.TEST);
-		ret.addProperty(Const.FTYPE, Const.ZIP);
-		ret.addProperty(Const.NAME, name);
-		ret.addProperty(Const.TIME, time);
+		ret.addProperty(Const.PROJECT, project);
+		ret.addProperty(Const.LANG, Const.JAVA);
+		JsonArray jsonNames = new JsonArray();
+		for(String name : names){
+			jsonNames.add(new JsonPrimitive(name));
+		}
+		ret.add(Const.NAMES, jsonNames);
 		return ret;
 	}
 
