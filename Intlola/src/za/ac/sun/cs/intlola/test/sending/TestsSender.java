@@ -31,6 +31,7 @@ public class TestsSender {
 			OutputStream snd = sock.getOutputStream();
 			InputStream rcv = sock.getInputStream();
 			TestFile file = new TestFile(tests, "za.ac.sun.cs.Triangle",
+					"testing",
 					new String[] { "EasyTests.java", "AllTests.java" });
 			snd.write(file.toJSON().toString().getBytes());
 			snd.write(Const.EOF);
@@ -72,7 +73,7 @@ public class TestsSender {
 			fe.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally{
+		} finally {
 			try {
 				sock.close();
 			} catch (IOException e) {

@@ -5,13 +5,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 public class TestFile implements IntlolaFile {
-	private final String path, project;
+	private final String path, project, pkg;
 	private final String[] names;
 
-	public TestFile(final String path, final String project,
+	public TestFile(final String path, final String project, final String pkg,
 			final String[] names) {
 		this.path = path;
 		this.project = project;
+		this.pkg = pkg;
 		this.names = names;
 	}
 
@@ -30,8 +31,9 @@ public class TestFile implements IntlolaFile {
 		final JsonObject ret = new JsonObject();
 		ret.addProperty(Const.PROJECT, project);
 		ret.addProperty(Const.LANG, Const.JAVA);
+		ret.addProperty(Const.PKG, pkg);
 		JsonArray jsonNames = new JsonArray();
-		for(String name : names){
+		for (String name : names) {
 			jsonNames.add(new JsonPrimitive(name));
 		}
 		ret.add(Const.NAMES, jsonNames);
