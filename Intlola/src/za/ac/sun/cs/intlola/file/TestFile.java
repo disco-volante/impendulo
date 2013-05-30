@@ -5,12 +5,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 public class TestFile implements IntlolaFile {
-	private final String path, project, pkg;
+	private final String testsPath, dataPath, project, pkg;
 	private final String[] names;
 
-	public TestFile(final String path, final String project, final String pkg,
+	public TestFile(final String testsPath, String dataPath, final String project, final String pkg,
 			final String[] names) {
-		this.path = path;
+		this.testsPath = testsPath;
+		this.dataPath = dataPath;
 		this.project = project;
 		this.pkg = pkg;
 		this.names = names;
@@ -18,9 +19,13 @@ public class TestFile implements IntlolaFile {
 
 	@Override
 	public String getPath() {
-		return path;
+		return testsPath;
 	}
 
+	public String getDataPath() {
+		return dataPath;
+	}
+	
 	@Override
 	public boolean hasContents() {
 		return true;

@@ -8,39 +8,36 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-import za.ac.sun.cs.intlola.Intlola;
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.FileUtils;
 import za.ac.sun.cs.intlola.file.TestFile;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
+import com.google.gson.JsonObject;
+
 public class TestsSender {
 
-	public static void main(final String argv[]) {
-		TestsSender.sendTests("Tests.zip", "Data.zip");
+	public TestsSender(String username, String password) {
+		this.username = username;
+		this.password = password;
 	}
 
-	private static void sendTests(final String tests, final String data) {
+	private Socket sock;
+	private String username;
+	private String password;
+
+	private void send(final TestFile testInfo) {
 		final byte[] readBuffer = new byte[FileUtils.BUFFER_SIZE];
 		final byte[] writeBuffer = new byte[FileUtils.BUFFER_SIZE];
-		InetSocketAddress address = new InetSocketAddress(
-				PreferenceConstants.LOCAL_ADDRESS, 8000);
-		Socket sock = new Socket();
 		try {
-			sock.connect(address, 5000);
 			OutputStream snd = sock.getOutputStream();
 			InputStream rcv = sock.getInputStream();
-			TestFile file = new TestFile(tests, "za.ac.sun.cs.Triangle",
-					"testing",
-					new String[] { "EasyTests.java", "AllTests.java" });
-			snd.write(file.toJSON().toString().getBytes());
+			snd.write(testInfo.toJSON().toString().getBytes());
 			snd.write(Const.EOF);
-			System.out.println("sent json");
 			rcv.read(readBuffer);
 			String received = new String(readBuffer);
-			System.out.println(received);
 			if (received.startsWith(Const.OK)) {
-				FileInputStream fis = new FileInputStream(tests);
+				FileInputStream fis = new FileInputStream(testInfo.getPath());
 				int count;
 				while ((count = fis.read(writeBuffer)) >= 0) {
 					snd.write(writeBuffer, 0, count);
@@ -48,26 +45,26 @@ public class TestsSender {
 				fis.close();
 				snd.write(Const.EOF);
 				snd.flush();
-				System.out.println("sent file");
 				rcv.read(readBuffer);
 				received = new String(readBuffer);
 				if (!received.startsWith(Const.OK)) {
-					Intlola.log(null, "Received invalid reply: " + received);
+					System.err.println(received);
 				}
-				fis = new FileInputStream(data);
+				fis = new FileInputStream(testInfo.getDataPath());
 				while ((count = fis.read(writeBuffer)) >= 0) {
 					snd.write(writeBuffer, 0, count);
 				}
 				fis.close();
 				snd.write(Const.EOF);
 				snd.flush();
-				System.out.println("sent data");
 				rcv.read(readBuffer);
 				received = new String(readBuffer);
 				if (!received.startsWith(Const.OK)) {
-					Intlola.log(null, "Received invalid reply: " + received);
+					System.err.println(received);
 				}
 
+			} else{
+				System.err.println(received);
 			}
 		} catch (FileNotFoundException fe) {
 			fe.printStackTrace();
@@ -81,4 +78,45 @@ public class TestsSender {
 			}
 		}
 	}
+
+	private boolean login(String address, int port) {
+		try {
+			sock = new Socket();
+			sock.connect(new InetSocketAddress(
+					PreferenceConstants.LOCAL_ADDRESS, 7200));
+			final JsonObject params = new JsonObject();
+			params.addProperty(Const.REQ, Const.LOGIN);
+			params.addProperty(Const.USER, username);
+			params.addProperty(Const.PASSWORD, password);
+			params.addProperty(Const.LANG, Const.JAVA);
+			final byte[] buffer = new byte[1024];
+			OutputStream snd = sock.getOutputStream();
+			snd.write(params.toString().getBytes());
+			snd.write(Const.EOF);
+			snd.flush();
+			InputStream rcv = sock.getInputStream();
+			rcv.read(buffer);
+			final String received = new String(buffer);
+			if (received.startsWith(Const.OK)) {
+				return true;
+			} else {
+				System.err.println(received);
+				return false;
+			}
+		} catch (final IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public static void main(final String argv[]) {
+		TestsSender sender = new TestsSender("username", "password");
+		if (sender.login(PreferenceConstants.LOCAL_ADDRESS, 7100)) {
+			TestFile testInfo = new TestFile("Tests.zip", "Data.zip",
+					"za.ac.sun.cs.Triangle", "testing", new String[] {
+							"EasyTests.java", "AllTests.java" });
+			sender.send(testInfo);
+		}
+	}
+
 }
