@@ -83,7 +83,7 @@ public class TestsSender {
 		try {
 			sock = new Socket();
 			sock.connect(new InetSocketAddress(
-					PreferenceConstants.LOCAL_ADDRESS, 7200));
+					address, port));
 			final JsonObject params = new JsonObject();
 			params.addProperty(Const.REQ, Const.LOGIN);
 			params.addProperty(Const.USER, username);
@@ -111,8 +111,8 @@ public class TestsSender {
 
 	public static void main(final String argv[]) {
 		TestsSender sender = new TestsSender("username", "password");
-		if (sender.login(PreferenceConstants.LOCAL_ADDRESS, 7100)) {
-			TestFile testInfo = new TestFile("Tests.zip", "Data.zip",
+		if (sender.login(PreferenceConstants.LOCAL_ADDRESS, 8011)) {
+			TestFile testInfo = new TestFile("testing.zip", "data.zip",
 					"za.ac.sun.cs.Triangle", "testing", new String[] {
 							"EasyTests.java", "AllTests.java" });
 			sender.send(testInfo);
