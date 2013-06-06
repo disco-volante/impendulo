@@ -13,6 +13,7 @@ import org.eclipse.ui.IStartup;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
+import za.ac.sun.cs.intlola.gui.InfoDialog;
 import za.ac.sun.cs.intlola.gui.LoginDialog;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 import za.ac.sun.cs.intlola.processing.IntlolaError;
@@ -74,8 +75,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		if (getActive().start(shell)) {
 			try {
 				project.setSessionProperty(RECORD_KEY, RECORD_ON);
-			//	project.setLocalTimeStamp(System.currentTimeMillis());
-			//	project.refreshLocal(IResource.DEPTH_INFINITE, null);
 				PluginUtils.touchAll(project);
 			} catch (final CoreException e) {
 				Intlola.log(e);
@@ -136,19 +135,20 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private boolean start(final Shell shell) {
 		final LoginDialog dialog = new LoginDialog(shell, "Intlola login",
-				proc.getUsername(), proc.getProject(), proc.getMode(),
+				proc.getUsername(),
 				proc.getAddress(), proc.getPort());
 		IntlolaError err = IntlolaError.DEFAULT;
 		while (!err.equals(IntlolaError.SUCCESS)) {
 			final int code = dialog.open(err);
 			if (code == Window.OK) {
 				err = proc.login(dialog.getUserName(), dialog.getPassword(),
-						dialog.getProject(), dialog.getMode(),
 						dialog.getAddress(), dialog.getPort());
 			} else {
 				break;
 			}
 		}
+		InfoDialog infoDlg = new InfoDialog(shell, "Intlola login", proc.getProjects(), proc.getMode());
+		proc.createSubmission(infoDlg.getProject(), infoDlg.getMode());
 		return err.equals(IntlolaError.SUCCESS);
 	}
 

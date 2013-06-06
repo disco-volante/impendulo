@@ -25,7 +25,7 @@ public class Processor {
 
 	protected IntlolaMode			mode;
 
-	private String					project;
+	private String[]					project;
 
 	private InputStream				rcv		= null;
 	private OutputStream			snd		= null;
