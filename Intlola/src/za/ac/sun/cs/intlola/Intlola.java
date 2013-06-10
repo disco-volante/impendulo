@@ -1,5 +1,7 @@
 package za.ac.sun.cs.intlola;
 
+import java.io.IOException;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
@@ -7,13 +9,14 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IStartup;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
-import za.ac.sun.cs.intlola.gui.InfoDialog;
+import za.ac.sun.cs.intlola.gui.ProjectDialog;
 import za.ac.sun.cs.intlola.gui.LoginDialog;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 import za.ac.sun.cs.intlola.processing.IntlolaError;
@@ -71,8 +74,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	public static void startRecord(final IProject project, final Shell shell) {
 		Intlola.log(null, "Intlola record started", project.getName());
-		getActive().setProcessor(project.getName());
-		if (getActive().start(shell)) {
+		getActive().setProcessor();
+		if (getActive().login(shell) && getActive().createSubmission(shell)) {
 			try {
 				project.setSessionProperty(RECORD_KEY, RECORD_ON);
 				PluginUtils.touchAll(project);
@@ -110,7 +113,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		return proc;
 	}
 
-	private void setProcessor(final String project) {
+	private void setProcessor() {
 		final IntlolaMode mode = IntlolaMode.getMode(getPreferenceStore()
 				.getString(PreferenceConstants.P_MODE));
 		final String uname = getPreferenceStore().getString(
@@ -119,7 +122,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 				PreferenceConstants.P_ADDRESS);
 		final int port = getPreferenceStore()
 				.getInt(PreferenceConstants.P_PORT);
-		proc = new Processor(uname, project, mode, address, port);
+		proc = new Processor(uname, mode, address, port);
 	}
 
 	@Override
@@ -133,23 +136,51 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
-	private boolean start(final Shell shell) {
+	private boolean login(final Shell shell) {
 		final LoginDialog dialog = new LoginDialog(shell, "Intlola login",
-				proc.getUsername(),
-				proc.getAddress(), proc.getPort());
+				proc.getUsername(), proc.getMode(), proc.getAddress(),
+				proc.getPort());
 		IntlolaError err = IntlolaError.DEFAULT;
 		while (!err.equals(IntlolaError.SUCCESS)) {
 			final int code = dialog.open(err);
 			if (code == Window.OK) {
-				err = proc.login(dialog.getUserName(), dialog.getPassword(),
-						dialog.getAddress(), dialog.getPort());
+				err = proc
+						.login(dialog.getUserName(), dialog.getPassword(),
+								dialog.getMode(), dialog.getAddress(),
+								dialog.getPort());
 			} else {
 				break;
 			}
 		}
-		InfoDialog infoDlg = new InfoDialog(shell, "Intlola login", proc.getProjects(), proc.getMode());
-		proc.createSubmission(infoDlg.getProject(), infoDlg.getMode());
 		return err.equals(IntlolaError.SUCCESS);
+	}
+
+	private boolean createSubmission(final Shell shell) {
+		IntlolaError err = IntlolaError.DEFAULT;
+		try {
+			proc.loadProjects();
+			ProjectDialog projDlg = new ProjectDialog(shell, "Choose project",
+					proc.getProjects());
+			final int code = projDlg.open();
+			if (code == Window.OK) {
+				err = proc.createSubmission(projDlg.getProject());
+			} else{
+				err = IntlolaError.CORE
+						.specific("User exited.");
+			}
+		} catch (IOException e) {
+			err = IntlolaError.SOCKET
+					.specific("IO error encontered while loading projects: "
+							+ e.getMessage());
+			e.printStackTrace();
+		}
+		if (err.equals(IntlolaError.SUCCESS)) {
+			return true;
+		} else {
+			MessageDialog
+					.openError(shell, err.toString(), err.getDescription());
+			return false;
+		}
 	}
 
 	private void stop() {
