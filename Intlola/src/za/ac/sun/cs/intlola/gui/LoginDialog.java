@@ -7,11 +7,8 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
@@ -19,12 +16,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import za.ac.sun.cs.intlola.processing.IntlolaError;
-import za.ac.sun.cs.intlola.processing.IntlolaMode;
 
 public class LoginDialog extends Dialog {
-	private IntlolaMode mode;
-	private SelectionListener modeListener;
-
 	private String address;
 
 	private String password;
@@ -38,12 +31,13 @@ public class LoginDialog extends Dialog {
 	private Text usernameField, passwordField, addressField, portField;
 
 	public LoginDialog(final Shell parentShell, final String title,
-			final String username, final IntlolaMode mode,
-			final String address, final int port) {
+			final String username, final String address, final int port) {
 		super(parentShell);
-		setFields(username, "", mode, address, port);
 		this.title = title;
-
+		this.username = username;
+		this.address = address;
+		this.port = port;
+		this.password = "";
 	}
 
 	@Override
@@ -94,70 +88,6 @@ public class LoginDialog extends Dialog {
 		portField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		portField.setText(String.valueOf(port));
 
-		final Label modeLabel = new Label(comp, SWT.RIGHT);
-		modeLabel.setText("Select the mode to run Intlola in:");
-		new Label(comp, SWT.RIGHT);
-
-		new Label(comp, SWT.RIGHT);
-		final Button btnFR = new Button(comp, SWT.RADIO);
-		btnFR.setText(IntlolaMode.FILE_REMOTE.getDescription());
-		btnFR.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-		new Label(comp, SWT.RIGHT);
-		final Button btnAR = new Button(comp, SWT.RADIO);
-		btnAR.setText(IntlolaMode.ARCHIVE_REMOTE.getDescription());
-		btnAR.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-		new Label(comp, SWT.RIGHT);
-		final Button btnAL = new Button(comp, SWT.RADIO);
-		btnAL.setText(IntlolaMode.ARCHIVE_LOCAL.getDescription());
-		btnAL.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-		modeListener = new SelectionListener() {
-
-			@Override
-			public void widgetDefaultSelected(final SelectionEvent event) {
-				widgetSelected(event);
-			}
-
-			@Override
-			public void widgetSelected(final SelectionEvent event) {
-				if (btnFR.getSelection()) {
-					btnAR.setSelection(false);
-					btnAL.setSelection(false);
-					mode = IntlolaMode.FILE_REMOTE;
-				} else if (btnAR.getSelection()) {
-					btnFR.setSelection(false);
-					btnAL.setSelection(false);
-					mode = IntlolaMode.ARCHIVE_REMOTE;
-				} else if (btnAL.getSelection()) {
-					btnFR.setSelection(false);
-					btnAR.setSelection(false);
-					mode = IntlolaMode.ARCHIVE_LOCAL;
-				}
-			}
-		};
-
-		btnFR.addSelectionListener(modeListener);
-		btnAR.addSelectionListener(modeListener);
-		btnAL.addSelectionListener(modeListener);
-
-		switch (mode) {
-			case FILE_REMOTE:
-				btnFR.setSelection(true);
-				break;
-			case ARCHIVE_LOCAL:
-				btnAL.setSelection(true);
-				break;
-			case ARCHIVE_REMOTE:
-				btnAR.setSelection(true);
-				break;
-			case ARCHIVE_TEST:
-				break;
-			default:
-				break;
-
-		}
 		return comp;
 	}
 
@@ -175,10 +105,6 @@ public class LoginDialog extends Dialog {
 
 	public String getUserName() {
 		return username;
-	}
-
-	public IntlolaMode getMode() {
-		return mode;
 	}
 
 	@Override
@@ -207,15 +133,6 @@ public class LoginDialog extends Dialog {
 			showError(err.toString(), err.getDescription());
 		}
 		return super.open();
-	}
-
-	public void setFields(final String username, final String password,
-			final IntlolaMode mode, final String address, final int port) {
-		this.username = username;
-		this.password = password;
-		this.address = address;
-		this.port = port;
-		this.mode = mode;
 	}
 
 	private void showError(final String title, final String msg) {
@@ -254,5 +171,11 @@ public class LoginDialog extends Dialog {
 			return type + " too short;";
 		}
 		return null;
+	}
+
+	public static void main(String[] args) {
+		LoginDialog dlg = new LoginDialog(new Shell(), "a", "b", "localhost",
+				3000);
+		dlg.open();
 	}
 }

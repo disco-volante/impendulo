@@ -11,6 +11,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.eclipse.core.resources.IResourceDelta;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Shell;
 
 import za.ac.sun.cs.intlola.Intlola;
 
@@ -18,7 +22,6 @@ public class FileUtils {
 	private static final String BIN = "bin";
 	private static final String CLASS = ".class";
 	public static final String COMPONENT_SEP = "_";
-	//private static final String FORMAT = "%1$tY%1$tm%1$td%1$tH%1$tM%1$tS%1$tL";
 	private static final String JAVA = ".java";
 	public static final String NAME_SEP = ".";
 	private static final String SRC = "src";
@@ -190,26 +193,26 @@ public class FileUtils {
 	public static char getKind(final int kind) {
 		char kindSuffix = ' ';
 		switch (kind) {
-			case IResourceDelta.ADDED:
-				kindSuffix = ADD;
-				break;
-			case IResourceDelta.REMOVED:
-				kindSuffix = REMOVE;
-				break;
-			case Intlola.LAUNCHED:
-				kindSuffix = LAUNCH;
-				break;
-			case IResourceDelta.MOVED_FROM:
-				kindSuffix = FROM;
-				break;
-			case IResourceDelta.MOVED_TO:
-				kindSuffix = TO;
-				break;
-			case IResourceDelta.CHANGED:
-				kindSuffix = CHANGE;
-				break;
-			default:
-				throw new InvalidParameterException();
+		case IResourceDelta.ADDED:
+			kindSuffix = ADD;
+			break;
+		case IResourceDelta.REMOVED:
+			kindSuffix = REMOVE;
+			break;
+		case Intlola.LAUNCHED:
+			kindSuffix = LAUNCH;
+			break;
+		case IResourceDelta.MOVED_FROM:
+			kindSuffix = FROM;
+			break;
+		case IResourceDelta.MOVED_TO:
+			kindSuffix = TO;
+			break;
+		case IResourceDelta.CHANGED:
+			kindSuffix = CHANGE;
+			break;
+		default:
+			throw new InvalidParameterException();
 		}
 		return kindSuffix;
 	}
@@ -275,27 +278,6 @@ public class FileUtils {
 	}
 
 	/**
-	 * Saves a string to a file specified by <code>fname</code>.
-	 * 
-	 * @param string
-	 *            The string to be saved.
-	 * @param fname
-	 *            The name of the file it is to be saved in.
-	 */
-	public static void saveString(final String string, final String fname) {
-		try {
-			final FileOutputStream outfile = new FileOutputStream(fname);
-			final BufferedOutputStream out = new BufferedOutputStream(outfile);
-			out.write(string.getBytes());
-			out.flush();
-			out.close();
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	/**
 	 * Creates a new empty file.
 	 * 
 	 * @param toName
@@ -346,6 +328,43 @@ public class FileUtils {
 				file.deleteOnExit();
 			}
 		}
+	}
+
+	public static String getFilename(Shell shell) {
+		FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+		dialog.setFileName("intlola.zip");
+		String filename = null;
+		boolean isDone = false;
+		while (!isDone) {
+			filename = dialog.open();
+			if (filename == null) {
+				isDone = true;
+			} else {
+				File file = new File(filename);
+				if (file.exists()) {
+					if (file.isFile()) {
+						isDone = MessageDialog
+								.openQuestion(
+										shell,
+										"Replace?",
+										"File \""
+												+ filename
+												+ "\" already exists.  Do you want to replace it?");
+					} else {
+						MessageDialog
+								.openInformation(
+										shell,
+										"Irregular file",
+										"File \""
+												+ filename
+												+ "\" exists, but it is not a regular file.  Please choose another file.");
+					}
+				} else {
+					isDone = true;
+				}
+			}
+		}
+		return filename;
 	}
 
 }

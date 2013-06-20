@@ -1,6 +1,5 @@
 package za.ac.sun.cs.intlola.processing;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -72,13 +71,11 @@ public class Processor {
 		return username;
 	}
 
-	public void handleArchive(final String location, final String zipLoc) {
-		final String filename = zipLoc + File.separator + getProject() + "_"
-				+ System.currentTimeMillis() + ".zip";
-		executor.execute(new ArchiveBuilder(location, filename));
+	public void handleArchive(final String location, final String zipName) {
+		executor.execute(new ArchiveBuilder(location, zipName));
 		if (mode.isRemote()) {
-			sendFile(new ArchiveFile(filename));
-			FileUtils.delete(filename);
+			sendFile(new ArchiveFile(zipName));
+			FileUtils.delete(zipName);
 		}
 		logout();
 	}
@@ -97,54 +94,46 @@ public class Processor {
 	}
 
 	public IntlolaError login(String username, final String password,
-			IntlolaMode mode, final String address, final int port) {
-		// Set fields to values specified by user.
-		this.mode = mode;
+			final String address, final int port) {
 		this.username = username;
 		this.address = new InetSocketAddress(address, port);
-		if (mode.isRemote()) {
-			final JsonObject params = new JsonObject();
-			params.addProperty(Const.REQ, Const.LOGIN);
-			params.addProperty(Const.USER, username);
-			params.addProperty(Const.PASSWORD, password);
-			params.addProperty(Const.MODE, mode.toString());
-			if (!init()) {
-				return IntlolaError.CONNECTION
-						.specific("Could not initialise connection on: "+address.toString());
-			} else {
-				final byte[] buffer = new byte[1024];
-				try {
-					snd.write(params.toString().getBytes());
-					snd.write(Const.EOF);
-					snd.flush();
-					int count = rcv.read(buffer);
-					final String received = new String(buffer, 0, count);
-					if (received.equals(Const.OK)) {
-						return IntlolaError.SUCCESS;
-					} else {
-						Intlola.log(null, received);
-						return IntlolaError.LOGIN
-								.specific("Login attempt failed with: "
-										+ received);
-					}
-				} catch (final IOException e) {
-					Intlola.log(e, "Login error");
-					return IntlolaError.LOGIN
-							.specific("Login attempt failed with: "
-									+ e.getMessage());
-				}
-			}
+		final JsonObject params = new JsonObject();
+		params.addProperty(Const.REQ, Const.LOGIN);
+		params.addProperty(Const.USER, username);
+		params.addProperty(Const.PASSWORD, password);
+		params.addProperty(Const.MODE, mode.toString());
+		if (!init()) {
+			return IntlolaError.CONNECTION
+					.specific("Could not initialise connection on: "
+							+ address.toString());
 		} else {
-			username += ":" + password;
-			return IntlolaError.SUCCESS;
+			final byte[] buffer = new byte[1024];
+			try {
+				snd.write(params.toString().getBytes());
+				snd.write(Const.EOF);
+				snd.flush();
+				int count = rcv.read(buffer);
+				final String received = new String(buffer, 0, count);
+				if (received.equals(Const.OK)) {
+					return IntlolaError.SUCCESS;
+				} else {
+					Intlola.log(null, received);
+					return IntlolaError.LOGIN
+							.specific("Login attempt failed with: " + received);
+				}
+			} catch (final IOException e) {
+				Intlola.log(e, "Login error");
+				return IntlolaError.LOGIN
+						.specific("Login attempt failed with: "
+								+ e.getMessage());
+			}
 		}
 	}
 
 	public void logout() {
-		if (!mode.isRemote()) {
-			return;
+		if (mode.isRemote()) {
+			executor.execute(new SessionEnder(sock, snd, rcv));
 		}
-		executor.execute(new SessionEnder(sock, snd, rcv));
 		executor.shutdown();
 	}
 
@@ -205,14 +194,21 @@ public class Processor {
 					return IntlolaError.SUCCESS;
 				} else {
 					Intlola.log(null, received);
-					return IntlolaError.LOGIN.specific("Login attempt failed with: "+received);
+					return IntlolaError.LOGIN
+							.specific("Login attempt failed with: " + received);
 				}
 			} catch (final IOException e) {
 				Intlola.log(e, "Login error");
-				return IntlolaError.LOGIN.specific("Login attempt failed with: "+e.getMessage());
+				return IntlolaError.LOGIN
+						.specific("Login attempt failed with: "
+								+ e.getMessage());
 			}
 		} else {
 			return IntlolaError.SUCCESS;
 		}
+	}
+
+	public void setMode(IntlolaMode mode) {
+		this.mode = mode;
 	}
 }

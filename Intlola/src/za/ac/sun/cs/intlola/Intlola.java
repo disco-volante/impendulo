@@ -1,5 +1,6 @@
 package za.ac.sun.cs.intlola;
 
+import java.io.File;
 import java.io.IOException;
 
 import org.eclipse.core.resources.IProject;
@@ -16,6 +17,8 @@ import org.eclipse.ui.IStartup;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
+import za.ac.sun.cs.intlola.file.FileUtils;
+import za.ac.sun.cs.intlola.gui.ModeDialog;
 import za.ac.sun.cs.intlola.gui.ProjectDialog;
 import za.ac.sun.cs.intlola.gui.LoginDialog;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
@@ -75,7 +78,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	public static void startRecord(final IProject project, final Shell shell) {
 		Intlola.log(null, "Intlola record started", project.getName());
 		getActive().setProcessor();
-		if (getActive().login(shell) && getActive().createSubmission(shell)) {
+		if (getActive().setup(shell)) {
 			try {
 				project.setSessionProperty(RECORD_KEY, RECORD_ON);
 				PluginUtils.touchAll(project);
@@ -86,7 +89,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	public static void stopRecord(final IProject project, final Shell shell) {
-		getActive().stop();
+		getActive().stop(shell);
 		try {
 			project.setSessionProperty(Intlola.RECORD_KEY, null);
 		} catch (final CoreException e) {
@@ -136,18 +139,31 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
+	private boolean setup(Shell shell) {
+		proc.setMode(chooseMode(shell));
+		return (proc.getMode().equals(IntlolaMode.ARCHIVE_LOCAL))
+				|| (proc.getMode().isRemote() && login(shell) && createSubmission(shell));
+	}
+
+	private IntlolaMode chooseMode(Shell shell) {
+		final ModeDialog dialog = new ModeDialog(shell, proc.getMode());
+		final int code = dialog.open();
+		if (code == Window.OK) {
+			return dialog.getMode();
+		} else {
+			return IntlolaMode.NONE;
+		}
+	}
+
 	private boolean login(final Shell shell) {
 		final LoginDialog dialog = new LoginDialog(shell, "Intlola login",
-				proc.getUsername(), proc.getMode(), proc.getAddress(),
-				proc.getPort());
+				proc.getUsername(), proc.getAddress(), proc.getPort());
 		IntlolaError err = IntlolaError.DEFAULT;
 		while (!err.equals(IntlolaError.SUCCESS)) {
 			final int code = dialog.open(err);
 			if (code == Window.OK) {
-				err = proc
-						.login(dialog.getUserName(), dialog.getPassword(),
-								dialog.getMode(), dialog.getAddress(),
-								dialog.getPort());
+				err = proc.login(dialog.getUserName(), dialog.getPassword(),
+						dialog.getAddress(), dialog.getPort());
 			} else {
 				break;
 			}
@@ -164,9 +180,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			final int code = projDlg.open();
 			if (code == Window.OK) {
 				err = proc.createSubmission(projDlg.getProject());
-			} else{
-				err = IntlolaError.CORE
-						.specific("User exited.");
+			} else {
+				err = IntlolaError.CORE.specific("User exited.");
 			}
 		} catch (IOException e) {
 			err = IntlolaError.SOCKET
@@ -183,9 +198,12 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
-	private void stop() {
+	private void stop(Shell shell) {
 		if (proc.getMode().isArchive()) {
-			proc.handleArchive(getActive().getStorePath(), getStorePath());
+			String zipName = proc.getMode().isRemote() ? zipName = getStorePath()
+					+ File.separator + "intlola.zip"
+					: FileUtils.getFilename(shell);
+			proc.handleArchive(getActive().getStorePath(), zipName);
 		} else if (proc.getMode().isRemote()) {
 			proc.logout();
 		}

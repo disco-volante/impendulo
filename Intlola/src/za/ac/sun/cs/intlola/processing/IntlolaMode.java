@@ -4,9 +4,8 @@ import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
 public enum IntlolaMode {
 	ARCHIVE_LOCAL("Save all snapshots locally in archive."), ARCHIVE_REMOTE(
-			"Send all snapshots to server once recording has stopped."), ARCHIVE_TEST(
-			"Send project tests to server."), FILE_REMOTE(
-			"Continuously send snapshots to server.");
+			"Send all snapshots to server once recording has stopped."), FILE_REMOTE(
+			"Continuously send snapshots to server."), NONE("None");
 
 	public static IntlolaMode getMode(final String mpref) {
 		IntlolaMode ret = null;
@@ -14,8 +13,6 @@ public enum IntlolaMode {
 			ret = FILE_REMOTE;
 		} else if (mpref.equals(PreferenceConstants.ARCHIVE_REMOTE)) {
 			ret = ARCHIVE_REMOTE;
-		} else if (mpref.equals(PreferenceConstants.ARCHIVE_TEST)) {
-			ret = ARCHIVE_TEST;
 		} else if (mpref.equals(PreferenceConstants.ARCHIVE_LOCAL)) {
 			ret = ARCHIVE_LOCAL;
 		} else {
@@ -35,13 +32,11 @@ public enum IntlolaMode {
 	}
 
 	public boolean isArchive() {
-		return equals(ARCHIVE_REMOTE) || equals(ARCHIVE_LOCAL)
-				|| equals(ARCHIVE_TEST);
+		return equals(ARCHIVE_REMOTE) || equals(ARCHIVE_LOCAL);
 	}
 
 	public boolean isRemote() {
-		return equals(ARCHIVE_REMOTE) || equals(FILE_REMOTE)
-				|| equals(ARCHIVE_TEST);
+		return equals(ARCHIVE_REMOTE) || equals(FILE_REMOTE);
 	}
 
 	@Override

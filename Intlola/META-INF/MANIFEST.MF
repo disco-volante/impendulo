@@ -5,8 +5,8 @@ Bundle-SymbolicName: Intlola;singleton:=true
 Bundle-Version: 1.0.0.5
 Bundle-Vendor: Computer Science, Stellenbosch University
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Bundle-ClassPath: lib/gson-2.2.2.jar,
- .,
+Bundle-ClassPath: .,
+ lib/gson-2.2.4.jar,
  lib/commons-validator-1.4.0.jar
 Service-Component: plugin.xml
 Import-Package: org.eclipse.core.commands,
