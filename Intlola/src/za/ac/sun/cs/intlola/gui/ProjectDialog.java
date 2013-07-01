@@ -59,10 +59,9 @@ public class ProjectDialog extends Dialog {
 		projectList.setItems(projects);
 		projectList.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		projectList.addSelectionListener(new SelectionListener() {
-			
-
 			@Override
 			public void widgetSelected(SelectionEvent se) {
+				selected = projectList.getSelectionIndex();
 			}
 			
 			@Override

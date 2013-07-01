@@ -19,7 +19,7 @@ public class Const {
 	public static final String	NAME	= "name";
 	public static final String	NUM		= "num";
 	public static final String	OK		= "ok";
-	public static final String	PKG		= "pkg";
+	public static final String	PKG		= "package";
 	public static final String	PROJECT	= "project";
 	public static final String	PASSWORD	= "password";
 	public static final String	REQ		= "req";

@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -164,7 +165,6 @@ public class Processor {
 		final String received = new String(buffer, 0, count);
 		Gson gson = new Gson();
 		Project[] p = new Project[1];
-		System.out.println(received);
 		projects = gson.fromJson(received, p.getClass());
 	}
 
@@ -172,7 +172,7 @@ public class Processor {
 		String[] vals = new String[projects.length];
 		for (int i = 0; i < projects.length; i++) {
 			vals[i] = projects[i].Name + "(" + projects[i].Lang + ")" + " @ "
-					+ projects[i].Time;
+					+ new Date(projects[i].Time).toString();
 		}
 		return vals;
 	}

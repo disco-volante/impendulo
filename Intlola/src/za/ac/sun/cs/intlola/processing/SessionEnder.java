@@ -41,6 +41,7 @@ public class SessionEnder implements Runnable {
 			final JsonObject params = new JsonObject();
 			params.addProperty(Const.REQ, Const.LOGOUT);
 			snd.write(params.toString().getBytes());
+			snd.write(Const.EOF);
 			snd.flush();
 			final byte[] buffer = new byte[FileUtils.BUFFER_SIZE];
 			rcv.read(buffer);
