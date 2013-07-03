@@ -16,7 +16,6 @@ import za.ac.sun.cs.intlola.processing.IntlolaMode;
 
 public class ModeDialog extends Dialog {
 	private IntlolaMode mode;
-	private SelectionListener modeListener;
 
 	public ModeDialog(final Shell parentShell, final IntlolaMode mode) {
 		super(parentShell);
@@ -45,7 +44,7 @@ public class ModeDialog extends Dialog {
 		final Button btnAL = new Button(comp, SWT.RADIO);
 		btnAL.setText(IntlolaMode.ARCHIVE_LOCAL.getDescription());
 		btnAL.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		modeListener = new SelectionListener() {
+		SelectionListener modeListener = new SelectionListener() {
 			@Override
 			public void widgetDefaultSelected(final SelectionEvent event) {
 				widgetSelected(event);

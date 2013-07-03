@@ -1,11 +1,14 @@
 package za.ac.sun.cs.intlola.processing;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -17,6 +20,7 @@ import za.ac.sun.cs.intlola.file.IntlolaFile;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 
 public class Processor {
 
@@ -26,15 +30,16 @@ public class Processor {
 
 	protected IntlolaMode mode;
 
-	private Project project;
-
 	private InputStream rcv = null;
 	private OutputStream snd = null;
 	private Socket sock = null;
 
 	private String username;
 
-	private Project[] projects;
+	private Project[] availableProjects;
+	private Project currentProject;
+	private Map<Project, ArrayList<Submission>> history;
+	private Submission currentSubmission;
 
 	/**
 	 * Construct processor with default values.
@@ -48,7 +53,6 @@ public class Processor {
 	public Processor(final String username, final IntlolaMode mode,
 			final String address, final int port) {
 		setFields(username, mode, address, port);
-		// Only one thread worker. Interaction with server should be sequential.
 		executor = Executors.newFixedThreadPool(1);
 	}
 
@@ -64,12 +68,20 @@ public class Processor {
 		return address.getPort();
 	}
 
-	public Project getProject() {
-		return project;
+	public Project getCurrentProject() {
+		return currentProject;
 	}
 
 	public String getUsername() {
 		return username;
+	}
+
+	public Project[] getAvailableProjects() {
+		return availableProjects;
+	}
+
+	public Map<Project, ArrayList<Submission>> getHistory() {
+		return history;
 	}
 
 	public void handleArchive(final String location, final String zipName) {
@@ -115,14 +127,16 @@ public class Processor {
 				snd.flush();
 				int count = rcv.read(buffer);
 				final String received = new String(buffer, 0, count);
-				if (received.equals(Const.OK)) {
-					return IntlolaError.SUCCESS;
-				} else {
-					Intlola.log(null, received);
-					return IntlolaError.LOGIN
-							.specific("Login attempt failed with: " + received);
-				}
+				Gson gson = new Gson();
+				availableProjects = gson.fromJson(received,
+						new Project[1].getClass());
+				return IntlolaError.SUCCESS;
 			} catch (final IOException e) {
+				Intlola.log(e, "Login error");
+				return IntlolaError.LOGIN
+						.specific("Login attempt failed with: "
+								+ e.getMessage());
+			} catch (JsonSyntaxException e) {
 				Intlola.log(e, "Login error");
 				return IntlolaError.LOGIN
 						.specific("Login attempt failed with: "
@@ -149,40 +163,47 @@ public class Processor {
 		this.address = new InetSocketAddress(address, port);
 	}
 
-	public class Project {
-		String Id, Name, User, Lang;
-		long Time;
-	}
-
-	public void loadProjects() throws IOException {
-		final JsonObject params = new JsonObject();
-		params.addProperty(Const.REQ, Const.PROJECTS);
-		final byte[] buffer = new byte[1024];
-		snd.write(params.toString().getBytes());
-		snd.write(Const.EOF);
-		snd.flush();
-		int count = rcv.read(buffer);
-		final String received = new String(buffer, 0, count);
-		Gson gson = new Gson();
-		Project[] p = new Project[1];
-		projects = gson.fromJson(received, p.getClass());
-	}
-
-	public String[] getProjects() {
-		String[] vals = new String[projects.length];
-		for (int i = 0; i < projects.length; i++) {
-			vals[i] = projects[i].Name + "(" + projects[i].Lang + ")" + " @ "
-					+ new Date(projects[i].Time).toString();
+	@SuppressWarnings("unchecked")
+	public boolean loadHistory(String storePath) {
+		String histPath = storePath + File.separator + "history.ser";
+		try {
+			history = (Map<Project, ArrayList<Submission>>) FileUtils
+					.deserialize(histPath);
+			return true;
+		} catch (ClassNotFoundException e) {
+			Intlola.log(e);
+		} catch (IOException e) {
+			Intlola.log(e);
 		}
-		return vals;
+		history = new HashMap<Project, ArrayList<Submission>>();
+		return false;
 	}
 
-	public IntlolaError createSubmission(int pindex) {
-		this.project = projects[pindex];
+	public void saveHistory(String storePath) {
+		String histPath = storePath + File.separator + "history.ser";
+		ArrayList<Submission> proj = history.get(currentProject);
+		if (proj == null) {
+			history.put(currentProject, new ArrayList<Submission>());
+			proj = history.get(currentProject);
+		}
+		if (!proj.contains(currentSubmission)) {
+			proj.add(currentSubmission);
+		}
+		try {
+			FileUtils.serialize(histPath, history);
+		} catch (IOException e) {
+			Intlola.log(e);
+		}
+	}
+
+	public IntlolaError continueSubmission(Submission submission,
+			Project project) {
+		currentSubmission = submission;
+		currentProject = project;
 		if (mode.isRemote()) {
 			final JsonObject params = new JsonObject();
-			params.addProperty(Const.REQ, Const.SUBMISSION);
-			params.addProperty(Const.PROJECT_ID, project.Id);
+			params.addProperty(Const.REQ, Const.SUBMISSION_CONTINUE);
+			params.addProperty(Const.SUBMISSION_ID, currentSubmission.Id);
 			final byte[] buffer = new byte[1024];
 			try {
 				snd.write(params.toString().getBytes());
@@ -190,17 +211,57 @@ public class Processor {
 				snd.flush();
 				int count = rcv.read(buffer);
 				final String received = new String(buffer, 0, count);
-				if (received.equals(Const.OK)) {
+				if (received.startsWith(Const.OK)) {
 					return IntlolaError.SUCCESS;
 				} else {
-					Intlola.log(null, received);
+					Intlola.log(null, "Submission continuation error: "
+							+ received);
 					return IntlolaError.LOGIN
-							.specific("Login attempt failed with: " + received);
+							.specific("Submission continuation attempt failed with: "
+									+ received);
 				}
 			} catch (final IOException e) {
-				Intlola.log(e, "Login error");
+				Intlola.log(e, "Submission continuation error");
 				return IntlolaError.LOGIN
-						.specific("Login attempt failed with: "
+						.specific("Submission continuation attempt failed with: "
+								+ e.getMessage());
+			} catch (final JsonSyntaxException e) {
+				Intlola.log(e, "Submission continuation error");
+				return IntlolaError.LOGIN
+						.specific("Submission continuation attempt failed with: "
+								+ e.getMessage());
+			}
+		} else {
+			return IntlolaError.SUCCESS;
+		}
+	}
+
+	public IntlolaError createSubmission(Project project) {
+		currentProject = project;
+		if (mode.isRemote()) {
+			final JsonObject params = new JsonObject();
+			params.addProperty(Const.REQ, Const.SUBMISSION_NEW);
+			params.addProperty(Const.PROJECT_ID, currentProject.Id);
+			final byte[] buffer = new byte[1024];
+			try {
+				snd.write(params.toString().getBytes());
+				snd.write(Const.EOF);
+				snd.flush();
+				int count = rcv.read(buffer);
+				final String received = new String(buffer, 0, count);
+				Gson gson = new Gson();
+				currentSubmission = gson.fromJson(received,
+						new Submission().getClass());
+				return IntlolaError.SUCCESS;
+			} catch (final IOException e) {
+				Intlola.log(e, "Submission creation error");
+				return IntlolaError.LOGIN
+						.specific("Submission creation attempt failed with: "
+								+ e.getMessage());
+			} catch (final JsonSyntaxException e) {
+				Intlola.log(e, "Submission creation error");
+				return IntlolaError.LOGIN
+						.specific("Submission creation attempt failed with: "
 								+ e.getMessage());
 			}
 		} else {

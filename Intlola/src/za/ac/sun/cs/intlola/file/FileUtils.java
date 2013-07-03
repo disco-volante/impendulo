@@ -6,6 +6,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.security.InvalidParameterException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -365,6 +367,21 @@ public class FileUtils {
 			}
 		}
 		return filename;
+	}
+
+	public static Object deserialize(String serilizedObject) throws IOException, ClassNotFoundException {
+		FileInputStream fis = new FileInputStream(serilizedObject);
+	    ObjectInputStream ois = new ObjectInputStream(fis);
+	    Object ret = ois.readObject();
+	    fis.close();
+	    return ret;
+	}
+	
+	public static void serialize(String fname, Object serializableObject) throws IOException{
+		FileOutputStream fos = new FileOutputStream(fname);
+	    ObjectOutputStream oos = new ObjectOutputStream(fos);
+	    oos.writeObject(serializableObject);
+	    fos.close();
 	}
 
 }

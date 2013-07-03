@@ -13,7 +13,8 @@ public class Const {
 	public static final String	LOGIN	= "begin";
 	public static final String	LOGOUT	= "end";
 	public static final String PROJECTS = "projects";
-	public static final String SUBMISSION = "submission";
+	public static final String SUBMISSION_NEW = "submission_new";
+	public static final String SUBMISSION_CONTINUE = "submission_continue";
 	public static final String	MOD		= "mod";
 	public static final String	MODE	= "mode";
 	public static final String	NAME	= "name";
@@ -32,4 +33,5 @@ public class Const {
 	public static final String	ZIP		= "zip";
 	public static final String NAMES = "names";
 	public static final String PROJECT_ID = "projectid";
+	public static final String SUBMISSION_ID = "subid";
 }

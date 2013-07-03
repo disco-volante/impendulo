@@ -44,8 +44,8 @@ public class SessionEnder implements Runnable {
 			snd.write(Const.EOF);
 			snd.flush();
 			final byte[] buffer = new byte[FileUtils.BUFFER_SIZE];
-			rcv.read(buffer);
-			final String received = new String(buffer);
+			int count = rcv.read(buffer);
+			final String received = new String(buffer, 0, count);
 			if (!received.startsWith(Const.OK)) {
 				Intlola.log(null, received);
 			}

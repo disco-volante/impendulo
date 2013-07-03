@@ -46,13 +46,12 @@ public class FileSender implements Runnable {
 			snd.write(fjson.toString().getBytes());
 			snd.write(Const.EOF);
 			snd.flush();
-			rcv.read(readBuffer);
-			String received = new String(readBuffer);
+			int count = rcv.read(readBuffer);
+			String received = new String(readBuffer, 0, count);
 			if (received.startsWith(Const.OK)) {
 				if (file.hasContents()) {
 					try {
 						fis = new FileInputStream(file.getPath());
-						int count;
 						while ((count = fis.read(writeBuffer)) >= 0) {
 							snd.write(writeBuffer, 0, count);
 						}
@@ -62,8 +61,8 @@ public class FileSender implements Runnable {
 				}
 				snd.write(Const.EOF);
 				snd.flush();
-				rcv.read(readBuffer);
-				received = new String(readBuffer);
+				count = rcv.read(readBuffer);
+				received = new String(readBuffer, 0, count);
 				if (!received.startsWith(Const.OK)) {
 					Intlola.log(null, "Received invalid reply: " + received);
 				}

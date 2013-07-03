@@ -1,7 +1,6 @@
 package za.ac.sun.cs.intlola;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -18,9 +17,9 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
 import za.ac.sun.cs.intlola.file.FileUtils;
-import za.ac.sun.cs.intlola.gui.ModeDialog;
-import za.ac.sun.cs.intlola.gui.ProjectDialog;
 import za.ac.sun.cs.intlola.gui.LoginDialog;
+import za.ac.sun.cs.intlola.gui.ModeDialog;
+import za.ac.sun.cs.intlola.gui.SubmissionDialog;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 import za.ac.sun.cs.intlola.processing.IntlolaError;
 import za.ac.sun.cs.intlola.processing.IntlolaMode;
@@ -142,7 +141,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	private boolean setup(Shell shell) {
 		proc.setMode(chooseMode(shell));
 		return (proc.getMode().equals(IntlolaMode.ARCHIVE_LOCAL))
-				|| (proc.getMode().isRemote() && login(shell) && createSubmission(shell));
+				|| (proc.getMode().isRemote() && login(shell) && startSubmission(shell));
 	}
 
 	private IntlolaMode chooseMode(Shell shell) {
@@ -171,23 +170,21 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		return err.equals(IntlolaError.SUCCESS);
 	}
 
-	private boolean createSubmission(final Shell shell) {
+	private boolean startSubmission(final Shell shell) {
 		IntlolaError err = IntlolaError.DEFAULT;
-		try {
-			proc.loadProjects();
-			ProjectDialog projDlg = new ProjectDialog(shell, "Choose project",
-					proc.getProjects());
-			final int code = projDlg.open();
-			if (code == Window.OK) {
-				err = proc.createSubmission(projDlg.getProject());
+		proc.loadHistory(getStorePath());
+		SubmissionDialog subDlg = new SubmissionDialog(shell,
+				proc.getAvailableProjects(), proc.getHistory());
+		final int code = subDlg.open();
+		if (code == Window.OK) {
+			if (subDlg.isCreate()) {
+				err = proc.createSubmission(subDlg.getProject());
 			} else {
-				err = IntlolaError.CORE.specific("User exited.");
+				err = proc.continueSubmission(subDlg.getSubmission(),
+						subDlg.getProject());
 			}
-		} catch (IOException e) {
-			err = IntlolaError.SOCKET
-					.specific("IO error encontered while loading projects: "
-							+ e.getMessage());
-			e.printStackTrace();
+		} else {
+			err = IntlolaError.CORE.specific("User exited.");
 		}
 		if (err.equals(IntlolaError.SUCCESS)) {
 			return true;
@@ -207,6 +204,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		} else if (proc.getMode().isRemote()) {
 			proc.logout();
 		}
+		proc.saveHistory(getStorePath());
 	}
 
 	public String getStorePath() {
