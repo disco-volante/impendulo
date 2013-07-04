@@ -23,7 +23,6 @@ import za.ac.sun.cs.intlola.processing.Project;
 import za.ac.sun.cs.intlola.processing.Submission;
 
 public class SubmissionDialog extends Dialog {
-	private Combo projectList, submissionList;
 	private Project project;
 	private Submission submission;
 	private Map<Project, ArrayList<Submission>> history;
@@ -83,9 +82,26 @@ public class SubmissionDialog extends Dialog {
 		final Button btnNew = new Button(comp, SWT.RADIO);
 		btnNew.setText("Create new submission.");
 		btnNew.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
 		final Button btnContinue = new Button(comp, SWT.RADIO);
 		btnContinue.setText("Continue with existing submission.");
 		btnContinue.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		final Label projectLabel = new Label(comp, SWT.RIGHT);
+		projectLabel.setText("Project:");
+
+		final Combo projectList = new Combo(comp, SWT.DROP_DOWN | SWT.READ_ONLY);
+		projectList.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+
+		final Label subLabel = new Label(comp, SWT.RIGHT);
+		subLabel.setText("Submission:");
+
+		final Combo submissionList = new Combo(comp, SWT.DROP_DOWN | SWT.READ_ONLY);
+		submissionList.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		//Add listeners
+		
 		SelectionListener choiceListener = new SelectionListener() {
 			@Override
 			public void widgetDefaultSelected(final SelectionEvent event) {
@@ -99,21 +115,19 @@ public class SubmissionDialog extends Dialog {
 					btnContinue.setSelection(false);
 					projectList.setItems(retProjectItems);
 					submissionList.setVisible(false);
+					subLabel.setVisible(false);
 				} else {
 					btnNew.setSelection(false);
 					projectList.setItems(histProjectItems);
 					submissionList.setVisible(true);
+					subLabel.setVisible(true);
 				}
 			}
 		};
+		
 		btnNew.addSelectionListener(choiceListener);
 		btnContinue.addSelectionListener(choiceListener);
-
-		final Label projectLabel = new Label(comp, SWT.RIGHT);
-		projectLabel.setText("Project:");
-
-		projectList = new Combo(comp, SWT.DROP_DOWN | SWT.READ_ONLY);
-		projectList.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
 		projectList.addSelectionListener(new SelectionListener() {
 			@Override
 			public void widgetSelected(SelectionEvent se) {
@@ -130,12 +144,7 @@ public class SubmissionDialog extends Dialog {
 				widgetSelected(se);
 			}
 		});
-
-		final Label subLabel = new Label(comp, SWT.RIGHT);
-		subLabel.setText("Submission:");
-
-		submissionList = new Combo(comp, SWT.DROP_DOWN | SWT.READ_ONLY);
-		submissionList.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
 		submissionList.addSelectionListener(new SelectionListener() {
 			@Override
 			public void widgetSelected(SelectionEvent se) {
@@ -150,7 +159,13 @@ public class SubmissionDialog extends Dialog {
 				widgetSelected(se);
 			}
 		});
+		
+		//Initialise
 		btnNew.setSelection(true);
+		projectList.setItems(retProjectItems);
+		submissionList.setVisible(false);
+		subLabel.setVisible(false);
+		
 		return comp;
 	}
 

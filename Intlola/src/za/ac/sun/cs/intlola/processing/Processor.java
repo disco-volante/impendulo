@@ -7,12 +7,14 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import za.ac.sun.cs.intlola.Intlola;
+import za.ac.sun.cs.intlola.IntlolaVisitor;
 import za.ac.sun.cs.intlola.file.ArchiveFile;
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.FileUtils;
@@ -211,15 +213,9 @@ public class Processor {
 				snd.flush();
 				int count = rcv.read(buffer);
 				final String received = new String(buffer, 0, count);
-				if (received.startsWith(Const.OK)) {
-					return IntlolaError.SUCCESS;
-				} else {
-					Intlola.log(null, "Submission continuation error: "
-							+ received);
-					return IntlolaError.LOGIN
-							.specific("Submission continuation attempt failed with: "
-									+ received);
-				}
+				IntlolaVisitor.setCounter(new Gson().fromJson(received,
+						int.class));
+				return IntlolaError.SUCCESS;
 			} catch (final IOException e) {
 				Intlola.log(e, "Submission continuation error");
 				return IntlolaError.LOGIN
@@ -242,6 +238,7 @@ public class Processor {
 			final JsonObject params = new JsonObject();
 			params.addProperty(Const.REQ, Const.SUBMISSION_NEW);
 			params.addProperty(Const.PROJECT_ID, currentProject.Id);
+			params.addProperty(Const.TIME, Calendar.getInstance().getTimeInMillis());
 			final byte[] buffer = new byte[1024];
 			try {
 				snd.write(params.toString().getBytes());

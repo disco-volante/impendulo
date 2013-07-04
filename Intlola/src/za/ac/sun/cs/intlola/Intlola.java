@@ -1,6 +1,9 @@
 package za.ac.sun.cs.intlola;
 
 import java.io.File;
+import java.io.IOException;
+
+import javax.security.auth.login.LoginException;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -75,15 +78,19 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	public static void startRecord(final IProject project, final Shell shell) {
-		Intlola.log(null, "Intlola record started", project.getName());
-		getActive().setProcessor();
-		if (getActive().setup(shell)) {
-			try {
-				project.setSessionProperty(RECORD_KEY, RECORD_ON);
-				PluginUtils.touchAll(project);
-			} catch (final CoreException e) {
-				Intlola.log(e);
-			}
+		try {
+			getActive().setStorePath(project);
+			getActive().setProcessor();
+			getActive().setup(shell);
+			project.setSessionProperty(RECORD_KEY, RECORD_ON);
+			PluginUtils.touchAll(project);
+			Intlola.log(null, "Intlola record started", project.getName());
+		} catch (IOException e) {
+			Intlola.log(e);
+		} catch (LoginException e) {
+			Intlola.log(e);
+		} catch (final CoreException e) {
+			Intlola.log(e);
 		}
 	}
 
@@ -102,6 +109,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	private boolean listenersAdded = false;
 
 	private Processor proc;
+
+	private String storePath;
 
 	public Intlola() {
 		Intlola.plugin = this;
@@ -138,10 +147,16 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
-	private boolean setup(Shell shell) {
+	private void setup(Shell shell) throws LoginException {
 		proc.setMode(chooseMode(shell));
-		return (proc.getMode().equals(IntlolaMode.ARCHIVE_LOCAL))
-				|| (proc.getMode().isRemote() && login(shell) && startSubmission(shell));
+		if (proc.getMode().isRemote()) {
+			if (!login(shell)) {
+				throw new LoginException("Could not login to server.");
+			}
+			if (!startSubmission(shell)) {
+				throw new LoginException("Could not start submission.");
+			}
+		}
 	}
 
 	private IntlolaMode chooseMode(Shell shell) {
@@ -207,8 +222,19 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		proc.saveHistory(getStorePath());
 	}
 
+	private void setStorePath(IProject project) throws IOException {
+		
+		storePath = project.getLocation().toOSString() + File.separator
+				+ ".intlola" + File.separator;
+		System.out.println(storePath);
+		File dir = new File(storePath);
+		if (!dir.exists() && !dir.mkdirs()) {
+			throw new IOException("Could not create plugin directory.");
+		}
+	}
+
 	public String getStorePath() {
-		return getStateLocation().toOSString();
+		return storePath;
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package za.ac.sun.cs.intlola;
 
 import java.io.File;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceDelta;
@@ -58,6 +59,10 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 		} else {
 			return false;
 		}
+	}
+
+	public static void setCounter(int counter) {
+		IntlolaVisitor.counter = counter;
 	}
 
 }
