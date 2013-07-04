@@ -53,6 +53,10 @@ public class IndividualFile implements IntlolaFile {
 	public JsonObject toJSON() {
 		final JsonObject ret = new JsonObject();
 		ret.addProperty(Const.NAME, name);
+		ret.addProperty(Const.PKG, pkg);
+		ret.addProperty(Const.MOD, mod);
+		ret.addProperty(Const.NUM, num);
+		ret.addProperty(Const.TIME, time);
 		if (hasContents()) {
 			final String ext = name.split("\\.")[1];
 			ret.addProperty(Const.FTYPE, ext);
@@ -65,10 +69,6 @@ public class IndividualFile implements IntlolaFile {
 			ret.addProperty(Const.FTYPE, Const.EMPTY);
 			ret.addProperty(Const.TYPE, Const.CHANGE);
 		}
-		ret.addProperty(Const.PKG, pkg);
-		ret.addProperty(Const.MOD, mod);
-		ret.addProperty(Const.NUM, num);
-		ret.addProperty(Const.TIME, time);
 		return ret;
 	}
 

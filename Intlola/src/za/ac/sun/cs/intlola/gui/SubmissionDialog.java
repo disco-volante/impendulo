@@ -69,8 +69,10 @@ public class SubmissionDialog extends Dialog {
 	public Control createButtonBar(final Composite parent) {
 		final Control ret = super.createButtonBar(parent);
 		getButton(IDialogConstants.OK_ID).setText("Confirm");
+		getButton(IDialogConstants.OK_ID).setEnabled(false);
 		return ret;
 	}
+	
 
 	@Override
 	protected Control createDialogArea(final Composite parent) {
@@ -82,26 +84,26 @@ public class SubmissionDialog extends Dialog {
 		final Button btnNew = new Button(comp, SWT.RADIO);
 		btnNew.setText("Create new submission.");
 		btnNew.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		
+
 		final Button btnContinue = new Button(comp, SWT.RADIO);
 		btnContinue.setText("Continue with existing submission.");
 		btnContinue.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		
+
 		final Label projectLabel = new Label(comp, SWT.RIGHT);
 		projectLabel.setText("Project:");
 
 		final Combo projectList = new Combo(comp, SWT.DROP_DOWN | SWT.READ_ONLY);
 		projectList.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		
 
 		final Label subLabel = new Label(comp, SWT.RIGHT);
 		subLabel.setText("Submission:");
 
-		final Combo submissionList = new Combo(comp, SWT.DROP_DOWN | SWT.READ_ONLY);
+		final Combo submissionList = new Combo(comp, SWT.DROP_DOWN
+				| SWT.READ_ONLY);
 		submissionList.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		
-		//Add listeners
-		
+
+		// Add listeners
+
 		SelectionListener choiceListener = new SelectionListener() {
 			@Override
 			public void widgetDefaultSelected(final SelectionEvent event) {
@@ -110,6 +112,7 @@ public class SubmissionDialog extends Dialog {
 
 			@Override
 			public void widgetSelected(final SelectionEvent event) {
+				getButton(IDialogConstants.OK_ID).setEnabled(false);
 				create = btnNew.getSelection();
 				if (create) {
 					btnContinue.setSelection(false);
@@ -124,18 +127,24 @@ public class SubmissionDialog extends Dialog {
 				}
 			}
 		};
-		
+
 		btnNew.addSelectionListener(choiceListener);
 		btnContinue.addSelectionListener(choiceListener);
-		
+
 		projectList.addSelectionListener(new SelectionListener() {
 			@Override
 			public void widgetSelected(SelectionEvent se) {
-				if (create) {
-					project = retProjects[projectList.getSelectionIndex()];
-				} else {
-					project = histProjects[projectList.getSelectionIndex()];
-					submissionList.setItems(subItems.get(projectList.getText()));
+				int index = projectList.getSelectionIndex();
+				getButton(IDialogConstants.OK_ID).setEnabled(false);
+				if (index >= 0) {
+					if (create) {
+						project = retProjects[index];
+						getButton(IDialogConstants.OK_ID).setEnabled(true);
+					} else {
+						project = histProjects[index];
+						submissionList.setItems(subItems.get(projectList
+								.getText()));
+					}
 				}
 			}
 
@@ -144,13 +153,14 @@ public class SubmissionDialog extends Dialog {
 				widgetSelected(se);
 			}
 		});
-		
+
 		submissionList.addSelectionListener(new SelectionListener() {
 			@Override
 			public void widgetSelected(SelectionEvent se) {
 				if (!create) {
 					submission = history.get(project).get(
 							submissionList.getSelectionIndex());
+					getButton(IDialogConstants.OK_ID).setEnabled(true);
 				}
 			}
 
@@ -159,13 +169,14 @@ public class SubmissionDialog extends Dialog {
 				widgetSelected(se);
 			}
 		});
-		
-		//Initialise
+
+		// Initialise
+		create = true;
 		btnNew.setSelection(true);
 		projectList.setItems(retProjectItems);
 		submissionList.setVisible(false);
 		subLabel.setVisible(false);
-		
+
 		return comp;
 	}
 
@@ -177,7 +188,7 @@ public class SubmissionDialog extends Dialog {
 		return submission;
 	}
 
-	public boolean isCreate(){
+	public boolean isCreate() {
 		return create;
 	}
 }

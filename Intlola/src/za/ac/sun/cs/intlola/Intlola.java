@@ -26,6 +26,7 @@ import za.ac.sun.cs.intlola.gui.SubmissionDialog;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 import za.ac.sun.cs.intlola.processing.IntlolaError;
 import za.ac.sun.cs.intlola.processing.IntlolaMode;
+import za.ac.sun.cs.intlola.processing.InvalidModeException;
 import za.ac.sun.cs.intlola.processing.Processor;
 
 public class Intlola extends AbstractUIPlugin implements IStartup {
@@ -91,6 +92,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			Intlola.log(e);
 		} catch (final CoreException e) {
 			Intlola.log(e);
+		} catch (InvalidModeException e) {
+			Intlola.log(e);
 		}
 	}
 
@@ -147,7 +150,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
-	private void setup(Shell shell) throws LoginException {
+	private void setup(Shell shell) throws LoginException, InvalidModeException {
 		proc.setMode(chooseMode(shell));
 		if (proc.getMode().isRemote()) {
 			if (!login(shell)) {
@@ -199,13 +202,15 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 						subDlg.getProject());
 			}
 		} else {
-			err = IntlolaError.CORE.specific("User exited.");
+			err = IntlolaError.USER;
 		}
 		if (err.equals(IntlolaError.SUCCESS)) {
 			return true;
 		} else {
-			MessageDialog
-					.openError(shell, err.toString(), err.getDescription());
+			if (!err.equals(IntlolaError.USER)) {
+				MessageDialog.openError(shell, err.toString(),
+						err.getDescription());
+			}
 			return false;
 		}
 	}
@@ -223,10 +228,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	private void setStorePath(IProject project) throws IOException {
-		
 		storePath = project.getLocation().toOSString() + File.separator
 				+ ".intlola" + File.separator;
-		System.out.println(storePath);
 		File dir = new File(storePath);
 		if (!dir.exists() && !dir.mkdirs()) {
 			throw new IOException("Could not create plugin directory.");

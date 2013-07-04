@@ -238,7 +238,8 @@ public class Processor {
 			final JsonObject params = new JsonObject();
 			params.addProperty(Const.REQ, Const.SUBMISSION_NEW);
 			params.addProperty(Const.PROJECT_ID, currentProject.Id);
-			params.addProperty(Const.TIME, Calendar.getInstance().getTimeInMillis());
+			params.addProperty(Const.TIME, Calendar.getInstance()
+					.getTimeInMillis());
 			final byte[] buffer = new byte[1024];
 			try {
 				snd.write(params.toString().getBytes());
@@ -266,7 +267,13 @@ public class Processor {
 		}
 	}
 
-	public void setMode(IntlolaMode mode) {
-		this.mode = mode;
+	public void setMode(IntlolaMode mode) throws InvalidModeException {
+		if (mode.equals(IntlolaMode.ARCHIVE_LOCAL)
+				|| mode.equals(IntlolaMode.ARCHIVE_REMOTE)
+				|| mode.equals(IntlolaMode.FILE_REMOTE)) {
+			this.mode = mode;
+		}else{
+			throw new InvalidModeException(mode);
+		}
 	}
 }
