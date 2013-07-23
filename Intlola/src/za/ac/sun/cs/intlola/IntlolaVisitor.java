@@ -17,44 +17,38 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 
 	public static void processChanges(final IResource resource, final int kind) {
 		final char kindSuffix = FileUtils.getKind(kind);
+		final int num = counter++;
+		final String path = resource.getLocation().toString();
+		final boolean isFile = resource.getType() == IResource.FILE;
 		if (Intlola.getActive().getProcessor().getMode().isArchive()) {
-			save(resource, kindSuffix);
+			final String name = Intlola.getActive().getStorePath()
+					+ File.separator
+					+ FileUtils.encodeName(path, System.nanoTime(), num,
+							kindSuffix);
+			if (isFile) {
+				FileUtils.copy(path, name);
+			} else {
+				FileUtils.touch(name);
+			}
 		} else if (Intlola.getActive().getProcessor().getMode().isRemote()) {
-			send(resource, kindSuffix);
+			Intlola.getActive()
+					.getProcessor()
+					.sendFile(new IndividualFile(path, kindSuffix, num, isFile));
 		}
-	}
-
-	private static void save(final IResource resource, final char kindSuffix) {
-		final String f = resource.getLocation().toString();
-		final String name = Intlola.getActive().getStorePath()
-				+ File.separator
-				+ FileUtils.encodeName(f, System.nanoTime(), counter++,
-						kindSuffix);
-		if (resource.getType() == IResource.FILE) {
-			FileUtils.copy(f, name);
-		} else {
-			FileUtils.touch(name);
-		}
-
-	}
-
-	private static void send(final IResource resource, final char kindSuffix) {
-		final String f = resource.getLocation().toString();
-		Intlola.getActive()
-				.getProcessor()
-				.sendFile(
-						new IndividualFile(f, kindSuffix, counter++, resource
-								.getType() == IResource.FILE));
 	}
 
 	@Override
 	public boolean visit(final IResourceDelta delta) throws CoreException {
 		final IResource resource = delta.getResource();
 		final IProject project = resource.getProject();
+		boolean isSrc = resource.getType() == IResource.FILE
+				&& resource.getLocation().toString().trim().endsWith("java");
 		if (project == null) {
 			return true;
 		} else if (Intlola.getRecordStatus(project)) {
-			IntlolaVisitor.processChanges(resource, delta.getKind());
+			if (isSrc) {
+				IntlolaVisitor.processChanges(resource, delta.getKind());
+			}
 			return true;
 		} else {
 			return false;
