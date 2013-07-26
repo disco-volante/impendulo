@@ -7,6 +7,7 @@ public class Project implements Serializable {
 	private static final long serialVersionUID = -7128594023385132073L;
 	String Id, Name, User, Lang;
 	long Time;
+	byte [] Skeleton;
 
 	@Override
 	public int hashCode() {

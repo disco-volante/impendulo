@@ -2,7 +2,7 @@
 <feature
       id="za.ac.sun.cs.IntlolaFeature"
       label="IntlolaFeature"
-      version="1.0.0.5"
+      version="1.0.0.6"
       provider-name="Computer Science, Stellenbosch University"
       plugin="Intlola">
 
@@ -52,7 +52,7 @@ along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
          id="Intlola"
          download-size="0"
          install-size="0"
-         version="1.0.0.5"
+         version="0.0.0"
          unpack="false"/>
 
 </feature>

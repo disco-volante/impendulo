@@ -129,6 +129,7 @@ public class Processor {
 				snd.flush();
 				int count = rcv.read(buffer);
 				final String received = new String(buffer, 0, count);
+				System.out.println(received);
 				Gson gson = new Gson();
 				availableProjects = gson.fromJson(received,
 						new Project[1].getClass());

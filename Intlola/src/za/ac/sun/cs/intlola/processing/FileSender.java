@@ -15,10 +15,10 @@ import za.ac.sun.cs.intlola.file.IntlolaFile;
 import com.google.gson.JsonObject;
 
 public class FileSender implements Runnable {
-	private final IntlolaFile	file;
-	private final InputStream	rcv;
-	private final OutputStream	snd;
-	private final Socket		sock;
+	private final IntlolaFile file;
+	private final InputStream rcv;
+	private final OutputStream snd;
+	private final Socket sock;
 
 	FileSender(final IntlolaFile file, final Socket sock,
 			final OutputStream snd, final InputStream rcv) {
@@ -42,6 +42,7 @@ public class FileSender implements Runnable {
 		boolean ok = true;
 		try {
 			final JsonObject fjson = file.toJSON();
+			System.out.println(fjson.toString());
 			fjson.addProperty(Const.REQ, Const.SEND);
 			snd.write(fjson.toString().getBytes());
 			snd.write(Const.EOF);
