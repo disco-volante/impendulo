@@ -65,7 +65,7 @@ public class AllTests {
 							}
 
 						});
-				answer = future.get(15, TimeUnit.SECONDS);
+				answer = future.get(5, TimeUnit.SECONDS);
 			} catch (TimeoutException | InterruptedException
 					| ExecutionException te) {
 				fail("Test took too long.");

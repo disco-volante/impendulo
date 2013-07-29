@@ -42,7 +42,6 @@ public class FileSender implements Runnable {
 		boolean ok = true;
 		try {
 			final JsonObject fjson = file.toJSON();
-			System.out.println(fjson.toString());
 			fjson.addProperty(Const.REQ, Const.SEND);
 			snd.write(fjson.toString().getBytes());
 			snd.write(Const.EOF);
