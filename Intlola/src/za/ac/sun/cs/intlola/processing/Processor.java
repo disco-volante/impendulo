@@ -103,6 +103,7 @@ public class Processor {
 			rcv = sock.getInputStream();
 			return true;
 		} catch (final IOException e) {
+			e.printStackTrace();
 			Intlola.log(e, "No server detected");
 			return false;
 		}

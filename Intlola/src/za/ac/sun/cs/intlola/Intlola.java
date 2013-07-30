@@ -69,12 +69,13 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	public static void log(final Exception e, final Object... msgs) {
+		System.out.println(getActive());
 		if (getActive() != null) {
 			getActive().getLog().log(
 					new Status(IStatus.INFO, PLUGIN_ID, IStatus.OK,
 							getLogMessage(e, msgs), e));
 		} else {
-			System.out.println(getLogMessage(e, msgs));
+			System.err.println(getLogMessage(e, msgs));
 		}
 	}
 

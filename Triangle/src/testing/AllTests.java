@@ -65,10 +65,13 @@ public class AllTests {
 							}
 
 						});
-				answer = future.get(5, TimeUnit.SECONDS);
-			} catch (TimeoutException | InterruptedException
-					| ExecutionException te) {
+				answer = future.get(30, TimeUnit.SECONDS);
+			} catch (TimeoutException  te) {
 				fail("Test took too long.");
+			} catch (ExecutionException e) {
+				fail("Test failed with "+e.getMessage());
+			}catch (InterruptedException e) {
+				fail("Test interrupted.");
 			}
 
 			assertTrue("Wrong answer " + answer + ", should be " + outputValue,
@@ -81,7 +84,10 @@ public class AllTests {
 	}
 
 	public static Test suite() {
-		String location = "src"+File.separator+"testing"+File.separator+"data";
+		String location = System.getProperty("data.location");
+		if(location == null || !new File(location).exists()){
+			location = "src"+File.separator+"testing"+File.separator+"data";
+		}
 		TestSuite suite = new TestSuite("Test for Triangle");
 		File f = new File(location);
 		String s[] = f.list();

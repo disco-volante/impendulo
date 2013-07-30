@@ -6,9 +6,9 @@ import za.ac.sun.cs.intlola.processing.IntlolaMode;
 import za.ac.sun.cs.intlola.processing.Processor;
 
 public class SendTester{
-	private static final int runnerCount = 20;
+	private static final int runnerCount = 1;
 	public static void main(String[] args){
-		Thread[] runners = new Thread[20]; 
+		Thread[] runners = new Thread[runnerCount]; 
 		for(int i = 0; i < runnerCount; i ++){
 			runners[i] = new FileSender();
 			runners[i].start();
@@ -23,7 +23,7 @@ public class SendTester{
 	}
 	
 	public static class FileSender extends Thread {
-		private static final int sendCount = 10;
+		private static final int sendCount = 2;
 		private Processor proc;
 		private int count;
 
