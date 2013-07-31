@@ -45,6 +45,9 @@ public class PluginUtils {
 	public static void touchAll(IContainer container) {
 		try {
 			for (IResource resource : container.members()) {
+				if(resource.getFullPath().lastSegment().contains("test")){
+					continue;
+				}
 				resource.touch(null);
 				if (resource instanceof IContainer) {
 					touchAll((IContainer) resource);

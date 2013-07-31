@@ -3,7 +3,6 @@ package za.ac.sun.cs.intlola;
 import java.io.IOException;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.ILaunch;
@@ -34,10 +33,9 @@ public class IntlolaMonitor implements ILaunchListener {
 					.getProject(projectName);
 			if (project != null && Intlola.getRecordStatus(project)) {
 				final String path = project.getLocation().toString();
-				boolean isFile = project.getType() == IResource.FILE;
 				try {
 					Intlola.getActive().getProcessor()
-							.processChanges(path, isFile, FileUtils.LAUNCHED);
+							.processChanges(path, false, FileUtils.LAUNCHED);
 				} catch (IOException e) {
 					Intlola.log(e, "Could not process launch");
 				}

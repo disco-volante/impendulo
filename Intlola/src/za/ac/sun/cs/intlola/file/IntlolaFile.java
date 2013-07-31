@@ -6,7 +6,7 @@ public interface IntlolaFile {
 
 	String getPath();
 
-	boolean hasContents();
+	boolean sendContents();
 
 	JsonObject toJSON();
 

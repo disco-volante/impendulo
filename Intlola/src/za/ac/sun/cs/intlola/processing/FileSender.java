@@ -48,7 +48,7 @@ public class FileSender implements Runnable {
 			int count = rcv.read(readBuffer);
 			String received = new String(readBuffer, 0, count);
 			if (received.startsWith(Const.OK)) {
-				if (file.hasContents()) {
+				if (file.sendContents()) {
 					try {
 						fis = new FileInputStream(file.getPath());
 						while ((count = fis.read(writeBuffer)) >= 0) {

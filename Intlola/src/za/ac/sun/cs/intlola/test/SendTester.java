@@ -24,7 +24,6 @@ public class SendTester {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			;
 		}
 	}
 

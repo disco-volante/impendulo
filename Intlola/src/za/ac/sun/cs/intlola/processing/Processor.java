@@ -273,20 +273,23 @@ public class Processor {
 		}
 	}
 
-	public void processChanges(final String path, final boolean isFile,
+	public void processChanges(final String path, final boolean sendContents,
 			final int kind) throws IOException {
-		final char kindSuffix = FileUtils.getKind(kind);
+		char kindSuffix = FileUtils.getKind(kind);
+		if(kindSuffix == FileUtils.SAVE && path.endsWith(Const.CLASS)){
+			kindSuffix = Const.COMPILED;
+		}
 		final int num = fileCounter++;
 		if (getMode().isArchive()) {
 			final String name = FileUtils.joinPath(archivePath, FileUtils
 					.encodeName(path, System.nanoTime(), num, kindSuffix));
-			if (isFile) {
+			if (sendContents) {
 				FileUtils.copy(path, name);
 			} else {
 				FileUtils.touch(name);
 			}
 		} else if (getMode().isRemote()) {
-			sendFile(new IndividualFile(path, kindSuffix, num, isFile));
+			sendFile(new IndividualFile(path, kindSuffix, num, sendContents));
 		}
 	}
 

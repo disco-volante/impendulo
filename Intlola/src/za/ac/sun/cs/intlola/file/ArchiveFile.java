@@ -15,7 +15,7 @@ public class ArchiveFile implements IntlolaFile {
 	}
 
 	@Override
-	public boolean hasContents() {
+	public boolean sendContents() {
 		return true;
 	}
 

@@ -19,7 +19,7 @@ import za.ac.sun.cs.intlola.file.IntlolaFile;
 public class FileTest {
 	private static final long TIME_1 = Calendar.getInstance().getTimeInMillis();
 	private static final int NUM_1 = 100;
-	private static final char MOD_1 = FileUtils.CHANGE;
+	private static final char MOD_1 = FileUtils.SAVE;
 	private static final String FNAME_1 = "Intlola.java";
 	private static final String PKG_1 = "za" + FileUtils.NAME_SEP + "sun"
 			+ FileUtils.NAME_SEP + "cs" + FileUtils.NAME_SEP + "intlola";

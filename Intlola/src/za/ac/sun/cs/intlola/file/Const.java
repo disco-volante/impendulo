@@ -34,4 +34,5 @@ public class Const {
 	public static final String NAMES = "names";
 	public static final String PROJECT_ID = "projectid";
 	public static final String SUBMISSION_ID = "subid";
+	public static final char COMPILED = 0;
 }

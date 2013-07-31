@@ -30,7 +30,8 @@ public class FileUtils {
 	public static final char LAUNCH = 'l';
 	public static final char FROM = 'f';
 	public static final char TO = 't';
-	public static final char CHANGE = 'c';
+	public static final char SAVE = 's';
+	public static final char COMPILE = 'c';
 	private static final byte NOTHING = 0;
 	public static final int LAUNCHED = -6666;
 
@@ -114,10 +115,10 @@ public class FileUtils {
 		final int num = Integer.parseInt(elems[elems.length - 2]);
 		final long time = Long.parseLong(elems[elems.length - 3]);
 		String name = getFileName(elems);
-		boolean hasContents = name.contains(NAME_SEP);
+		boolean sendContents = name.endsWith(Const.JAVA);
 		String pkg = getPackage(elems, NAME_SEP);
 		return new IndividualFile(encodedName, name, pkg, time, num, mod,
-				hasContents);
+				sendContents);
 	}
 
 	public static void delete(final String filename) {
@@ -179,7 +180,8 @@ public class FileUtils {
 
 	public static boolean isKindSuffix(char modChar) {
 		return modChar == ADD || modChar == REMOVE || modChar == LAUNCH
-				|| modChar == FROM || modChar == TO || modChar == CHANGE;
+				|| modChar == FROM || modChar == TO || modChar == SAVE
+				|| modChar == COMPILE;
 	}
 
 	public static char getKind(final int kind) {
@@ -201,7 +203,7 @@ public class FileUtils {
 			kindSuffix = TO;
 			break;
 		case IResourceDelta.CHANGED:
-			kindSuffix = CHANGE;
+			kindSuffix = SAVE;
 			break;
 		default:
 			throw new InvalidParameterException();

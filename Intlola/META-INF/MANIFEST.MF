@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Intlola
 Bundle-SymbolicName: Intlola;singleton:=true
-Bundle-Version: 1.0.0.6
+Bundle-Version: 1.0.0.7
 Bundle-Vendor: Computer Science, Stellenbosch University
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: .,

@@ -7,20 +7,20 @@ import com.google.gson.JsonObject;
 
 public class IndividualFile implements IntlolaFile {
 
-	private final boolean	hasContents;
-	private final char		mod;
-	private final int		num;
+	private final boolean sendContents;
+	private final char mod;
+	private final int num;
 
-	private final String	path, name, pkg;
+	private final String path, name, pkg;
 
-	private final long		time;
+	private final long time;
 
 	public IndividualFile(final String path, final char mod, final int num,
-			final boolean hasContents) {
+			final boolean sendContents) {
 		this.path = path;
 		this.mod = mod;
 		this.num = num;
-		this.hasContents = hasContents;
+		this.sendContents = sendContents;
 		time = Calendar.getInstance().getTimeInMillis();
 		final String[] spd = path.split(File.separator);
 		name = spd[spd.length - 1];
@@ -29,11 +29,11 @@ public class IndividualFile implements IntlolaFile {
 
 	public IndividualFile(final String path, final String name,
 			final String pkg, final long time, final int num, final char mod,
-			final boolean hasContents) {
+			final boolean sendContents) {
 		this.path = path;
 		this.mod = mod;
 		this.num = num;
-		this.hasContents = hasContents;
+		this.sendContents = sendContents;
 		this.time = time;
 		this.name = name;
 		this.pkg = pkg;
@@ -45,30 +45,28 @@ public class IndividualFile implements IntlolaFile {
 	}
 
 	@Override
-	public boolean hasContents() {
-		return hasContents;
+	public boolean sendContents() {
+		return sendContents;
 	}
 
 	@Override
 	public JsonObject toJSON() {
 		final JsonObject ret = new JsonObject();
+		if (name.endsWith(Const.JAVA)) {
+			ret.addProperty(Const.FTYPE, Const.JAVA);
+			ret.addProperty(Const.TYPE, Const.SRC);
+		} else if (name.endsWith(Const.CLASS)) {
+			ret.addProperty(Const.FTYPE, Const.CLASS);
+			ret.addProperty(Const.TYPE, Const.EXEC);
+		} else {
+			ret.addProperty(Const.FTYPE, Const.EMPTY);
+			ret.addProperty(Const.TYPE, Const.CHANGE);
+		}
 		ret.addProperty(Const.NAME, name);
 		ret.addProperty(Const.PKG, pkg);
 		ret.addProperty(Const.MOD, mod);
 		ret.addProperty(Const.NUM, num);
 		ret.addProperty(Const.TIME, time);
-		if (hasContents()) {
-			final String ext = name.split("\\.")[1];
-			ret.addProperty(Const.FTYPE, ext);
-			if (ext.equals(Const.JAVA)) {
-				ret.addProperty(Const.TYPE, Const.SRC);
-			} else if (ext.equals(Const.CLASS)) {
-				ret.addProperty(Const.TYPE, Const.EXEC);
-			}
-		} else {
-			ret.addProperty(Const.FTYPE, Const.EMPTY);
-			ret.addProperty(Const.TYPE, Const.CHANGE);
-		}
 		return ret;
 	}
 
@@ -76,7 +74,7 @@ public class IndividualFile implements IntlolaFile {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (hasContents ? 1231 : 1237);
+		result = prime * result + (sendContents ? 1231 : 1237);
 		result = prime * result + mod;
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result + num;
@@ -95,7 +93,7 @@ public class IndividualFile implements IntlolaFile {
 		if (getClass() != obj.getClass())
 			return false;
 		IndividualFile other = (IndividualFile) obj;
-		if (hasContents != other.hasContents)
+		if (sendContents != other.sendContents)
 			return false;
 		if (mod != other.mod)
 			return false;
