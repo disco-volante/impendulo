@@ -73,6 +73,7 @@ public class LoginDialog extends Dialog {
 		passwordField = new Text(comp, SWT.SINGLE | SWT.PASSWORD);
 		passwordField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		passwordField.setText(password);
+		passwordField.setFocus();
 
 		final Label addessLabel = new Label(comp, SWT.RIGHT);
 		addessLabel.setText("Server address:");

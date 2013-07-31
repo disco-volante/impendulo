@@ -13,11 +13,10 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import za.ac.sun.cs.intlola.Intlola;
-import za.ac.sun.cs.intlola.IntlolaVisitor;
 import za.ac.sun.cs.intlola.file.ArchiveFile;
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.FileUtils;
+import za.ac.sun.cs.intlola.file.IndividualFile;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 
 import com.google.gson.Gson;
@@ -35,13 +34,19 @@ public class Processor {
 	private InputStream rcv = null;
 	private OutputStream snd = null;
 	private Socket sock = null;
-
+	private int fileCounter = 0;
 	private String username;
 
 	private Project[] availableProjects;
 	private Project currentProject;
 	private Map<Project, ArrayList<Submission>> history;
 	private Submission currentSubmission;
+
+	private String storePath;
+
+	private String archivePath;
+
+	private String id;
 
 	/**
 	 * Construct processor with default values.
@@ -52,10 +57,15 @@ public class Processor {
 	 * @param address
 	 * @param port
 	 */
-	public Processor(final String username, final IntlolaMode mode,
-			final String address, final int port) {
-		setFields(username, mode, address, port);
+	public Processor(final IntlolaMode mode, final String storePath) {
+		this.id = String.valueOf(System.nanoTime());
+		this.mode = mode;
+		this.storePath = storePath;
 		executor = Executors.newFixedThreadPool(1);
+		if (mode.isArchive()) {
+			archivePath = FileUtils.joinPath(storePath, "archive"+id);
+			new File(archivePath).mkdirs();
+		}
 	}
 
 	public String getAddress() {
@@ -86,13 +96,9 @@ public class Processor {
 		return history;
 	}
 
-	public void handleArchive(final String location, final String zipName) {
-		executor.execute(new ArchiveBuilder(location, zipName));
-		if (mode.isRemote()) {
-			sendFile(new ArchiveFile(zipName));
-			FileUtils.delete(zipName);
-		}
-		logout();
+	public void handleLocalArchive(final String zipName) {
+		executor.execute(new ArchiveBuilder(archivePath, zipName));
+		executor.shutdown();
 	}
 
 	private boolean init() {
@@ -103,25 +109,22 @@ public class Processor {
 			rcv = sock.getInputStream();
 			return true;
 		} catch (final IOException e) {
-			e.printStackTrace();
-			Intlola.log(e, "No server detected");
 			return false;
 		}
 	}
 
 	public IntlolaError login(String username, final String password,
 			final String address, final int port) {
-		this.username = username;
-		this.address = new InetSocketAddress(address, port);
+		setFields(username, address, port);
 		final JsonObject params = new JsonObject();
 		params.addProperty(Const.REQ, Const.LOGIN);
-		params.addProperty(Const.USER, username);
+		params.addProperty(Const.USER, this.username);
 		params.addProperty(Const.PASSWORD, password);
 		params.addProperty(Const.MODE, mode.toString());
 		if (!init()) {
 			return IntlolaError.CONNECTION
 					.specific("Could not initialise connection on: "
-							+ address.toString());
+							+ this.address.toString());
 		} else {
 			final byte[] buffer = new byte[1024];
 			try {
@@ -130,18 +133,16 @@ public class Processor {
 				snd.flush();
 				int count = rcv.read(buffer);
 				final String received = new String(buffer, 0, count);
-				System.out.println(received);
 				Gson gson = new Gson();
-				availableProjects = gson.fromJson(received,
-						new Project[1].getClass());
-				return IntlolaError.SUCCESS;
+				try {
+					availableProjects = gson.fromJson(received,
+							new Project[1].getClass());
+					return IntlolaError.SUCCESS;
+				} catch (JsonSyntaxException e) {
+					return IntlolaError.LOGIN
+							.specific("Login attempt failed with: " + received);
+				}
 			} catch (final IOException e) {
-				Intlola.log(e, "Login error");
-				return IntlolaError.LOGIN
-						.specific("Login attempt failed with: "
-								+ e.getMessage());
-			} catch (JsonSyntaxException e) {
-				Intlola.log(e, "Login error");
 				return IntlolaError.LOGIN
 						.specific("Login attempt failed with: "
 								+ e.getMessage());
@@ -150,9 +151,13 @@ public class Processor {
 	}
 
 	public void logout() {
-		if (mode.isRemote()) {
-			executor.execute(new SessionEnder(sock, snd, rcv));
+		if (mode.equals(IntlolaMode.ARCHIVE_REMOTE)) {
+			String zipName = FileUtils.joinPath(storePath, id+".zip");
+			executor.execute(new ArchiveBuilder(archivePath, zipName));
+			sendFile(new ArchiveFile(zipName));
+			FileUtils.delete(zipName);
 		}
+		executor.execute(new SessionEnder(sock, snd, rcv));
 		executor.shutdown();
 	}
 
@@ -160,31 +165,28 @@ public class Processor {
 		executor.execute(new FileSender(file, sock, snd, rcv));
 	}
 
-	private void setFields(final String username, final IntlolaMode mode,
-			final String address, final int port) {
+	private void setFields(final String username, final String address,
+			final int port) {
 		this.username = username;
-		this.mode = mode;
 		this.address = new InetSocketAddress(address, port);
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean loadHistory(String storePath) {
-		String histPath = storePath + File.separator + "history.ser";
+	public boolean loadHistory() {
+		String histPath = FileUtils.joinPath(storePath, "history.ser");
 		try {
 			history = (Map<Project, ArrayList<Submission>>) FileUtils
 					.deserialize(histPath);
 			return true;
 		} catch (ClassNotFoundException e) {
-			Intlola.log(e);
 		} catch (IOException e) {
-			Intlola.log(e);
 		}
 		history = new HashMap<Project, ArrayList<Submission>>();
 		return false;
 	}
 
-	public void saveHistory(String storePath) {
-		String histPath = storePath + File.separator + "history.ser";
+	public void saveHistory() throws IOException {
+		String histPath = FileUtils.joinPath(storePath, "history.ser");
 		ArrayList<Submission> proj = history.get(currentProject);
 		if (proj == null) {
 			history.put(currentProject, new ArrayList<Submission>());
@@ -193,79 +195,71 @@ public class Processor {
 		if (!proj.contains(currentSubmission)) {
 			proj.add(currentSubmission);
 		}
-		try {
-			FileUtils.serialize(histPath, history);
-		} catch (IOException e) {
-			Intlola.log(e);
-		}
+		FileUtils.serialize(histPath, history);
 	}
 
 	public IntlolaError continueSubmission(Submission submission,
 			Project project) {
 		currentSubmission = submission;
 		currentProject = project;
-		if (mode.isRemote()) {
-			final JsonObject params = new JsonObject();
-			params.addProperty(Const.REQ, Const.SUBMISSION_CONTINUE);
-			params.addProperty(Const.SUBMISSION_ID, currentSubmission.Id);
-			final byte[] buffer = new byte[1024];
-			try {
-				snd.write(params.toString().getBytes());
-				snd.write(Const.EOF);
-				snd.flush();
-				int count = rcv.read(buffer);
-				final String received = new String(buffer, 0, count);
-				IntlolaVisitor.setCounter(new Gson().fromJson(received,
-						int.class));
-				return IntlolaError.SUCCESS;
-			} catch (final IOException e) {
-				Intlola.log(e, "Submission continuation error");
-				return IntlolaError.LOGIN
-						.specific("Submission continuation attempt failed with: "
-								+ e.getMessage());
-			} catch (final JsonSyntaxException e) {
-				Intlola.log(e, "Submission continuation error");
-				return IntlolaError.LOGIN
-						.specific("Submission continuation attempt failed with: "
-								+ e.getMessage());
-			}
-		} else {
+		if (!mode.isRemote()) {
 			return IntlolaError.SUCCESS;
+		}
+		final JsonObject params = new JsonObject();
+		params.addProperty(Const.REQ, Const.SUBMISSION_CONTINUE);
+		params.addProperty(Const.SUBMISSION_ID, currentSubmission.Id);
+		final byte[] buffer = new byte[1024];
+		try {
+			snd.write(params.toString().getBytes());
+			snd.write(Const.EOF);
+			snd.flush();
+			int count = rcv.read(buffer);
+			final String received = new String(buffer, 0, count);
+			try {
+				setFileCounter(new Gson().fromJson(received, int.class));
+				return IntlolaError.SUCCESS;
+			} catch (final JsonSyntaxException e) {
+				return IntlolaError.LOGIN
+						.specific("Submission continuation attempt failed with: "
+								+ received);
+			}
+		} catch (final IOException e) {
+			return IntlolaError.LOGIN
+					.specific("Submission continuation attempt failed with: "
+							+ e.getMessage());
 		}
 	}
 
 	public IntlolaError createSubmission(Project project) {
 		currentProject = project;
-		if (mode.isRemote()) {
-			final JsonObject params = new JsonObject();
-			params.addProperty(Const.REQ, Const.SUBMISSION_NEW);
-			params.addProperty(Const.PROJECT_ID, currentProject.Id);
-			params.addProperty(Const.TIME, Calendar.getInstance()
-					.getTimeInMillis());
-			final byte[] buffer = new byte[1024];
+		if (!mode.isRemote()) {
+			return IntlolaError.SUCCESS;
+		}
+		final JsonObject params = new JsonObject();
+		params.addProperty(Const.REQ, Const.SUBMISSION_NEW);
+		params.addProperty(Const.PROJECT_ID, currentProject.Id);
+		params.addProperty(Const.TIME, Calendar.getInstance().getTimeInMillis());
+		final byte[] buffer = new byte[1024];
+		try {
+			snd.write(params.toString().getBytes());
+			snd.write(Const.EOF);
+			snd.flush();
+			int count = rcv.read(buffer);
+			final String received = new String(buffer, 0, count);
+			Gson gson = new Gson();
 			try {
-				snd.write(params.toString().getBytes());
-				snd.write(Const.EOF);
-				snd.flush();
-				int count = rcv.read(buffer);
-				final String received = new String(buffer, 0, count);
-				Gson gson = new Gson();
 				currentSubmission = gson.fromJson(received,
 						new Submission().getClass());
 				return IntlolaError.SUCCESS;
-			} catch (final IOException e) {
-				Intlola.log(e, "Submission creation error");
-				return IntlolaError.LOGIN
-						.specific("Submission creation attempt failed with: "
-								+ e.getMessage());
 			} catch (final JsonSyntaxException e) {
-				Intlola.log(e, "Submission creation error");
 				return IntlolaError.LOGIN
 						.specific("Submission creation attempt failed with: "
-								+ e.getMessage());
+								+ received);
 			}
-		} else {
-			return IntlolaError.SUCCESS;
+		} catch (final IOException e) {
+			return IntlolaError.LOGIN
+					.specific("Submission creation attempt failed with: "
+							+ e.getMessage());
 		}
 	}
 
@@ -274,8 +268,33 @@ public class Processor {
 				|| mode.equals(IntlolaMode.ARCHIVE_REMOTE)
 				|| mode.equals(IntlolaMode.FILE_REMOTE)) {
 			this.mode = mode;
-		}else{
+		} else {
 			throw new InvalidModeException(mode);
 		}
+	}
+
+	public void processChanges(final String path, final boolean isFile,
+			final int kind) throws IOException {
+		final char kindSuffix = FileUtils.getKind(kind);
+		final int num = fileCounter++;
+		if (getMode().isArchive()) {
+			final String name = FileUtils.joinPath(archivePath, FileUtils
+					.encodeName(path, System.nanoTime(), num, kindSuffix));
+			if (isFile) {
+				FileUtils.copy(path, name);
+			} else {
+				FileUtils.touch(name);
+			}
+		} else if (getMode().isRemote()) {
+			sendFile(new IndividualFile(path, kindSuffix, num, isFile));
+		}
+	}
+
+	public int getFileCounter() {
+		return fileCounter;
+	}
+
+	public void setFileCounter(int fileCounter) {
+		this.fileCounter = fileCounter;
 	}
 }

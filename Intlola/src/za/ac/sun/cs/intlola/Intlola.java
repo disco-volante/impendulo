@@ -30,8 +30,6 @@ import za.ac.sun.cs.intlola.processing.InvalidModeException;
 import za.ac.sun.cs.intlola.processing.Processor;
 
 public class Intlola extends AbstractUIPlugin implements IStartup {
-	public static final int LAUNCHED = -6666;
-
 	private static Intlola plugin;
 	protected static final String PLUGIN_ID = "za.ac.sun.cs.intlola";
 	private static final QualifiedName RECORD_KEY = new QualifiedName(
@@ -69,7 +67,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	public static void log(final Exception e, final Object... msgs) {
-		System.out.println(getActive());
 		if (getActive() != null) {
 			getActive().getLog().log(
 					new Status(IStatus.INFO, PLUGIN_ID, IStatus.OK,
@@ -81,8 +78,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	public static void startRecord(final IProject project, final Shell shell) {
 		try {
-			getActive().setStorePath(project);
-			getActive().setProcessor();
+			String storepath = getActive().calcStorePath(project);
+			getActive().setProcessor(storepath);
 			getActive().setup(shell);
 			project.setSessionProperty(RECORD_KEY, RECORD_ON);
 			PluginUtils.touchAll(project);
@@ -128,16 +125,10 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		return proc;
 	}
 
-	private void setProcessor() {
+	private void setProcessor(String storePath) {
 		final IntlolaMode mode = IntlolaMode.getMode(getPreferenceStore()
 				.getString(PreferenceConstants.P_MODE));
-		final String uname = getPreferenceStore().getString(
-				PreferenceConstants.P_UNAME);
-		final String address = getPreferenceStore().getString(
-				PreferenceConstants.P_ADDRESS);
-		final int port = getPreferenceStore()
-				.getInt(PreferenceConstants.P_PORT);
-		proc = new Processor(uname, mode, address, port);
+		proc = new Processor(mode, storePath);
 	}
 
 	@Override
@@ -174,8 +165,14 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	private boolean login(final Shell shell) {
+		final String uname = getPreferenceStore().getString(
+				PreferenceConstants.P_UNAME);
+		final String address = getPreferenceStore().getString(
+				PreferenceConstants.P_ADDRESS);
+		final int port = getPreferenceStore()
+				.getInt(PreferenceConstants.P_PORT);
 		final LoginDialog dialog = new LoginDialog(shell, "Intlola login",
-				proc.getUsername(), proc.getAddress(), proc.getPort());
+				uname, address, port);
 		IntlolaError err = IntlolaError.DEFAULT;
 		while (!err.equals(IntlolaError.SUCCESS)) {
 			final int code = dialog.open(err);
@@ -191,7 +188,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private boolean startSubmission(final Shell shell) {
 		IntlolaError err = IntlolaError.DEFAULT;
-		proc.loadHistory(getStorePath());
+		proc.loadHistory();
 		SubmissionDialog subDlg = new SubmissionDialog(shell,
 				proc.getAvailableProjects(), proc.getHistory());
 		final int code = subDlg.open();
@@ -217,27 +214,25 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	private void stop(Shell shell) {
-		if (proc.getMode().isArchive()) {
-			String zipName = proc.getMode().isRemote() ? zipName = getStorePath()
-					+ File.separator + "intlola.zip"
-					: FileUtils.getFilename(shell);
-			proc.handleArchive(getActive().getStorePath(), zipName);
-		} else if (proc.getMode().isRemote()) {
+		if (proc.getMode().isRemote()) {
 			proc.logout();
+		} else if (proc.getMode().equals(IntlolaMode.ARCHIVE_LOCAL)) {
+			proc.handleLocalArchive(FileUtils.getFilename(shell));
 		}
-		proc.saveHistory(getStorePath());
+		try {
+			proc.saveHistory();
+		} catch (IOException e) {
+			log(e, "Could not save history.");
+		}
 	}
 
-	private void setStorePath(IProject project) throws IOException {
-		storePath = project.getLocation().toOSString() + File.separator
-				+ ".intlola" + File.separator;
+	private String calcStorePath(IProject project) throws IOException {
+		storePath = FileUtils.joinPath(project.getLocation().toOSString(),
+				".intlola");
 		File dir = new File(storePath);
 		if (!dir.exists() && !dir.mkdirs()) {
 			throw new IOException("Could not create plugin directory.");
 		}
-	}
-
-	public String getStorePath() {
 		return storePath;
 	}
 

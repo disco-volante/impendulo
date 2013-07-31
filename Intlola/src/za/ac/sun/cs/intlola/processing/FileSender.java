@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import za.ac.sun.cs.intlola.Intlola;
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.FileUtils;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
@@ -56,7 +55,7 @@ public class FileSender implements Runnable {
 							snd.write(writeBuffer, 0, count);
 						}
 					} catch (FileNotFoundException fe) {
-						Intlola.log(fe);
+						System.err.println(fe.getMessage());
 					}
 				}
 				snd.write(Const.EOF);
@@ -64,12 +63,12 @@ public class FileSender implements Runnable {
 				count = rcv.read(readBuffer);
 				received = new String(readBuffer, 0, count);
 				if (!received.startsWith(Const.OK)) {
-					Intlola.log(null, "Received invalid reply: " + received);
+					System.err.println("Received invalid reply: " + received);
 				}
 			}
 
 		} catch (final IOException e) {
-			Intlola.log(e);
+			System.err.println(e.getMessage());
 			ok = false;
 		} finally {
 			try {
@@ -77,13 +76,13 @@ public class FileSender implements Runnable {
 					fis.close();
 				}
 			} catch (final IOException e) {
-				Intlola.log(e);
+				System.err.println(e.getMessage());
 			}
 			if (!ok) {
 				try {
 					closeConnection();
 				} catch (final IOException e) {
-					Intlola.log(e);
+					System.err.println(e.getMessage());
 				}
 			}
 

@@ -5,16 +5,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import za.ac.sun.cs.intlola.Intlola;
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.FileUtils;
 
 import com.google.gson.JsonObject;
 
 public class SessionEnder implements Runnable {
-	private final InputStream	rcv;
-	private final OutputStream	snd;
-	private final Socket		sock;
+	private final InputStream rcv;
+	private final OutputStream snd;
+	private final Socket sock;
 
 	SessionEnder(final Socket sock, final OutputStream snd,
 			final InputStream rcv) {
@@ -47,15 +46,15 @@ public class SessionEnder implements Runnable {
 			int count = rcv.read(buffer);
 			final String received = new String(buffer, 0, count);
 			if (!received.startsWith(Const.OK)) {
-				Intlola.log(null, received);
+				System.err.println(received);
 			}
 		} catch (final IOException e) {
-			Intlola.log(e);
+			System.err.println(e.getMessage());
 		} finally {
 			try {
 				closeConnection();
 			} catch (final IOException e) {
-				Intlola.log(e, "Logout error");
+				System.err.println(e.getMessage());
 			}
 		}
 	}

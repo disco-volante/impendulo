@@ -3,7 +3,6 @@ package za.ac.sun.cs.intlola.file;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -17,8 +16,6 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
-
-import za.ac.sun.cs.intlola.Intlola;
 
 public class FileUtils {
 	private static final String BIN = "bin";
@@ -35,6 +32,7 @@ public class FileUtils {
 	public static final char TO = 't';
 	public static final char CHANGE = 'c';
 	private static final byte NOTHING = 0;
+	public static final int LAUNCHED = -6666;
 
 	/**
 	 * Copies the contents of a file to a new file location.
@@ -43,36 +41,33 @@ public class FileUtils {
 	 *            The file to be copied.
 	 * @param toName
 	 *            The path of the new file.
+	 * @throws IOException
 	 */
-	public static void copy(final String fromName, final String toName) {
-		try {
-
-			final File fromFile = new File(fromName);
-			final File toFile = new File(toName);
-			if (!fromFile.exists()) {
-				throw new IOException("No such file: " + fromName);
-			}
-			if (!fromFile.isFile()) {
-				throw new IOException("Not a file: " + fromName);
-			}
-			if (!fromFile.canRead()) {
-				throw new IOException("Cannot read file: " + fromName);
-			}
-			if (toFile.exists()) {
-				throw new IOException("File already exists: " + fromName);
-			}
-			final FileInputStream from = new FileInputStream(fromFile);
-			final FileOutputStream to = new FileOutputStream(toFile);
-			final byte[] buffer = new byte[BUFFER_SIZE];
-			int bytesRead;
-			while ((bytesRead = from.read(buffer)) != -1) {
-				to.write(buffer, 0, bytesRead);
-			}
-			from.close();
-			to.close();
-		} catch (final IOException e) {
-			Intlola.log(e);
+	public static void copy(final String fromName, final String toName)
+			throws IOException {
+		final File fromFile = new File(fromName);
+		final File toFile = new File(toName);
+		if (!fromFile.exists()) {
+			throw new IOException("No such file: " + fromName);
 		}
+		if (!fromFile.isFile()) {
+			throw new IOException("Not a file: " + fromName);
+		}
+		if (!fromFile.canRead()) {
+			throw new IOException("Cannot read file: " + fromName);
+		}
+		if (toFile.exists()) {
+			throw new IOException("File already exists: " + fromName);
+		}
+		final FileInputStream from = new FileInputStream(fromFile);
+		final FileOutputStream to = new FileOutputStream(toFile);
+		final byte[] buffer = new byte[BUFFER_SIZE];
+		int bytesRead;
+		while ((bytesRead = from.read(buffer)) != -1) {
+			to.write(buffer, 0, bytesRead);
+		}
+		from.close();
+		to.close();
 	}
 
 	/**
@@ -82,23 +77,18 @@ public class FileUtils {
 	 *            The location of the files to be zipped.
 	 * @param fname
 	 *            The absolute file name of the zip file to be created.
+	 * @throws IOException
 	 */
-	public static void createZip(final String location, final String fname) {
-		try {
-			final File dir = new File(location);
-			final FileOutputStream outfile = new FileOutputStream(fname);
-			final BufferedOutputStream out = new BufferedOutputStream(outfile);
-			final ZipOutputStream outzip = new ZipOutputStream(out);
-			zipDir(outzip, dir);
-			outzip.close();
-			out.flush();
-			out.close();
-		} catch (final FileNotFoundException e) {
-			Intlola.log(e);
-		} catch (final IOException e) {
-			Intlola.log(e);
-		}
-
+	public static void createZip(final String location, final String fname)
+			throws IOException {
+		final File dir = new File(location);
+		final FileOutputStream outfile = new FileOutputStream(fname);
+		final BufferedOutputStream out = new BufferedOutputStream(outfile);
+		final ZipOutputStream outzip = new ZipOutputStream(out);
+		zipDir(outzip, dir);
+		outzip.close();
+		out.flush();
+		out.close();
 	}
 
 	/**
@@ -201,7 +191,7 @@ public class FileUtils {
 		case IResourceDelta.REMOVED:
 			kindSuffix = REMOVE;
 			break;
-		case Intlola.LAUNCHED:
+		case LAUNCHED:
 			kindSuffix = LAUNCH;
 			break;
 		case IResourceDelta.MOVED_FROM:
@@ -226,7 +216,7 @@ public class FileUtils {
 	 * @param args
 	 *            Array containing a file's package among other information.
 	 * @param sep
-	 *            Seperator to place between package components.
+	 *            Separator to place between package components.
 	 * @return A file's package.
 	 */
 	public static String getPackage(final String[] args, final String sep) {
@@ -284,19 +274,16 @@ public class FileUtils {
 	 * 
 	 * @param toName
 	 *            The path of the empty file.
+	 * @throws IOException
 	 */
-	public static void touch(final String toName) {
-		try {
-			final File toFile = new File(toName);
-			if (toFile.exists()) {
-				throw new IOException("File already exists: " + toName);
-			}
-			final FileOutputStream to = new FileOutputStream(toFile);
-			to.write(NOTHING);
-			to.close();
-		} catch (final IOException e) {
-			Intlola.log(e);
+	public static void touch(final String toName) throws IOException {
+		final File toFile = new File(toName);
+		if (toFile.exists()) {
+			throw new IOException("File already exists: " + toName);
 		}
+		final FileOutputStream to = new FileOutputStream(toFile);
+		to.write(NOTHING);
+		to.close();
 	}
 
 	/**
@@ -308,25 +295,23 @@ public class FileUtils {
 	 *            The zip file.
 	 * @param dirfile
 	 *            The current directory.
+	 * @throws IOException
 	 */
-	public static void zipDir(final ZipOutputStream outzip, final File dirfile) {
+	public static void zipDir(final ZipOutputStream outzip, final File dirfile)
+			throws IOException {
 		for (final File file : dirfile.listFiles()) {
 			if (file.isDirectory()) {
 				zipDir(outzip, file);
 			} else if (isIntlolaFile(file.toString())) {
-				try {
-					final byte[] data = new byte[BUFFER_SIZE];
-					final FileInputStream origin = new FileInputStream(file);
-					outzip.putNextEntry(new ZipEntry(file.getName()));
-					int count;
-					while ((count = origin.read(data)) != -1) {
-						outzip.write(data, 0, count);
-					}
-					outzip.closeEntry();
-					origin.close();
-				} catch (final IOException e) {
-					Intlola.log(e);
+				final byte[] data = new byte[BUFFER_SIZE];
+				final FileInputStream origin = new FileInputStream(file);
+				outzip.putNextEntry(new ZipEntry(file.getName()));
+				int count;
+				while ((count = origin.read(data)) != -1) {
+					outzip.write(data, 0, count);
 				}
+				outzip.closeEntry();
+				origin.close();
 				file.deleteOnExit();
 			}
 		}
@@ -369,19 +354,27 @@ public class FileUtils {
 		return filename;
 	}
 
-	public static Object deserialize(String serilizedObject) throws IOException, ClassNotFoundException {
+	public static Object deserialize(String serilizedObject)
+			throws IOException, ClassNotFoundException {
 		FileInputStream fis = new FileInputStream(serilizedObject);
-	    ObjectInputStream ois = new ObjectInputStream(fis);
-	    Object ret = ois.readObject();
-	    fis.close();
-	    return ret;
+		ObjectInputStream ois = new ObjectInputStream(fis);
+		Object ret = ois.readObject();
+		fis.close();
+		return ret;
 	}
-	
-	public static void serialize(String fname, Object serializableObject) throws IOException{
+
+	public static void serialize(String fname, Object serializableObject)
+			throws IOException {
 		FileOutputStream fos = new FileOutputStream(fname);
-	    ObjectOutputStream oos = new ObjectOutputStream(fos);
-	    oos.writeObject(serializableObject);
-	    fos.close();
+		ObjectOutputStream oos = new ObjectOutputStream(fos);
+		oos.writeObject(serializableObject);
+		fos.close();
+	}
+
+	public static String joinPath(String path1, String path2) {
+		File file1 = new File(path1);
+		File file2 = new File(file1, path2);
+		return file2.getPath();
 	}
 
 }
