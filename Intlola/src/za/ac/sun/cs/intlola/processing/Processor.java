@@ -63,7 +63,7 @@ public class Processor {
 		this.storePath = storePath;
 		executor = Executors.newFixedThreadPool(1);
 		if (mode.isArchive()) {
-			archivePath = FileUtils.joinPath(storePath, "archive"+id);
+			archivePath = FileUtils.joinPath(storePath, "archive" + id);
 			new File(archivePath).mkdirs();
 		}
 	}
@@ -152,7 +152,7 @@ public class Processor {
 
 	public void logout() {
 		if (mode.equals(IntlolaMode.ARCHIVE_REMOTE)) {
-			String zipName = FileUtils.joinPath(storePath, id+".zip");
+			String zipName = FileUtils.joinPath(storePath, id + ".zip");
 			executor.execute(new ArchiveBuilder(archivePath, zipName));
 			sendFile(new ArchiveFile(zipName));
 			FileUtils.delete(zipName);
@@ -276,13 +276,14 @@ public class Processor {
 	public void processChanges(final String path, final boolean sendContents,
 			final int kind) throws IOException {
 		char kindSuffix = FileUtils.getKind(kind);
-		if(kindSuffix == FileUtils.SAVE && path.endsWith(Const.CLASS)){
+		if (kindSuffix == FileUtils.SAVE && path.endsWith(Const.CLASS)) {
 			kindSuffix = Const.COMPILED;
 		}
 		final int num = fileCounter++;
 		if (getMode().isArchive()) {
 			final String name = FileUtils.joinPath(archivePath, FileUtils
-					.encodeName(path, System.nanoTime(), num, kindSuffix));
+					.encodeName(path, Calendar.getInstance().getTimeInMillis(),
+							num, kindSuffix));
 			if (sendContents) {
 				FileUtils.copy(path, name);
 			} else {

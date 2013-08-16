@@ -7,14 +7,14 @@ import org.eclipse.core.resources.IResourceDelta;
 import za.ac.sun.cs.intlola.processing.IntlolaError;
 import za.ac.sun.cs.intlola.processing.IntlolaMode;
 import za.ac.sun.cs.intlola.processing.Processor;
+import za.ac.sun.cs.intlola.processing.Project;
 
 public class SendTester {
-	private static final int runnerCount = 2;
-
+	private static final int runnerCount = 100;
 	public static void main(String[] args) {
 		Thread[] runners = new Thread[runnerCount];
 		for (int i = 0; i < runnerCount; i++) {
-			IntlolaMode mode = IntlolaMode.FILE_REMOTE;
+			IntlolaMode mode = i % 2 == 0 ? IntlolaMode.FILE_REMOTE : IntlolaMode.ARCHIVE_REMOTE;
 			runners[i] = new FileSender(mode);
 			runners[i].start();
 		}
@@ -28,7 +28,7 @@ public class SendTester {
 	}
 
 	public static class FileSender extends Thread {
-		private static final int sendCount = 2;
+		private static final int sendCount = 1000;
 		private Processor proc;
 
 		public FileSender(IntlolaMode mode) {
@@ -42,7 +42,14 @@ public class SendTester {
 				System.err.println(error.getDescription());
 				return;
 			}
-			error = proc.createSubmission(proc.getAvailableProjects()[0]);
+			Project selected = null;
+			for(Project p : proc.getAvailableProjects()){
+				if(p.Name.equals("Triangle")){
+					selected = p;
+					break;
+				}
+			}
+			error = proc.createSubmission(selected);
 			if (!error.equals(IntlolaError.SUCCESS)) {
 				System.err.println(error.getDescription());
 				return;

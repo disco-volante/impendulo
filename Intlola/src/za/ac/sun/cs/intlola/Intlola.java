@@ -100,7 +100,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		try {
 			project.setSessionProperty(Intlola.RECORD_KEY, null);
 		} catch (final CoreException e) {
-			e.printStackTrace();
+			Intlola.log(e);
 		}
 		Intlola.log(null, "Intlola record stopping", project.getName());
 	}
