@@ -10,7 +10,7 @@ import za.ac.sun.cs.intlola.processing.Processor;
 import za.ac.sun.cs.intlola.processing.Project;
 
 public class SendTester {
-	private static final int runnerCount = 100;
+	private static final int runnerCount = 20;
 	public static void main(String[] args) {
 		Thread[] runners = new Thread[runnerCount];
 		for (int i = 0; i < runnerCount; i++) {
@@ -28,7 +28,7 @@ public class SendTester {
 	}
 
 	public static class FileSender extends Thread {
-		private static final int sendCount = 1000;
+		private static final int sendCount = 5;
 		private Processor proc;
 
 		public FileSender(IntlolaMode mode) {
@@ -57,7 +57,7 @@ public class SendTester {
 			while (proc.getFileCounter() < sendCount) {
 				try {
 					proc.processChanges(
-							"/home/godfried/dev/java/intlola/Triangle/src/triangle/Triangle.java",
+							"/home/godfried/dev/java/ImpenduloProjects/Triangle/src/triangle/Triangle.java",
 							true, IResourceDelta.CHANGED);
 				} catch (IOException e) {
 					e.printStackTrace();

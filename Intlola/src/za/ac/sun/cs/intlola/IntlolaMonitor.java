@@ -31,7 +31,7 @@ public class IntlolaMonitor implements ILaunchListener {
 		if (projectName != "") {
 			final IProject project = ResourcesPlugin.getWorkspace().getRoot()
 					.getProject(projectName);
-			if (project != null && Intlola.getRecordStatus(project)) {
+			if (project != null && Intlola.projectRecording(project)) {
 				final String path = project.getLocation().toString();
 				try {
 					Intlola.getActive().getProcessor()

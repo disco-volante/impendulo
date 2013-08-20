@@ -36,7 +36,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			"intlola", "record");
 
 	private static final Boolean RECORD_ON = new Boolean(true);
-
+	private static boolean recording = false;
+	
 	public static Intlola getActive() {
 		return Intlola.plugin;
 	}
@@ -54,16 +55,19 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 		return logMsg;
 	}
-
-	public static boolean getRecordStatus(final IProject project) {
+	
+	public static boolean isRecording(){
+		return recording;
+	}
+	
+	public static boolean projectRecording(IProject project) {
 		try {
-			final Boolean record = (Boolean) project
-					.getSessionProperty(RECORD_KEY);
-			return record == RECORD_ON;
-		} catch (final CoreException e) {
-			Intlola.log(e);
-			return false;
+			Boolean status = (Boolean) project.getSessionProperty(RECORD_KEY);
+			return status != null && status.equals(RECORD_ON);
+		} catch (CoreException e) {
+			Intlola.log(e);;
 		}
+		return false;
 	}
 
 	public static void log(final Exception e, final Object... msgs) {
@@ -81,7 +85,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 			String storepath = getActive().calcStorePath(project);
 			getActive().setProcessor(storepath);
 			getActive().setup(shell);
-			project.setSessionProperty(RECORD_KEY, RECORD_ON);
+			project.setSessionProperty(RECORD_KEY, true);
+			recording = true;
 			PluginUtils.touchAll(project);
 			Intlola.log(null, "Intlola record started", project.getName());
 		} catch (IOException e) {
@@ -102,6 +107,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		} catch (final CoreException e) {
 			Intlola.log(e);
 		}
+		recording = false;
 		Intlola.log(null, "Intlola record stopping", project.getName());
 	}
 

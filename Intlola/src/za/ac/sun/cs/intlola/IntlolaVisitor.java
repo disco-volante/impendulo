@@ -18,7 +18,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 		final IProject project = resource.getProject();
 		if (project == null) {
 			return true;
-		} else if (Intlola.getRecordStatus(project)) {
+		} else if (Intlola.projectRecording(project)) {
 			final String path = resource.getLocation().toString();
 			if(path.contains("test")){
 				return false;
