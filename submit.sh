@@ -2,5 +2,5 @@
 
 git add . -A
 git commit -m "$1"
-git push origin 
-git push backup
+git --set-upstream push origin master 
+git --set-upstream push backup master
