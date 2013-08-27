@@ -15,7 +15,6 @@ import java.util.concurrent.Executors;
 
 import za.ac.sun.cs.intlola.file.ArchiveFile;
 import za.ac.sun.cs.intlola.file.Const;
-import za.ac.sun.cs.intlola.file.FileUtils;
 import za.ac.sun.cs.intlola.file.IndividualFile;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 
@@ -63,7 +62,7 @@ public class Processor {
 		this.storePath = storePath;
 		executor = Executors.newFixedThreadPool(1);
 		if (mode.isArchive()) {
-			archivePath = FileUtils.joinPath(storePath, "archive" + id);
+			archivePath = IOUtils.joinPath(storePath, "archive" + id);
 			new File(archivePath).mkdirs();
 		}
 	}
@@ -126,21 +125,19 @@ public class Processor {
 					.specific("Could not initialise connection on: "
 							+ this.address.toString());
 		} else {
-			final byte[] buffer = new byte[1024];
 			try {
-				snd.write(params.toString().getBytes());
-				snd.write(Const.EOF);
-				snd.flush();
-				int count = rcv.read(buffer);
-				final String received = new String(buffer, 0, count);
+				IOUtils.writeJson(snd, params);
+				String projects = IOUtils.read(rcv);
 				Gson gson = new Gson();
 				try {
-					availableProjects = gson.fromJson(received,
+					availableProjects = gson.fromJson(projects.toString(),
 							new Project[1].getClass());
 					return IntlolaError.SUCCESS;
 				} catch (JsonSyntaxException e) {
+					System.out.println(e.getMessage());
 					return IntlolaError.LOGIN
-							.specific("Login attempt failed with: " + received);
+							.specific("Login attempt failed with: "
+									+ projects.toString());
 				}
 			} catch (final IOException e) {
 				return IntlolaError.LOGIN
@@ -150,12 +147,13 @@ public class Processor {
 		}
 	}
 
+
 	public void logout() {
 		if (mode.equals(IntlolaMode.ARCHIVE_REMOTE)) {
-			String zipName = FileUtils.joinPath(storePath, id + ".zip");
+			String zipName = IOUtils.joinPath(storePath, id + ".zip");
 			executor.execute(new ArchiveBuilder(archivePath, zipName));
 			sendFile(new ArchiveFile(zipName));
-			FileUtils.delete(zipName);
+			IOUtils.delete(zipName);
 		}
 		executor.execute(new SessionEnder(sock, snd, rcv));
 		executor.shutdown();
@@ -173,9 +171,9 @@ public class Processor {
 
 	@SuppressWarnings("unchecked")
 	public boolean loadHistory() {
-		String histPath = FileUtils.joinPath(storePath, "history.ser");
+		String histPath = IOUtils.joinPath(storePath, "history.ser");
 		try {
-			history = (Map<Project, ArrayList<Submission>>) FileUtils
+			history = (Map<Project, ArrayList<Submission>>) IOUtils
 					.deserialize(histPath);
 			return true;
 		} catch (ClassNotFoundException e) {
@@ -186,7 +184,7 @@ public class Processor {
 	}
 
 	public void saveHistory() throws IOException {
-		String histPath = FileUtils.joinPath(storePath, "history.ser");
+		String histPath = IOUtils.joinPath(storePath, "history.ser");
 		ArrayList<Submission> proj = history.get(currentProject);
 		if (proj == null) {
 			history.put(currentProject, new ArrayList<Submission>());
@@ -195,7 +193,7 @@ public class Processor {
 		if (!proj.contains(currentSubmission)) {
 			proj.add(currentSubmission);
 		}
-		FileUtils.serialize(histPath, history);
+		IOUtils.serialize(histPath, history);
 	}
 
 	public IntlolaError continueSubmission(Submission submission,
@@ -208,13 +206,9 @@ public class Processor {
 		final JsonObject params = new JsonObject();
 		params.addProperty(Const.REQ, Const.SUBMISSION_CONTINUE);
 		params.addProperty(Const.SUBMISSION_ID, currentSubmission.Id);
-		final byte[] buffer = new byte[1024];
 		try {
-			snd.write(params.toString().getBytes());
-			snd.write(Const.EOF);
-			snd.flush();
-			int count = rcv.read(buffer);
-			final String received = new String(buffer, 0, count);
+			IOUtils.writeJson(snd, params);
+			final String received = IOUtils.read(rcv);
 			try {
 				setFileCounter(new Gson().fromJson(received, int.class));
 				return IntlolaError.SUCCESS;
@@ -239,13 +233,9 @@ public class Processor {
 		params.addProperty(Const.REQ, Const.SUBMISSION_NEW);
 		params.addProperty(Const.PROJECT_ID, currentProject.Id);
 		params.addProperty(Const.TIME, Calendar.getInstance().getTimeInMillis());
-		final byte[] buffer = new byte[1024];
 		try {
-			snd.write(params.toString().getBytes());
-			snd.write(Const.EOF);
-			snd.flush();
-			int count = rcv.read(buffer);
-			final String received = new String(buffer, 0, count);
+			IOUtils.writeJson(snd, params);
+			final String received = IOUtils.read(rcv);
 			Gson gson = new Gson();
 			try {
 				currentSubmission = gson.fromJson(received,
@@ -275,19 +265,19 @@ public class Processor {
 
 	public void processChanges(final String path, final boolean sendContents,
 			final int kind) throws IOException {
-		char kindSuffix = FileUtils.getKind(kind);
-		if (kindSuffix == FileUtils.SAVE && path.endsWith(Const.CLASS)) {
-			kindSuffix = Const.COMPILED;
+		char kindSuffix = IOUtils.getKind(kind);
+		if (!IOUtils.shouldSend(kindSuffix, path)) {
+			return;
 		}
 		final int num = fileCounter++;
 		if (getMode().isArchive()) {
-			final String name = FileUtils.joinPath(archivePath, FileUtils
+			final String name = IOUtils.joinPath(archivePath, IOUtils
 					.encodeName(path, Calendar.getInstance().getTimeInMillis(),
 							num, kindSuffix));
 			if (sendContents) {
-				FileUtils.copy(path, name);
+				IOUtils.copy(path, name);
 			} else {
-				FileUtils.touch(name);
+				IOUtils.touch(name);
 			}
 		} else if (getMode().isRemote()) {
 			sendFile(new IndividualFile(path, kindSuffix, num, sendContents));

@@ -1,13 +1,16 @@
-package za.ac.sun.cs.intlola.file;
+package za.ac.sun.cs.intlola.processing;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.security.InvalidParameterException;
+import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -17,23 +20,50 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 
-public class FileUtils {
+import za.ac.sun.cs.intlola.file.Const;
+import za.ac.sun.cs.intlola.file.IndividualFile;
+import za.ac.sun.cs.intlola.file.IntlolaFile;
+
+import com.google.gson.JsonObject;
+
+public class IOUtils {
 	private static final String BIN = "bin";
 	private static final String CLASS = ".class";
 	public static final String COMPONENT_SEP = "_";
 	private static final String JAVA = ".java";
 	public static final String NAME_SEP = ".";
 	private static final String SRC = "src";
-	public static final int BUFFER_SIZE = 2048;
-	public static final char ADD = 'a';
-	public static final char REMOVE = 'r';
+	public static final int BUFFER_SIZE = 4096;
 	public static final char LAUNCH = 'l';
-	public static final char FROM = 'f';
-	public static final char TO = 't';
 	public static final char SAVE = 's';
-	public static final char COMPILE = 'c';
+	public static final char INVALID = 'i';
 	private static final byte NOTHING = 0;
 	public static final int LAUNCHED = -6666;
+
+	public static String read(InputStream in) throws IOException {
+		final byte[] buffer = new byte[BUFFER_SIZE];
+		StringBuilder read = new StringBuilder();
+		int count = 0;
+		while ((count = in.read(buffer)) != -1) {
+			byte[] subBuffer = Arrays.copyOfRange(buffer, count
+					- Const.EOT_B.length, count);
+			if (Arrays.equals(Const.EOT_B, subBuffer)) {
+				read.append(new String(buffer, 0, count - Const.EOT_B.length));
+				break;
+			} else {
+				String current = new String(buffer, 0, count);
+				read.append(current);
+			}
+		}
+		return read.toString();
+	}
+
+	public static void writeJson(OutputStream out, JsonObject data)
+			throws IOException {
+		out.write(data.toString().getBytes());
+		out.write(Const.EOT_B);
+		out.flush();
+	}
 
 	/**
 	 * Copies the contents of a file to a new file location.
@@ -179,36 +209,35 @@ public class FileUtils {
 	}
 
 	public static boolean isKindSuffix(char modChar) {
-		return modChar == ADD || modChar == REMOVE || modChar == LAUNCH
-				|| modChar == FROM || modChar == TO || modChar == SAVE
-				|| modChar == COMPILE;
+		return modChar == LAUNCH || modChar == SAVE;
 	}
 
 	public static char getKind(final int kind) {
 		char kindSuffix = ' ';
 		switch (kind) {
-		case IResourceDelta.ADDED:
-			kindSuffix = ADD;
-			break;
-		case IResourceDelta.REMOVED:
-			kindSuffix = REMOVE;
-			break;
 		case LAUNCHED:
 			kindSuffix = LAUNCH;
-			break;
-		case IResourceDelta.MOVED_FROM:
-			kindSuffix = FROM;
-			break;
-		case IResourceDelta.MOVED_TO:
-			kindSuffix = TO;
 			break;
 		case IResourceDelta.CHANGED:
 			kindSuffix = SAVE;
 			break;
 		default:
-			throw new InvalidParameterException();
+			kindSuffix = INVALID;
 		}
 		return kindSuffix;
+	}
+
+	public static boolean shouldSend(char kindSuffix, String path) {
+		if (kindSuffix == LAUNCH) {
+			return true;
+		}
+		if (!path.endsWith(Const.JAVA)) {
+			return false;
+		}
+		if (kindSuffix == INVALID) {
+			return false;
+		}
+		return true;
 	}
 
 	/**

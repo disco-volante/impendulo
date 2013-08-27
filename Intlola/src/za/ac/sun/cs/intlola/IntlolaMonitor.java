@@ -10,7 +10,7 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchListener;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 
-import za.ac.sun.cs.intlola.file.FileUtils;
+import za.ac.sun.cs.intlola.processing.IOUtils;
 
 public class IntlolaMonitor implements ILaunchListener {
 
@@ -35,7 +35,7 @@ public class IntlolaMonitor implements ILaunchListener {
 				final String path = project.getLocation().toString();
 				try {
 					Intlola.getActive().getProcessor()
-							.processChanges(path, false, FileUtils.LAUNCHED);
+							.processChanges(path, false, IOUtils.LAUNCHED);
 				} catch (IOException e) {
 					Intlola.log(e, "Could not process launch");
 				}

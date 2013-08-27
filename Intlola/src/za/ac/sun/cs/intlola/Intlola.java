@@ -19,11 +19,11 @@ import org.eclipse.ui.IStartup;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
-import za.ac.sun.cs.intlola.file.FileUtils;
 import za.ac.sun.cs.intlola.gui.LoginDialog;
 import za.ac.sun.cs.intlola.gui.ModeDialog;
 import za.ac.sun.cs.intlola.gui.SubmissionDialog;
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
+import za.ac.sun.cs.intlola.processing.IOUtils;
 import za.ac.sun.cs.intlola.processing.IntlolaError;
 import za.ac.sun.cs.intlola.processing.IntlolaMode;
 import za.ac.sun.cs.intlola.processing.InvalidModeException;
@@ -37,7 +37,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private static final Boolean RECORD_ON = new Boolean(true);
 	private static boolean recording = false;
-	
+
 	public static Intlola getActive() {
 		return Intlola.plugin;
 	}
@@ -55,17 +55,18 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 		return logMsg;
 	}
-	
-	public static boolean isRecording(){
+
+	public static boolean isRecording() {
 		return recording;
 	}
-	
+
 	public static boolean projectRecording(IProject project) {
 		try {
 			Boolean status = (Boolean) project.getSessionProperty(RECORD_KEY);
 			return status != null && status.equals(RECORD_ON);
 		} catch (CoreException e) {
-			Intlola.log(e);;
+			Intlola.log(e);
+			;
 		}
 		return false;
 	}
@@ -223,7 +224,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		if (proc.getMode().isRemote()) {
 			proc.logout();
 		} else if (proc.getMode().equals(IntlolaMode.ARCHIVE_LOCAL)) {
-			proc.handleLocalArchive(FileUtils.getFilename(shell));
+			proc.handleLocalArchive(IOUtils.getFilename(shell));
 		}
 		try {
 			proc.saveHistory();
@@ -233,7 +234,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	}
 
 	private String calcStorePath(IProject project) throws IOException {
-		storePath = FileUtils.joinPath(project.getLocation().toOSString(),
+		storePath = IOUtils.joinPath(project.getLocation().toOSString(),
 				".intlola");
 		File dir = new File(storePath);
 		if (!dir.exists() && !dir.mkdirs()) {

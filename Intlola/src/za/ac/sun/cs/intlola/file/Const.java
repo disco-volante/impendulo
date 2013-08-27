@@ -5,7 +5,8 @@ public class Const {
 	public static final String	CHANGE	= "change";
 	public static final String	CLASS	= "class";
 	public static final String	EMPTY	= "empty";
-	public static final byte[]	EOF		= "eof".getBytes();
+	public static final String	EOT_S		= "\u0004";
+	public static final byte[]	EOT_B		= EOT_S.getBytes();
 	public static final String	EXEC	= "exec";
 	public static final String	FTYPE	= "ftype";
 	public static final String	JAVA	= "java";
@@ -34,5 +35,4 @@ public class Const {
 	public static final String NAMES = "names";
 	public static final String PROJECT_ID = "projectid";
 	public static final String SUBMISSION_ID = "subid";
-	public static final char COMPILED = 0;
 }

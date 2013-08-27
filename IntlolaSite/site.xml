@@ -4,7 +4,7 @@
       Provides the Intlola plug-in, which is part of the
 Impendulo system.
    </description>
-   <feature url="features/za.ac.sun.cs.IntlolaFeature_1.0.0.10.jar" id="za.ac.sun.cs.IntlolaFeature" version="1.0.0.10">
+   <feature url="features/za.ac.sun.cs.IntlolaFeature_1.0.0.11.jar" id="za.ac.sun.cs.IntlolaFeature" version="1.0.0.11">
       <category name="za.ac.sun.cs.Intlola"/>
    </feature>
    <category-def name="za.ac.sun.cs.Intlola" label="Intlola">

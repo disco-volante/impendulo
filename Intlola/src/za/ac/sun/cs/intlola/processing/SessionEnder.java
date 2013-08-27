@@ -6,7 +6,6 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 import za.ac.sun.cs.intlola.file.Const;
-import za.ac.sun.cs.intlola.file.FileUtils;
 
 import com.google.gson.JsonObject;
 
@@ -39,12 +38,8 @@ public class SessionEnder implements Runnable {
 		try {
 			final JsonObject params = new JsonObject();
 			params.addProperty(Const.REQ, Const.LOGOUT);
-			snd.write(params.toString().getBytes());
-			snd.write(Const.EOF);
-			snd.flush();
-			final byte[] buffer = new byte[FileUtils.BUFFER_SIZE];
-			int count = rcv.read(buffer);
-			final String received = new String(buffer, 0, count);
+			IOUtils.writeJson(snd, params);
+			final String received = IOUtils.read(rcv);
 			if (!received.startsWith(Const.OK)) {
 				System.err.println(received);
 			}

@@ -158,7 +158,8 @@ public class LoginDialog extends Dialog {
 
 	private String validPort(final String port) {
 		try {
-			if (Integer.parseInt(portField.getText().trim()) < 0) {
+			int p = Integer.parseInt(portField.getText().trim());
+			if (p < 0 || p > 65535) {
 				return port + " is not a valid port number.";
 			}
 		} catch (final NumberFormatException ne) {
@@ -170,6 +171,8 @@ public class LoginDialog extends Dialog {
 	private String validString(final String type, final String arg) {
 		if (arg.length() == 0) {
 			return type + " too short;";
+		} else if(arg.length() > 100){
+			return type + " too long;";
 		}
 		return null;
 	}

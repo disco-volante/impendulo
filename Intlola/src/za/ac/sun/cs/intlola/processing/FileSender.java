@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 import za.ac.sun.cs.intlola.file.Const;
-import za.ac.sun.cs.intlola.file.FileUtils;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 
 import com.google.gson.JsonObject;
@@ -35,22 +34,19 @@ public class FileSender implements Runnable {
 
 	@Override
 	public void run() {
-		final byte[] readBuffer = new byte[FileUtils.BUFFER_SIZE];
-		final byte[] writeBuffer = new byte[FileUtils.BUFFER_SIZE];
+		final byte[] writeBuffer = new byte[IOUtils.BUFFER_SIZE];
 		FileInputStream fis = null;
 		boolean ok = true;
 		try {
 			final JsonObject fjson = file.toJSON();
 			fjson.addProperty(Const.REQ, Const.SEND);
-			snd.write(fjson.toString().getBytes());
-			snd.write(Const.EOF);
-			snd.flush();
-			int count = rcv.read(readBuffer);
-			String received = new String(readBuffer, 0, count);
+			IOUtils.writeJson(snd, fjson);
+			String received = IOUtils.read(rcv);
 			if (received.startsWith(Const.OK)) {
 				if (file.sendContents()) {
 					try {
 						fis = new FileInputStream(file.getPath());
+						int count = 1;
 						while ((count = fis.read(writeBuffer)) >= 0) {
 							snd.write(writeBuffer, 0, count);
 						}
@@ -58,10 +54,9 @@ public class FileSender implements Runnable {
 						System.err.println(fe.getMessage());
 					}
 				}
-				snd.write(Const.EOF);
+				snd.write(Const.EOT_B);
 				snd.flush();
-				count = rcv.read(readBuffer);
-				received = new String(readBuffer, 0, count);
+				received = IOUtils.read(rcv);
 				if (!received.startsWith(Const.OK)) {
 					System.err.println("Received invalid reply: " + received);
 				}

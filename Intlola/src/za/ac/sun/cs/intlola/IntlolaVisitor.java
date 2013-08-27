@@ -19,15 +19,20 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 		if (project == null) {
 			return true;
 		} else if (Intlola.projectRecording(project)) {
-			final String path = resource.getLocation().toString();
-			if(path.contains("test")){
+			String current = resource.getLocation().lastSegment();
+			if (current.contains("bin") || current.contains("test")
+					|| current.startsWith(".")) {
 				return false;
 			}
-			boolean sendContents = resource.getType() == IResource.FILE
-					&& path.trim().endsWith(Const.JAVA);
+			final String path = resource.getLocation().toString();
 			try {
-				Intlola.getActive().getProcessor()
-						.processChanges(path, sendContents, delta.getKind());
+				if ((delta.getFlags() & IResourceDelta.CONTENT) == IResourceDelta.CONTENT) {
+					boolean sendContents = resource.getType() == IResource.FILE
+							&& path.trim().endsWith(Const.JAVA);
+					Intlola.getActive()
+							.getProcessor()
+							.processChanges(path, sendContents, delta.getKind());
+				}
 			} catch (IOException e) {
 				Intlola.log(e, "Could not process changes");
 			}

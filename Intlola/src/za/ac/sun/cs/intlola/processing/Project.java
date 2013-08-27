@@ -5,10 +5,11 @@ import java.util.Date;
 
 public class Project implements Serializable {
 	private static final long serialVersionUID = -7128594023385132073L;
-	public String Id, Name, User, Lang;
+	String Id;
+	public String Name;
+	String User;
+	String Lang;
 	long Time;
-	byte [] Skeleton;
-
 	@Override
 	public int hashCode() {
 		return Id.hashCode();
