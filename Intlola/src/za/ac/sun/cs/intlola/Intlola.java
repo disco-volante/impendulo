@@ -154,6 +154,15 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		if (proc.getMode().isRemote()) {
 			if (!login(shell)) {
 				throw new LoginException("Could not login to server.");
+			} else {
+				getPreferenceStore().setValue(PreferenceConstants.P_ADDRESS,
+						proc.getAddress());
+				getPreferenceStore().setValue(PreferenceConstants.P_MODE,
+						proc.getMode().toString());
+				getPreferenceStore().setValue(PreferenceConstants.P_PORT,
+						proc.getPort());
+				getPreferenceStore().setValue(PreferenceConstants.P_UNAME,
+						proc.getUsername());
 			}
 			if (!startSubmission(shell)) {
 				throw new LoginException("Could not start submission.");

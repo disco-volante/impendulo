@@ -134,19 +134,14 @@ public class Processor {
 							new Project[1].getClass());
 					return IntlolaError.SUCCESS;
 				} catch (JsonSyntaxException e) {
-					System.out.println(e.getMessage());
 					return IntlolaError.LOGIN
-							.specific("Login attempt failed with: "
-									+ projects.toString());
+							.specific("Login attempt failed, invalid username or password.");
 				}
 			} catch (final IOException e) {
-				return IntlolaError.LOGIN
-						.specific("Login attempt failed with: "
-								+ e.getMessage());
+				return IntlolaError.LOGIN.specific("Login attempt failed.");
 			}
 		}
 	}
-
 
 	public void logout() {
 		if (mode.equals(IntlolaMode.ARCHIVE_REMOTE)) {
@@ -214,13 +209,11 @@ public class Processor {
 				return IntlolaError.SUCCESS;
 			} catch (final JsonSyntaxException e) {
 				return IntlolaError.LOGIN
-						.specific("Submission continuation attempt failed with: "
-								+ received);
+						.specific("Could not continue submission.");
 			}
 		} catch (final IOException e) {
 			return IntlolaError.LOGIN
-					.specific("Submission continuation attempt failed with: "
-							+ e.getMessage());
+					.specific("Could not continue submission.");
 		}
 	}
 
@@ -243,13 +236,10 @@ public class Processor {
 				return IntlolaError.SUCCESS;
 			} catch (final JsonSyntaxException e) {
 				return IntlolaError.LOGIN
-						.specific("Submission creation attempt failed with: "
-								+ received);
+						.specific("Could not create submission.");
 			}
 		} catch (final IOException e) {
-			return IntlolaError.LOGIN
-					.specific("Submission creation attempt failed with: "
-							+ e.getMessage());
+			return IntlolaError.LOGIN.specific("Could not create submission.");
 		}
 	}
 
