@@ -11,10 +11,12 @@ import org.junit.Test;
 import za.ac.sun.cs.intlola.file.IndividualFile;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 import za.ac.sun.cs.intlola.processing.IOUtils;
+
 /**
  * Tests for {@link IOUtils}.
+ * 
  * @author disco
- *
+ * 
  */
 public class FileTest {
 	private static final long TIME_1 = Calendar.getInstance().getTimeInMillis();
@@ -33,14 +35,13 @@ public class FileTest {
 	private static final String PREFIX_2 = "bla" + File.separator + "src";
 	private static final String ENC_NAME_1 = PREFIX_1 + IOUtils.COMPONENT_SEP
 			+ ENC_PKG_1 + IOUtils.COMPONENT_SEP + FNAME_1
-			+ IOUtils.COMPONENT_SEP + TIME_1 + IOUtils.COMPONENT_SEP
-			+ NUM_1 + IOUtils.COMPONENT_SEP + MOD_1;
-	private static final String ENC_NAME_2 = ENC_PKG_1
-			+ IOUtils.COMPONENT_SEP + FNAME_1 + IOUtils.COMPONENT_SEP
-			+ TIME_1 + IOUtils.COMPONENT_SEP + NUM_1
+			+ IOUtils.COMPONENT_SEP + TIME_1 + IOUtils.COMPONENT_SEP + NUM_1
 			+ IOUtils.COMPONENT_SEP + MOD_1;
+	private static final String ENC_NAME_2 = ENC_PKG_1 + IOUtils.COMPONENT_SEP
+			+ FNAME_1 + IOUtils.COMPONENT_SEP + TIME_1 + IOUtils.COMPONENT_SEP
+			+ NUM_1 + IOUtils.COMPONENT_SEP + MOD_1;
 	private static final IntlolaFile IFILE_1 = new IndividualFile(ENC_NAME_1,
-			FNAME_1, PKG_1, TIME_1, NUM_1, MOD_1, true);
+			FNAME_1, PKG_1, TIME_1, MOD_1, true);
 	private static final String PATH_1 = PREFIX_2 + File.separator + PKG_PATH_1
 			+ File.separator + FNAME_1;
 	private static final String PATH_2 = PKG_PATH_1 + File.separator + FNAME_1;
@@ -70,7 +71,7 @@ public class FileTest {
 
 	@Test
 	public void testEncodeName() {
-		String actual = IOUtils.encodeName(PATH_1, TIME_1, NUM_1, MOD_1);
+		String actual = IOUtils.encodeName(PATH_1, TIME_1, MOD_1);
 		assertEquals(ENC_NAME_2, actual);
 	}
 

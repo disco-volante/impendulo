@@ -12,6 +12,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
@@ -142,6 +143,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	public void start(final BundleContext context) throws Exception {
 		super.start(context);
 		if (!listenersAdded) {
+			DebugPlugin.getDefault().getLaunchManager()
+					.addLaunchListener(new IntlolaMonitor());
 			changeListener = new IntlolaListener();
 			PluginUtils.getWorkspace().addResourceChangeListener(
 					changeListener, IResourceChangeEvent.POST_CHANGE);

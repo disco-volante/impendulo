@@ -35,7 +35,7 @@ public class IOUtils {
 	private static final String SRC = "src";
 	public static final int BUFFER_SIZE = 4096;
 	public static final char LAUNCH = 'l';
-	public static final char SAVE = 's';
+	public static final char SAVE = 'c';
 	public static final char INVALID = 'i';
 	private static final byte NOTHING = 0;
 	public static final int LAUNCHED = -6666;
@@ -142,12 +142,11 @@ public class IOUtils {
 		if (!isKindSuffix(mod)) {
 			throw new InvalidParameterException("Unknown kind: " + mod);
 		}
-		final int num = Integer.parseInt(elems[elems.length - 2]);
-		final long time = Long.parseLong(elems[elems.length - 3]);
+		final long time = Long.parseLong(elems[elems.length - 2]);
 		String name = getFileName(elems);
 		boolean sendContents = name.endsWith(Const.JAVA);
 		String pkg = getPackage(elems, NAME_SEP);
-		return new IndividualFile(encodedName, name, pkg, time, num, mod,
+		return new IndividualFile(encodedName, name, pkg, time, mod,
 				sendContents);
 	}
 
@@ -168,7 +167,7 @@ public class IOUtils {
 	 * @return A name containing file metadata.
 	 */
 	public static String encodeName(final String path, final long time,
-			final int count, final char kindSuffix) {
+			final char kindSuffix) {
 		final StringBuffer d = new StringBuffer();
 		final String[] args = path.split(File.separator);
 		final String pkg = getPackage(args, COMPONENT_SEP);
@@ -182,8 +181,6 @@ public class IOUtils {
 			d.append(COMPONENT_SEP);
 		}
 		d.append(time);
-		d.append(COMPONENT_SEP);
-		d.append(count);
 		d.append(COMPONENT_SEP);
 		d.append(kindSuffix);
 		return d.toString();

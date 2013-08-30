@@ -33,7 +33,6 @@ public class Processor {
 	private InputStream rcv = null;
 	private OutputStream snd = null;
 	private Socket sock = null;
-	private int fileCounter = 0;
 	private String username;
 
 	private Project[] availableProjects;
@@ -204,10 +203,9 @@ public class Processor {
 		try {
 			IOUtils.writeJson(snd, params);
 			final String received = IOUtils.read(rcv);
-			try {
-				setFileCounter(new Gson().fromJson(received, int.class));
+			if (received.startsWith(Const.OK)) {
 				return IntlolaError.SUCCESS;
-			} catch (final JsonSyntaxException e) {
+			} else {
 				return IntlolaError.LOGIN
 						.specific("Could not continue submission.");
 			}
@@ -259,26 +257,17 @@ public class Processor {
 		if (!IOUtils.shouldSend(kindSuffix, path)) {
 			return;
 		}
-		final int num = fileCounter++;
 		if (getMode().isArchive()) {
 			final String name = IOUtils.joinPath(archivePath, IOUtils
 					.encodeName(path, Calendar.getInstance().getTimeInMillis(),
-							num, kindSuffix));
+							kindSuffix));
 			if (sendContents) {
 				IOUtils.copy(path, name);
 			} else {
 				IOUtils.touch(name);
 			}
 		} else if (getMode().isRemote()) {
-			sendFile(new IndividualFile(path, kindSuffix, num, sendContents));
+			sendFile(new IndividualFile(path, kindSuffix, sendContents));
 		}
-	}
-
-	public int getFileCounter() {
-		return fileCounter;
-	}
-
-	public void setFileCounter(int fileCounter) {
-		this.fileCounter = fileCounter;
 	}
 }

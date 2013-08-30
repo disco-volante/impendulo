@@ -11,17 +11,15 @@ public class IndividualFile implements IntlolaFile {
 
 	private final boolean sendContents;
 	private final char mod;
-	private final int num;
 
 	private final String path, name, pkg;
 
 	private final long time;
 
-	public IndividualFile(final String path, final char mod, final int num,
+	public IndividualFile(final String path, final char mod,
 			final boolean sendContents) {
 		this.path = path;
 		this.mod = mod;
-		this.num = num;
 		this.sendContents = sendContents;
 		time = Calendar.getInstance().getTimeInMillis();
 		final String[] spd = path.split(File.separator);
@@ -30,11 +28,10 @@ public class IndividualFile implements IntlolaFile {
 	}
 
 	public IndividualFile(final String path, final String name,
-			final String pkg, final long time, final int num, final char mod,
+			final String pkg, final long time, final char mod,
 			final boolean sendContents) {
 		this.path = path;
 		this.mod = mod;
-		this.num = num;
 		this.sendContents = sendContents;
 		this.time = time;
 		this.name = name;
@@ -55,19 +52,12 @@ public class IndividualFile implements IntlolaFile {
 	public JsonObject toJSON() {
 		final JsonObject ret = new JsonObject();
 		if (name.endsWith(Const.JAVA)) {
-			ret.addProperty(Const.FTYPE, Const.JAVA);
 			ret.addProperty(Const.TYPE, Const.SRC);
-		} else if (name.endsWith(Const.CLASS)) {
-			ret.addProperty(Const.FTYPE, Const.CLASS);
-			ret.addProperty(Const.TYPE, Const.EXEC);
 		} else {
-			ret.addProperty(Const.FTYPE, Const.EMPTY);
-			ret.addProperty(Const.TYPE, Const.CHANGE);
+			ret.addProperty(Const.TYPE, Const.LAUNCH);
 		}
 		ret.addProperty(Const.NAME, name);
 		ret.addProperty(Const.PKG, pkg);
-		ret.addProperty(Const.MOD, mod);
-		ret.addProperty(Const.NUM, num);
 		ret.addProperty(Const.TIME, time);
 		return ret;
 	}
@@ -79,7 +69,6 @@ public class IndividualFile implements IntlolaFile {
 		result = prime * result + (sendContents ? 1231 : 1237);
 		result = prime * result + mod;
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + num;
 		result = prime * result + ((path == null) ? 0 : path.hashCode());
 		result = prime * result + ((pkg == null) ? 0 : pkg.hashCode());
 		result = prime * result + (int) (time ^ (time >>> 32));
@@ -103,8 +92,6 @@ public class IndividualFile implements IntlolaFile {
 			if (other.name != null)
 				return false;
 		} else if (!name.equals(other.name))
-			return false;
-		if (num != other.num)
 			return false;
 		if (path == null) {
 			if (other.path != null)

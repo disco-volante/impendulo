@@ -54,7 +54,8 @@ public class SendTester {
 				System.err.println(error.getDescription());
 				return;
 			}
-			while (proc.getFileCounter() < sendCount) {
+			int count = 0;
+			while (count < sendCount) {
 				try {
 					proc.processChanges(
 							"/home/godfried/dev/java/ImpenduloProjects/Triangle/src/triangle/Triangle.java",
@@ -62,6 +63,7 @@ public class SendTester {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+				count ++;
 			}
 			if (proc.getMode().isRemote()) {
 				proc.logout();
