@@ -47,6 +47,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
+/**
+ * Processor interacts with Impendulo over TCP. It logs the user in to
+ * Impendulo, retrieves available projects, sends files and logs them out.
+ * 
+ * @author godfried
+ * 
+ */
 public class Processor {
 
 	private InetSocketAddress address;
@@ -77,10 +84,12 @@ public class Processor {
 	 * @param mode
 	 * @param address
 	 * @param port
-	 * @throws InvalidModeException 
+	 * @throws InvalidModeException
 	 */
-	public Processor(final IntlolaMode mode, final String storePath) throws InvalidModeException {
-		this.storePath = IOUtils.joinPath(storePath, UUID.randomUUID().toString());
+	public Processor(final IntlolaMode mode, final String storePath)
+			throws InvalidModeException {
+		this.storePath = IOUtils.joinPath(storePath, UUID.randomUUID()
+				.toString());
 		setMode(mode);
 		executor = Executors.newFixedThreadPool(1);
 	}
@@ -113,11 +122,22 @@ public class Processor {
 		return history;
 	}
 
+	/**
+	 * handleLocalArchive shuts down the processor if the snapshots are being
+	 * stored locally.
+	 * 
+	 * @param zipName
+	 */
 	public void handleLocalArchive(final String zipName) {
 		executor.execute(new ArchiveBuilder(archivePath, zipName));
 		executor.shutdown();
 	}
 
+	/**
+	 * init creates the socket over which communication will take place.
+	 * 
+	 * @return
+	 */
 	private boolean init() {
 		try {
 			sock = new Socket();
@@ -130,6 +150,17 @@ public class Processor {
 		}
 	}
 
+	/**
+	 * login attempts to log the user in to Impendulo with the provided details.
+	 * If successful, it will also receive a list of the available projects
+	 * which the user can attempt.
+	 * 
+	 * @param username
+	 * @param password
+	 * @param address
+	 * @param port
+	 * @return
+	 */
 	public IntlolaError login(String username, final String password,
 			final String address, final int port) {
 		setFields(username, address, port);
@@ -161,6 +192,9 @@ public class Processor {
 		}
 	}
 
+	/**
+	 * logout ends communication with Impendulo and shuts down the processor.
+	 */
 	public void logout() {
 		if (mode.equals(IntlolaMode.ARCHIVE_REMOTE)) {
 			String zipName = IOUtils.joinPath(storePath, "intlola.zip");
@@ -172,6 +206,11 @@ public class Processor {
 		executor.shutdown();
 	}
 
+	/**
+	 * sendFile sends a file asynchronously to Impendulo.
+	 * 
+	 * @param file
+	 */
 	public void sendFile(final IntlolaFile file) {
 		executor.execute(new FileSender(file, sock, snd, rcv));
 	}
@@ -182,6 +221,11 @@ public class Processor {
 		this.address = new InetSocketAddress(address, port);
 	}
 
+	/**
+	 * loadHistory loads previous submissions the user has worked on.
+	 * 
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public boolean loadHistory() {
 		String histPath = IOUtils.joinPath(storePath, "history.ser");
@@ -196,6 +240,12 @@ public class Processor {
 		return false;
 	}
 
+	/**
+	 * saveHistory stores submissions this user has worked on including the
+	 * current submission.
+	 * 
+	 * @throws IOException
+	 */
 	public void saveHistory() throws IOException {
 		String histPath = IOUtils.joinPath(storePath, "history.ser");
 		ArrayList<Submission> proj = history.get(currentProject);
@@ -209,6 +259,13 @@ public class Processor {
 		IOUtils.serialize(histPath, history);
 	}
 
+	/**
+	 * continueSubmission allows the user to continue with an old submission.
+	 * 
+	 * @param submission
+	 * @param project
+	 * @return
+	 */
 	public IntlolaError continueSubmission(Submission submission,
 			Project project) {
 		currentSubmission = submission;
@@ -234,6 +291,12 @@ public class Processor {
 		}
 	}
 
+	/**
+	 * createSubmission creates a new submission for the user.
+	 * 
+	 * @param project
+	 * @return
+	 */
 	public IntlolaError createSubmission(Project project) {
 		currentProject = project;
 		if (!mode.isRemote()) {
@@ -260,8 +323,8 @@ public class Processor {
 		}
 	}
 
-	public void setMode(IntlolaMode mode) throws InvalidModeException{
-		if(mode == null || mode.equals(IntlolaMode.NONE)){
+	public void setMode(IntlolaMode mode) throws InvalidModeException {
+		if (mode == null || mode.equals(IntlolaMode.NONE)) {
 			throw new InvalidModeException(mode);
 		}
 		this.mode = mode;
@@ -271,6 +334,15 @@ public class Processor {
 		}
 	}
 
+	/**
+	 * processChanges processes a new snapshot and then either sends it or
+	 * stores it if it is valid.
+	 * 
+	 * @param path
+	 * @param sendContents
+	 * @param kind
+	 * @throws IOException
+	 */
 	public void processChanges(final String path, final boolean sendContents,
 			final int kind) throws IOException {
 		char kindSuffix = IOUtils.getKind(kind);

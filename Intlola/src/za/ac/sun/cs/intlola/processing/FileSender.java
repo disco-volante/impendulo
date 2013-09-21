@@ -36,6 +36,12 @@ import za.ac.sun.cs.intlola.file.IntlolaFile;
 
 import com.google.gson.JsonObject;
 
+/**
+ * FileSender is used to send files to Impendulo asynchronously
+ * 
+ * @author godfried
+ * 
+ */
 public class FileSender implements Runnable {
 	private final IntlolaFile file;
 	private final InputStream rcv;

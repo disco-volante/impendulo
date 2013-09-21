@@ -26,6 +26,12 @@ package za.ac.sun.cs.intlola.processing;
 
 import java.io.IOException;
 
+/**
+ * ArchiveBuilder is used to create a zip archive from a directory of files.
+ * 
+ * @author godfried
+ * 
+ */
 public class ArchiveBuilder implements Runnable {
 	private final String fileLocation, savePath;
 

@@ -28,6 +28,13 @@ import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.runtime.CoreException;
 
+/**
+ * IntlolaListener detects changes to resources and launches an IntlolaVisitor
+ * to investigate these changes.
+ * 
+ * @author godfried
+ * 
+ */
 public class IntlolaListener implements IResourceChangeListener {
 
 	@Override

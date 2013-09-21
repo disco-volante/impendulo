@@ -26,12 +26,33 @@ package za.ac.sun.cs.intlola.file;
 
 import com.google.gson.JsonObject;
 
+/**
+ * IntlolaFile is an interface used to represent files used by Intlola.
+ * 
+ * @author godfried
+ * 
+ */
 public interface IntlolaFile {
 
+	/**
+	 * The path to the file.
+	 * 
+	 * @return
+	 */
 	String getPath();
 
+	/**
+	 * Whether the file has data to send.
+	 * 
+	 * @return
+	 */
 	boolean sendContents();
 
+	/**
+	 * Converts a file's metadata to Json.
+	 * 
+	 * @return
+	 */
 	JsonObject toJSON();
 
 }

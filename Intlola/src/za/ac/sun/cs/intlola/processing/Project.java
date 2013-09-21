@@ -27,6 +27,12 @@ package za.ac.sun.cs.intlola.processing;
 import java.io.Serializable;
 import java.util.Date;
 
+/**
+ * Project represents a project within Impendulo.
+ * 
+ * @author godfried
+ * 
+ */
 public class Project implements Serializable {
 	private static final long serialVersionUID = -7128594023385132073L;
 	String Id;
@@ -34,6 +40,7 @@ public class Project implements Serializable {
 	String User;
 	String Lang;
 	long Time;
+
 	@Override
 	public int hashCode() {
 		return Id.hashCode();

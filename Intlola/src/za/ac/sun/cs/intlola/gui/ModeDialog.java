@@ -38,6 +38,12 @@ import org.eclipse.swt.widgets.Shell;
 
 import za.ac.sun.cs.intlola.processing.IntlolaMode;
 
+/**
+ * ModeDialog is used to determine which mode the user wishes to run Intlola in.
+ * 
+ * @author godfried
+ * 
+ */
 public class ModeDialog extends Dialog {
 	private IntlolaMode mode;
 

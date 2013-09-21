@@ -36,6 +36,13 @@ import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 
 import za.ac.sun.cs.intlola.processing.IOUtils;
 
+/**
+ * IntlolaMonitor is used to detect when the user runs their project. It then
+ * notifies Intola that a launch has occurred.
+ * 
+ * @author godfried
+ * 
+ */
 public class IntlolaMonitor implements ILaunchListener {
 
 	@Override
@@ -55,6 +62,8 @@ public class IntlolaMonitor implements ILaunchListener {
 		if (projectName != "") {
 			final IProject project = ResourcesPlugin.getWorkspace().getRoot()
 					.getProject(projectName);
+			// Only want to notify if we are recording and we found a valid
+			// project.
 			if (project != null && Intlola.projectRecording(project)) {
 				final String path = project.getLocation().toString();
 				try {

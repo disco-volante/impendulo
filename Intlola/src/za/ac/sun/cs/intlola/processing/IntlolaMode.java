@@ -26,6 +26,12 @@ package za.ac.sun.cs.intlola.processing;
 
 import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
+/**
+ * IntlolaMode represents the mode in which Intlola is run.
+ * 
+ * @author godfried
+ * 
+ */
 public enum IntlolaMode {
 	ARCHIVE_LOCAL("Save all snapshots locally in archive."), ARCHIVE_REMOTE(
 			"Send all snapshots to server once recording has stopped."), FILE_REMOTE(
@@ -45,7 +51,7 @@ public enum IntlolaMode {
 		return ret;
 	}
 
-	private String	description;
+	private String description;
 
 	IntlolaMode(final String description) {
 		this.description = description;

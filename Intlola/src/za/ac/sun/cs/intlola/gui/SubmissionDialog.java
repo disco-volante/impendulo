@@ -46,6 +46,13 @@ import org.eclipse.swt.widgets.Shell;
 import za.ac.sun.cs.intlola.processing.Project;
 import za.ac.sun.cs.intlola.processing.Submission;
 
+/**
+ * SubmissionDialog is used to determine whether the user wants to create a new
+ * submission or continue with an existing one.
+ * 
+ * @author godfried
+ * 
+ */
 public class SubmissionDialog extends Dialog {
 	private Project project;
 	private Submission submission;
@@ -96,7 +103,6 @@ public class SubmissionDialog extends Dialog {
 		getButton(IDialogConstants.OK_ID).setEnabled(false);
 		return ret;
 	}
-	
 
 	@Override
 	protected Control createDialogArea(final Composite parent) {

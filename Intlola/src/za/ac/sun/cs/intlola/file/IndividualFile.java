@@ -31,6 +31,13 @@ import za.ac.sun.cs.intlola.processing.IOUtils;
 
 import com.google.gson.JsonObject;
 
+/**
+ * IndividualFile is an implementation of IntlolaFile for normal, non-archive
+ * files.
+ * 
+ * @author godfried
+ * 
+ */
 public class IndividualFile implements IntlolaFile {
 
 	private final boolean sendContents;

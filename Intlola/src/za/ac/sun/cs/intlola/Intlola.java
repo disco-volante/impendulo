@@ -54,6 +54,14 @@ import za.ac.sun.cs.intlola.processing.IntlolaMode;
 import za.ac.sun.cs.intlola.processing.InvalidModeException;
 import za.ac.sun.cs.intlola.processing.Processor;
 
+/**
+ * Intlola is the actual plugin. It is responsible initiating a recording
+ * session, capturing user details and coordinating the entire process of
+ * interacting with Impendulo.
+ * 
+ * @author godfried
+ * 
+ */
 public class Intlola extends AbstractUIPlugin implements IStartup {
 	private static Intlola plugin;
 	protected static final String PLUGIN_ID = "za.ac.sun.cs.intlola";
@@ -85,17 +93,28 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		return recording;
 	}
 
+	/**
+	 * Determines whether Intlola is currently recording the given project.
+	 * 
+	 * @param project
+	 * @return
+	 */
 	public static boolean projectRecording(IProject project) {
 		try {
 			Boolean status = (Boolean) project.getSessionProperty(RECORD_KEY);
 			return status != null && status.equals(RECORD_ON);
 		} catch (CoreException e) {
 			Intlola.log(e);
-			;
 		}
 		return false;
 	}
 
+	/**
+	 * log is Intlola's logging mechanism.
+	 * 
+	 * @param e
+	 * @param msgs
+	 */
 	public static void log(final Exception e, final Object... msgs) {
 		if (getActive() != null) {
 			getActive().getLog().log(
@@ -106,6 +125,12 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
+	/**
+	 * startRecord initiates a recording session for a given project.
+	 * 
+	 * @param project
+	 * @param shell
+	 */
 	public static void startRecord(final IProject project, final Shell shell) {
 		try {
 			String storepath = getActive().calcStorePath(project);
@@ -126,8 +151,14 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
+	/**
+	 * stopRecord ends recording for a given project.
+	 * 
+	 * @param project
+	 * @param shell
+	 */
 	public static void stopRecord(final IProject project, final Shell shell) {
-		getActive().stop(shell);
+		getActive().end(shell);
 		try {
 			project.setSessionProperty(Intlola.RECORD_KEY, null);
 		} catch (final CoreException e) {
@@ -157,6 +188,13 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		return proc;
 	}
 
+	/**
+	 * setProcessor creates a new Processor for Intlola. The Processor is
+	 * responsible for interacting with Impendulo.
+	 * 
+	 * @param storePath
+	 * @throws InvalidModeException
+	 */
 	private void setProcessor(String storePath) throws InvalidModeException {
 		final IntlolaMode mode = IntlolaMode.getMode(getPreferenceStore()
 				.getString(PreferenceConstants.P_MODE));
@@ -176,6 +214,13 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
+	/**
+	 * setup logs the user in and begins a new recording session.
+	 * 
+	 * @param shell
+	 * @throws LoginException
+	 * @throws InvalidModeException
+	 */
 	private void setup(Shell shell) throws LoginException, InvalidModeException {
 		proc.setMode(chooseMode(shell));
 		if (proc.getMode().isRemote()) {
@@ -197,6 +242,14 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
+	/**
+	 * chooseMode allows the user to choose the mode to run Intlola in. The user
+	 * can choose to send each snapshot as it is recording, to send all
+	 * snapshots at the end of the session or to store the snapshots locally.
+	 * 
+	 * @param shell
+	 * @return
+	 */
 	private IntlolaMode chooseMode(Shell shell) {
 		final ModeDialog dialog = new ModeDialog(shell, proc.getMode());
 		final int code = dialog.open();
@@ -207,6 +260,12 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
+	/**
+	 * login requests the user's login details and logs them into Impendulo.
+	 * 
+	 * @param shell
+	 * @return
+	 */
 	private boolean login(final Shell shell) {
 		final String uname = getPreferenceStore().getString(
 				PreferenceConstants.P_UNAME);
@@ -229,6 +288,13 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		return err.equals(IntlolaError.SUCCESS);
 	}
 
+	/**
+	 * StartSubmission allows the user to create a new submission or to continue
+	 * with an old submission.
+	 * 
+	 * @param shell
+	 * @return
+	 */
 	private boolean startSubmission(final Shell shell) {
 		IntlolaError err = IntlolaError.DEFAULT;
 		proc.loadHistory();
@@ -256,7 +322,12 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
-	private void stop(Shell shell) {
+	/**
+	 * end ends a submission. It logs the user out of Impendulo.
+	 * 
+	 * @param shell
+	 */
+	private void end(Shell shell) {
 		if (proc.getMode().isRemote()) {
 			proc.logout();
 		} else if (proc.getMode().equals(IntlolaMode.ARCHIVE_LOCAL)) {
@@ -269,6 +340,14 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		}
 	}
 
+	/**
+	 * calcStorePath determines where files should be stored temporarily for a
+	 * given project.
+	 * 
+	 * @param project
+	 * @return
+	 * @throws IOException
+	 */
 	private String calcStorePath(IProject project) throws IOException {
 		storePath = IOUtils.joinPath(project.getLocation().toOSString(),
 				".intlola");

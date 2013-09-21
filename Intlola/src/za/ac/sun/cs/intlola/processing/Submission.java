@@ -27,6 +27,12 @@ package za.ac.sun.cs.intlola.processing;
 import java.io.Serializable;
 import java.util.Date;
 
+/**
+ * Submission represents a submission in Impendulo.
+ * 
+ * @author godfried
+ * 
+ */
 public class Submission implements Serializable {
 
 	private static final long serialVersionUID = -7128594023385132073L;
@@ -59,7 +65,7 @@ public class Submission implements Serializable {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "User: " + User + ", Date: " + new Date(Time);

@@ -36,12 +36,26 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
+/**
+ * PluginUtils provides some utility methods associated with Eclipse plugin
+ * development.
+ * 
+ * @author godfried
+ * 
+ */
 public class PluginUtils {
 	public static ImageDescriptor getImageDescriptor(final String path) {
 		return AbstractUIPlugin.imageDescriptorFromPlugin(Intlola.PLUGIN_ID,
 				path);
 	}
 
+	/**
+	 * This method retrieves the project selected by the user in the package
+	 * explorer.
+	 * 
+	 * @param event
+	 * @return
+	 */
 	public static IProject getSelectedProject(final ExecutionEvent event) {
 		final IStructuredSelection selection = (IStructuredSelection) HandlerUtil
 				.getCurrentSelection(event);
@@ -58,24 +72,30 @@ public class PluginUtils {
 		return null;
 	}
 
+	/**
+	 * This method is used to retrieve the user's current workspace.
+	 * 
+	 * @return
+	 */
 	public static IWorkspace getWorkspace() {
 		return org.eclipse.core.resources.ResourcesPlugin.getWorkspace();
 	}
 
 	/**
 	 * Recursively marks an {@link IContainer}'s contents as changed.
+	 * 
 	 * @param container
 	 */
 	public static void touchAll(IContainer container) {
 		try {
 			for (IResource resource : container.members()) {
-				if(resource.getFullPath().lastSegment().contains("test")){
+				if (resource.getFullPath().lastSegment().contains("test")) {
 					continue;
 				}
 				resource.touch(null);
 				if (resource instanceof IContainer) {
 					touchAll((IContainer) resource);
-				} 
+				}
 			}
 		} catch (CoreException e) {
 			Intlola.log(e);

@@ -34,6 +34,13 @@ import org.eclipse.core.runtime.CoreException;
 
 import za.ac.sun.cs.intlola.file.Const;
 
+/**
+ * IntlolaVisitor is used to detect when a change has occurred to a file. If the
+ * change caused a change of content, the file is sent to be processed.
+ * 
+ * @author godfried
+ * 
+ */
 public class IntlolaVisitor implements IResourceDeltaVisitor {
 
 	@Override
@@ -42,6 +49,7 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 		final IProject project = resource.getProject();
 		if (project == null) {
 			return true;
+			// We only want to visit when Intlola is actually recording.
 		} else if (Intlola.projectRecording(project)) {
 			String current = resource.getLocation().lastSegment();
 			if (current.contains("bin") || current.contains("test")
@@ -50,9 +58,8 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 			}
 			final String path = resource.getLocation().toString();
 			try {
-				System.out.printf("Path %s Kind %d Flags %d Is content %d %n",
-						path, delta.getKind(), delta.getFlags(),
-						delta.getFlags() & IResourceDelta.CONTENT);
+				// We only want to send the file if its actual content has
+				// changed.
 				if ((delta.getFlags() & IResourceDelta.CONTENT) == IResourceDelta.CONTENT) {
 					boolean sendContents = resource.getType() == IResource.FILE
 							&& path.trim().endsWith(Const.JAVA);

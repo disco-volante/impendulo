@@ -30,6 +30,14 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.ui.handlers.HandlerUtil;
 
+/**
+ * This class is the handler which detects when the user wants to stop
+ * recording. It then notifies Intlola that it should stop recording the user's
+ * work.
+ * 
+ * @author godfried
+ * 
+ */
 public class IntlolaRecordStop extends AbstractHandler {
 
 	@Override

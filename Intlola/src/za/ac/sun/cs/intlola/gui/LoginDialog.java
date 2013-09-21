@@ -41,6 +41,12 @@ import org.eclipse.swt.widgets.Text;
 
 import za.ac.sun.cs.intlola.processing.IntlolaError;
 
+/**
+ * LoginDialog is used to get login details from the user for Impendulo.
+ * 
+ * @author godfried
+ * 
+ */
 public class LoginDialog extends Dialog {
 	private String address;
 
@@ -195,7 +201,7 @@ public class LoginDialog extends Dialog {
 	private String validString(final String type, final String arg) {
 		if (arg.length() == 0) {
 			return type + " too short;";
-		} else if(arg.length() > 100){
+		} else if (arg.length() > 100) {
 			return type + " too long;";
 		}
 		return null;

@@ -33,6 +33,12 @@ import za.ac.sun.cs.intlola.file.Const;
 
 import com.google.gson.JsonObject;
 
+/**
+ * SessionEnder logs the user out of Impendulo.
+ * 
+ * @author godfried
+ * 
+ */
 public class SessionEnder implements Runnable {
 	private final InputStream rcv;
 	private final OutputStream snd;

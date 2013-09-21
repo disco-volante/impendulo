@@ -34,6 +34,13 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 import za.ac.sun.cs.intlola.Intlola;
 import za.ac.sun.cs.intlola.processing.IntlolaMode;
 
+/**
+ * PreferencePage allows the user to configure preferences for Intlola in
+ * Eclipse's preferences.
+ * 
+ * @author godfried
+ * 
+ */
 public class PreferencePage extends FieldEditorPreferencePage implements
 		IWorkbenchPreferencePage {
 

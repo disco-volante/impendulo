@@ -26,6 +26,12 @@ import za.ac.sun.cs.intlola.file.IntlolaFile;
 
 import com.google.gson.JsonObject;
 
+/**
+ * IOUtils provides some utility functions for doing IO.
+ * 
+ * @author godfried
+ * 
+ */
 public class IOUtils {
 	private static final String BIN = "bin";
 	private static final String CLASS = ".class";
@@ -40,6 +46,13 @@ public class IOUtils {
 	private static final byte NOTHING = 0;
 	public static final int LAUNCHED = -6666;
 
+	/**
+	 * read reads all available data from an InputStream.
+	 * 
+	 * @param in
+	 * @return
+	 * @throws IOException
+	 */
 	public static String read(InputStream in) throws IOException {
 		final byte[] buffer = new byte[BUFFER_SIZE];
 		StringBuilder read = new StringBuilder();
@@ -58,6 +71,13 @@ public class IOUtils {
 		return read.toString();
 	}
 
+	/**
+	 * writeJson writes Json data to an OutputStream.
+	 * 
+	 * @param out
+	 * @param data
+	 * @throws IOException
+	 */
 	public static void writeJson(OutputStream out, JsonObject data)
 			throws IOException {
 		out.write(data.toString().getBytes());
@@ -209,6 +229,12 @@ public class IOUtils {
 		return modChar == LAUNCH || modChar == SAVE;
 	}
 
+	/**
+	 * getKind determines the kind of snapshot it is from kind.
+	 * 
+	 * @param kind
+	 * @return
+	 */
 	public static char getKind(final int kind) {
 		char kindSuffix = ' ';
 		switch (kind) {
@@ -224,6 +250,13 @@ public class IOUtils {
 		return kindSuffix;
 	}
 
+	/**
+	 * shouldSend determines whether a file should be sent.
+	 * 
+	 * @param kindSuffix
+	 * @param path
+	 * @return
+	 */
 	public static boolean shouldSend(char kindSuffix, String path) {
 		if (kindSuffix == LAUNCH) {
 			return true;
@@ -345,6 +378,12 @@ public class IOUtils {
 		}
 	}
 
+	/**
+	 * getFileName asks the user where a file should be saved.
+	 * 
+	 * @param shell
+	 * @return
+	 */
 	public static String getFilename(Shell shell) {
 		FileDialog dialog = new FileDialog(shell, SWT.SAVE);
 		dialog.setFileName("intlola.zip");
@@ -382,6 +421,15 @@ public class IOUtils {
 		return filename;
 	}
 
+	/**
+	 * deserialize deserialises a serialised object stored in a file and returns
+	 * it.
+	 * 
+	 * @param serilizedObject
+	 * @return
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	public static Object deserialize(String serilizedObject)
 			throws IOException, ClassNotFoundException {
 		FileInputStream fis = new FileInputStream(serilizedObject);
@@ -391,6 +439,13 @@ public class IOUtils {
 		return ret;
 	}
 
+	/**
+	 * serialize serialises an object and saves it to file.
+	 * 
+	 * @param fname
+	 * @param serializableObject
+	 * @throws IOException
+	 */
 	public static void serialize(String fname, Object serializableObject)
 			throws IOException {
 		FileOutputStream fos = new FileOutputStream(fname);
@@ -399,9 +454,16 @@ public class IOUtils {
 		fos.close();
 	}
 
+	/**
+	 * joinPath joins to filepaths.
+	 * 
+	 * @param parent
+	 * @param children
+	 * @return
+	 */
 	public static String joinPath(String parent, String... children) {
 		File file = new File(parent);
-		for(String child: children){
+		for (String child : children) {
 			file = new File(file, child);
 		}
 		return file.getPath();

@@ -31,6 +31,13 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.handlers.HandlerUtil;
 
+/**
+ * This class is the handler which detects when the user wants to start
+ * recording. It then notifies Intlola that it should begin a recording session.
+ * 
+ * @author godfried
+ * 
+ */
 public class IntlolaRecord extends AbstractHandler {
 
 	@Override

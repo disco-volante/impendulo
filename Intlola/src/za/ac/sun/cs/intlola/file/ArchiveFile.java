@@ -26,8 +26,14 @@ package za.ac.sun.cs.intlola.file;
 
 import com.google.gson.JsonObject;
 
+/**
+ * ArchiveFile is an implementation of IntlolaFile for archive files.
+ * 
+ * @author godfried
+ * 
+ */
 public class ArchiveFile implements IntlolaFile {
-	private final String	path;
+	private final String path;
 
 	public ArchiveFile(final String path) {
 		this.path = path;
