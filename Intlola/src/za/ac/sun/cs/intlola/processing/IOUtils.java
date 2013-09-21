@@ -88,7 +88,7 @@ public class IOUtils {
 			throw new IOException("Cannot read file: " + fromName);
 		}
 		if (toFile.exists()) {
-			throw new IOException("File already exists: " + fromName);
+			throw new IOException("File already exists: " + toName);
 		}
 		final FileInputStream from = new FileInputStream(fromFile);
 		final FileOutputStream to = new FileOutputStream(toFile);
@@ -399,10 +399,12 @@ public class IOUtils {
 		fos.close();
 	}
 
-	public static String joinPath(String path1, String path2) {
-		File file1 = new File(path1);
-		File file2 = new File(file1, path2);
-		return file2.getPath();
+	public static String joinPath(String parent, String... children) {
+		File file = new File(parent);
+		for(String child: children){
+			file = new File(file, child);
+		}
+		return file.getPath();
 	}
 
 }
