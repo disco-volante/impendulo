@@ -29,6 +29,39 @@
    </extension>
    <extension
          point="org.eclipse.ui.menus">
+         <menuContribution
+            locationURI="popup:org.eclipse.ui.navigator.ProjectExplorer#PopupMenu?after=additions">
+         <menu
+               label="Intlola">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="activeMenuSelection">
+                  <and>
+                     <count
+                           value="1">
+                     </count>
+                     <iterate
+                           ifEmpty="false">
+                        <adapt
+                              type="org.eclipse.core.resources.IProject">
+                        </adapt>
+                     </iterate>
+                  </and>
+               </with>
+            </visibleWhen>
+            <command
+                  commandId="za.ac.sun.cs.Intlola.record"
+                  label="Record"
+                  style="push">
+            </command>
+            <command
+                  commandId="za.ac.sun.cs.Intlola.recordstop"
+                  label="Record Stop"
+                  style="push">
+            </command>
+         </menu>
+      </menuContribution> 
       <menuContribution
             locationURI="popup:org.eclipse.jdt.ui.PackageExplorer">
          <menu

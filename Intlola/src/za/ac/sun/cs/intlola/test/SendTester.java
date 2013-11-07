@@ -95,7 +95,7 @@ public class SendTester {
 					sleep(10);
 					proc.processChanges(
 							"/home/godfried/dev/java/ImpenduloProjects/Triangle/src/triangle/Triangle.java",
-							true, IResourceDelta.CHANGED);
+							IResourceDelta.CHANGED);
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (InterruptedException e) {

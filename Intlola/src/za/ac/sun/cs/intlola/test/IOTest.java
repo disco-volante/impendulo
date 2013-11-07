@@ -29,6 +29,9 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.junit.Test;
 
@@ -42,9 +45,8 @@ import za.ac.sun.cs.intlola.processing.IOUtils;
  * @author disco
  * 
  */
-public class FileTest {
+public class IOTest {
 	private static final long TIME_1 = Calendar.getInstance().getTimeInMillis();
-	private static final int NUM_1 = 100;
 	private static final char MOD_1 = IOUtils.SAVE;
 	private static final String FNAME_1 = "Intlola.java";
 	private static final String PKG_1 = "za" + IOUtils.NAME_SEP + "sun"
@@ -59,11 +61,10 @@ public class FileTest {
 	private static final String PREFIX_2 = "bla" + File.separator + "src";
 	private static final String ENC_NAME_1 = PREFIX_1 + IOUtils.COMPONENT_SEP
 			+ ENC_PKG_1 + IOUtils.COMPONENT_SEP + FNAME_1
-			+ IOUtils.COMPONENT_SEP + TIME_1 + IOUtils.COMPONENT_SEP + NUM_1
-			+ IOUtils.COMPONENT_SEP + MOD_1;
+			+ IOUtils.COMPONENT_SEP + TIME_1 + IOUtils.COMPONENT_SEP + MOD_1;
 	private static final String ENC_NAME_2 = ENC_PKG_1 + IOUtils.COMPONENT_SEP
 			+ FNAME_1 + IOUtils.COMPONENT_SEP + TIME_1 + IOUtils.COMPONENT_SEP
-			+ NUM_1 + IOUtils.COMPONENT_SEP + MOD_1;
+			+ MOD_1;
 	private static final IntlolaFile IFILE_1 = new IndividualFile(ENC_NAME_1,
 			FNAME_1, PKG_1, TIME_1, MOD_1, true);
 	private static final String PATH_1 = PREFIX_2 + File.separator + PKG_PATH_1
@@ -135,4 +136,21 @@ public class FileTest {
 		fail("Not yet implemented");
 	}
 
+	@Test
+	public void testIgnore() {
+		Map<String, Boolean> tests = new HashMap<String, Boolean>() {
+			private static final long serialVersionUID = 1L;
+
+			{
+				put("/src/Triangle", false);
+				put("/src/.Triangle", true);
+				put("/src/bin", true);
+				put("/src/testing", true);
+				put("/src/lib/Triangle.java", false);
+			}
+		};
+		for (Entry<String, Boolean> test : tests.entrySet()) {
+			assertEquals(test.getValue(), IOUtils.ignore(test.getKey()));
+		}
+	}
 }

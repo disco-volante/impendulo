@@ -68,7 +68,7 @@ public class IntlolaMonitor implements ILaunchListener {
 				final String path = project.getLocation().toString();
 				try {
 					Intlola.getActive().getProcessor()
-							.processChanges(path, false, IOUtils.LAUNCHED);
+							.processChanges(path, IOUtils.LAUNCHED);
 				} catch (IOException e) {
 					Intlola.log(e, "Could not process launch");
 				}

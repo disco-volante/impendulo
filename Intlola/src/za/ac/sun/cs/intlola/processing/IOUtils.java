@@ -34,9 +34,7 @@ import com.google.gson.JsonObject;
  */
 public class IOUtils {
 	private static final String BIN = "bin";
-	private static final String CLASS = ".class";
 	public static final String COMPONENT_SEP = "_";
-	private static final String JAVA = ".java";
 	public static final String NAME_SEP = ".";
 	private static final String SRC = "src";
 	public static final int BUFFER_SIZE = 4096;
@@ -45,6 +43,10 @@ public class IOUtils {
 	public static final char INVALID = 'i';
 	private static final byte NOTHING = 0;
 	public static final int LAUNCHED = -6666;
+	private static final String JAVA = ".java";
+	private static final String C = ".c";
+	private static final String PY = ".py";
+	private static final String[] extensions = new String[] { JAVA, C, PY };
 
 	/**
 	 * read reads all available data from an InputStream.
@@ -164,7 +166,7 @@ public class IOUtils {
 		}
 		final long time = Long.parseLong(elems[elems.length - 2]);
 		String name = getFileName(elems);
-		boolean sendContents = name.endsWith(Const.JAVA);
+		boolean sendContents = isSrc(name);
 		String pkg = getPackage(elems, NAME_SEP);
 		return new IndividualFile(encodedName, name, pkg, time, mod,
 				sendContents);
@@ -217,7 +219,7 @@ public class IOUtils {
 	public static String getFileName(final String[] args) {
 		String name = "";
 		for (final String arg : args) {
-			if (isFileName(arg)) {
+			if (isSrc(arg)) {
 				name = arg;
 				break;
 			}
@@ -261,7 +263,7 @@ public class IOUtils {
 		if (kindSuffix == LAUNCH) {
 			return true;
 		}
-		if (!path.endsWith(Const.JAVA)) {
+		if (!isSrc(path)) {
 			return false;
 		}
 		if (kindSuffix == INVALID) {
@@ -284,7 +286,7 @@ public class IOUtils {
 		String pkg = "";
 		boolean start = false;
 		for (int i = 0; i < args.length; i++) {
-			if (isFileName(args[i])) {
+			if (isSrc(args[i])) {
 				break;
 			}
 			if (start) {
@@ -301,14 +303,19 @@ public class IOUtils {
 	}
 
 	/**
-	 * Determines whether a given string is a java file (source or compiled).
+	 * Determines whether a given string is a source file.
 	 * 
 	 * @param arg
 	 *            The string to be checked.
 	 * @return <code>true</code> if it is, <code>false</code> if not.
 	 */
-	public static boolean isFileName(final String arg) {
-		return arg.endsWith(JAVA) || arg.endsWith(CLASS);
+	public static boolean isSrc(final String fname) {
+		for (String ext : extensions) {
+			if (fname.endsWith(ext)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static boolean isIntlolaFile(final String fname) {
@@ -469,4 +476,17 @@ public class IOUtils {
 		return file.getPath();
 	}
 
+	private static String[] ignoreRegexes = new String[] { "bin", "\\..*",
+			"test.*", "lib" };
+
+	public static boolean ignore(String path) {
+		String toMatch = path
+				.substring(path.lastIndexOf(File.separatorChar) + 1);
+		for (String regex : ignoreRegexes) {
+			if (toMatch.matches(regex)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

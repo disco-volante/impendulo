@@ -40,7 +40,7 @@ import com.google.gson.JsonObject;
  */
 public class IndividualFile implements IntlolaFile {
 
-	private final boolean sendContents;
+	private final boolean isSrc;
 	private final char mod;
 
 	private final String path, name, pkg;
@@ -48,10 +48,10 @@ public class IndividualFile implements IntlolaFile {
 	private final long time;
 
 	public IndividualFile(final String path, final char mod,
-			final boolean sendContents) {
+			final boolean isSrc) {
 		this.path = path;
 		this.mod = mod;
-		this.sendContents = sendContents;
+		this.isSrc = isSrc;
 		time = Calendar.getInstance().getTimeInMillis();
 		final String[] spd = path.split(File.separator);
 		name = spd[spd.length - 1];
@@ -60,10 +60,10 @@ public class IndividualFile implements IntlolaFile {
 
 	public IndividualFile(final String path, final String name,
 			final String pkg, final long time, final char mod,
-			final boolean sendContents) {
+			final boolean isSrc) {
 		this.path = path;
 		this.mod = mod;
-		this.sendContents = sendContents;
+		this.isSrc = isSrc;
 		this.time = time;
 		this.name = name;
 		this.pkg = pkg;
@@ -76,13 +76,13 @@ public class IndividualFile implements IntlolaFile {
 
 	@Override
 	public boolean sendContents() {
-		return sendContents;
+		return isSrc;
 	}
 
 	@Override
 	public JsonObject toJSON() {
 		final JsonObject ret = new JsonObject();
-		if (name.endsWith(Const.JAVA)) {
+		if (isSrc) {
 			ret.addProperty(Const.TYPE, Const.SRC);
 		} else {
 			ret.addProperty(Const.TYPE, Const.LAUNCH);
@@ -97,7 +97,7 @@ public class IndividualFile implements IntlolaFile {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (sendContents ? 1231 : 1237);
+		result = prime * result + (isSrc ? 1231 : 1237);
 		result = prime * result + mod;
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result + ((path == null) ? 0 : path.hashCode());
@@ -115,7 +115,7 @@ public class IndividualFile implements IntlolaFile {
 		if (getClass() != obj.getClass())
 			return false;
 		IndividualFile other = (IndividualFile) obj;
-		if (sendContents != other.sendContents)
+		if (isSrc != other.isSrc)
 			return false;
 		if (mod != other.mod)
 			return false;

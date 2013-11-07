@@ -32,7 +32,7 @@ import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.runtime.CoreException;
 
-import za.ac.sun.cs.intlola.file.Const;
+import za.ac.sun.cs.intlola.processing.IOUtils;
 
 /**
  * IntlolaVisitor is used to detect when a change has occurred to a file. If the
@@ -42,7 +42,6 @@ import za.ac.sun.cs.intlola.file.Const;
  * 
  */
 public class IntlolaVisitor implements IResourceDeltaVisitor {
-
 	@Override
 	public boolean visit(final IResourceDelta delta) throws CoreException {
 		final IResource resource = delta.getResource();
@@ -51,21 +50,17 @@ public class IntlolaVisitor implements IResourceDeltaVisitor {
 			return true;
 			// We only want to visit when Intlola is actually recording.
 		} else if (Intlola.projectRecording(project)) {
-			String current = resource.getLocation().lastSegment();
-			if (current.contains("bin") || current.contains("test")
-					|| current.startsWith(".")) {
-				return false;
-			}
 			final String path = resource.getLocation().toString();
+			if(IOUtils.ignore(path)){
+					return false;
+			}
 			try {
 				// We only want to send the file if its actual content has
 				// changed.
 				if ((delta.getFlags() & IResourceDelta.CONTENT) == IResourceDelta.CONTENT) {
-					boolean sendContents = resource.getType() == IResource.FILE
-							&& path.trim().endsWith(Const.JAVA);
 					Intlola.getActive()
 							.getProcessor()
-							.processChanges(path, sendContents, delta.getKind());
+							.processChanges(path, delta.getKind());
 				}
 			} catch (IOException e) {
 				Intlola.log(e, "Could not process changes");

@@ -343,23 +343,24 @@ public class Processor {
 	 * @param kind
 	 * @throws IOException
 	 */
-	public void processChanges(final String path, final boolean sendContents,
-			final int kind) throws IOException {
+	public void processChanges(final String path, final int kind)
+			throws IOException {
 		char kindSuffix = IOUtils.getKind(kind);
 		if (!IOUtils.shouldSend(kindSuffix, path)) {
 			return;
 		}
+		boolean isSrc= IOUtils.isSrc(path);
 		if (getMode().isArchive()) {
 			final String name = IOUtils.joinPath(archivePath, IOUtils
 					.encodeName(path, Calendar.getInstance().getTimeInMillis(),
 							kindSuffix));
-			if (sendContents) {
+			if (isSrc) {
 				IOUtils.copy(path, name);
 			} else {
 				IOUtils.touch(name);
 			}
 		} else if (getMode().isRemote()) {
-			sendFile(new IndividualFile(path, kindSuffix, sendContents));
+			sendFile(new IndividualFile(path, kindSuffix, isSrc));
 		}
 	}
 }
