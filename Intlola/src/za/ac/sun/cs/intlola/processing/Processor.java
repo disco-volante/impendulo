@@ -30,18 +30,21 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import za.ac.sun.cs.intlola.Intlola;
 import za.ac.sun.cs.intlola.file.ArchiveFile;
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.IndividualFile;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
+import za.ac.sun.cs.intlola.processing.json.Project;
+import za.ac.sun.cs.intlola.processing.json.ProjectInfo;
+import za.ac.sun.cs.intlola.processing.json.SkeletonInfo;
+import za.ac.sun.cs.intlola.processing.json.Submission;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -67,14 +70,12 @@ public class Processor {
 	private Socket sock = null;
 	private String username;
 
-	private Project[] availableProjects;
 	private Project currentProject;
-	private Map<Project, ArrayList<Submission>> history;
+	private ProjectInfo[] projectInfos;
 	private Submission currentSubmission;
+	private SkeletonInfo skeletonInfo;
 
-	private String storePath;
-
-	private String archivePath;
+	private String projectLocation, storePath, archivePath;
 
 	/**
 	 * Construct processor with default values.
@@ -85,13 +86,17 @@ public class Processor {
 	 * @param address
 	 * @param port
 	 * @throws InvalidModeException
+	 * @throws IOException 
 	 */
-	public Processor(final IntlolaMode mode, final String storePath)
-			throws InvalidModeException {
+	public Processor(final IntlolaMode mode, final String projectLocation, final String storePath, final String skeletonInfoPath)
+			throws InvalidModeException, IOException {
+		this.projectLocation = projectLocation;
 		this.storePath = IOUtils.joinPath(storePath, UUID.randomUUID()
 				.toString());
 		setMode(mode);
-		executor = Executors.newFixedThreadPool(1);
+		this.executor = Executors.newFixedThreadPool(1);
+		this.skeletonInfo = IOUtils.readSkeletonInfo(skeletonInfoPath);
+		this.skeletonInfo.buildSendPaths(projectLocation);
 	}
 
 	public String getAddress() {
@@ -114,12 +119,8 @@ public class Processor {
 		return username;
 	}
 
-	public Project[] getAvailableProjects() {
-		return availableProjects;
-	}
-
-	public Map<Project, ArrayList<Submission>> getHistory() {
-		return history;
+	public ProjectInfo[] getProjects() {
+		return projectInfos;
 	}
 
 	/**
@@ -164,23 +165,23 @@ public class Processor {
 	public IntlolaError login(String username, final String password,
 			final String address, final int port) {
 		setFields(username, address, port);
-		final JsonObject params = new JsonObject();
-		params.addProperty(Const.REQ, Const.LOGIN);
-		params.addProperty(Const.USER, this.username);
-		params.addProperty(Const.PASSWORD, password);
-		params.addProperty(Const.MODE, mode.toString());
 		if (!init()) {
 			return IntlolaError.CONNECTION
 					.specific("Could not initialise connection on: "
 							+ this.address.toString());
 		} else {
+			final JsonObject params = new JsonObject();
+			params.addProperty(Const.REQ, Const.LOGIN);
+			params.addProperty(Const.USER, this.username);
+			params.addProperty(Const.PASSWORD, password);
+			params.addProperty(Const.MODE, mode.toString());
 			try {
 				IOUtils.writeJson(snd, params);
-				String projects = IOUtils.read(rcv);
+				String json = IOUtils.read(rcv);
 				Gson gson = new Gson();
 				try {
-					availableProjects = gson.fromJson(projects.toString(),
-							new Project[1].getClass());
+					projectInfos = gson.fromJson(json,
+							new ProjectInfo[0].getClass());
 					return IntlolaError.SUCCESS;
 				} catch (JsonSyntaxException e) {
 					return IntlolaError.LOGIN
@@ -222,44 +223,6 @@ public class Processor {
 	}
 
 	/**
-	 * loadHistory loads previous submissions the user has worked on.
-	 * 
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	public boolean loadHistory() {
-		String histPath = IOUtils.joinPath(storePath, "history.ser");
-		try {
-			history = (Map<Project, ArrayList<Submission>>) IOUtils
-					.deserialize(histPath);
-			return true;
-		} catch (ClassNotFoundException e) {
-		} catch (IOException e) {
-		}
-		history = new HashMap<Project, ArrayList<Submission>>();
-		return false;
-	}
-
-	/**
-	 * saveHistory stores submissions this user has worked on including the
-	 * current submission.
-	 * 
-	 * @throws IOException
-	 */
-	public void saveHistory() throws IOException {
-		String histPath = IOUtils.joinPath(storePath, "history.ser");
-		ArrayList<Submission> proj = history.get(currentProject);
-		if (proj == null) {
-			history.put(currentProject, new ArrayList<Submission>());
-			proj = history.get(currentProject);
-		}
-		if (!proj.contains(currentSubmission)) {
-			proj.add(currentSubmission);
-		}
-		IOUtils.serialize(histPath, history);
-	}
-
-	/**
 	 * continueSubmission allows the user to continue with an old submission.
 	 * 
 	 * @param submission
@@ -270,6 +233,7 @@ public class Processor {
 			Project project) {
 		currentSubmission = submission;
 		currentProject = project;
+		IOUtils.setExtension(project.Lang);
 		if (!mode.isRemote()) {
 			return IntlolaError.SUCCESS;
 		}
@@ -299,6 +263,7 @@ public class Processor {
 	 */
 	public IntlolaError createSubmission(Project project) {
 		currentProject = project;
+		IOUtils.setExtension(project.Lang);
 		if (!mode.isRemote()) {
 			return IntlolaError.SUCCESS;
 		}
@@ -349,7 +314,19 @@ public class Processor {
 		if (!IOUtils.shouldSend(kindSuffix, path)) {
 			return;
 		}
-		boolean isSrc= IOUtils.isSrc(path);
+		String tipe = Const.LAUNCH;
+		boolean isSrc = IOUtils.isSrc(path);
+		if(isSrc){
+			tipe = skeletonInfo.sendPaths.get(path);
+			if(tipe == null){
+				Intlola.log(null, path);
+				for(Entry<String, String> e : skeletonInfo.sendPaths.entrySet()){
+					Intlola.log(null, e.getKey());
+					Intlola.log(null, e.getKey().equals(path));
+				}
+				return;
+			}
+		}	
 		if (getMode().isArchive()) {
 			final String name = IOUtils.joinPath(archivePath, IOUtils
 					.encodeName(path, Calendar.getInstance().getTimeInMillis(),
@@ -360,7 +337,7 @@ public class Processor {
 				IOUtils.touch(name);
 			}
 		} else if (getMode().isRemote()) {
-			sendFile(new IndividualFile(path, kindSuffix, isSrc));
+			sendFile(new IndividualFile(path, kindSuffix, tipe));
 		}
 	}
 }

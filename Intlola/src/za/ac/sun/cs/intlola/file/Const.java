@@ -27,6 +27,8 @@ package za.ac.sun.cs.intlola.file;
 public class Const {
 	public static final String ARCHIVE = "archive";
 	public static final String LAUNCH = "launch";
+	public static final String TEST = "test";
+	public static final String SRC = "src";
 	public static final String EOT_S = "\u0004";
 	public static final byte[] EOT_B = EOT_S.getBytes();
 	public static final String LOGIN = "begin";
@@ -43,7 +45,6 @@ public class Const {
 	public static final String PASSWORD = "password";
 	public static final String REQ = "req";
 	public static final String SEND = "send";
-	public static final String SRC = "src";
 	public static final String TIME = "time";
 	public static final String TYPE = "type";
 	public static final String USER = "user";

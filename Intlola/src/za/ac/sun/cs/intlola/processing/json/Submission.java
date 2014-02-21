@@ -22,23 +22,23 @@
 //(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package za.ac.sun.cs.intlola.processing;
+package za.ac.sun.cs.intlola.processing.json;
 
 import java.io.Serializable;
 import java.util.Date;
 
 /**
- * Project represents a project within Impendulo.
+ * Submission represents a submission in Impendulo.
  * 
  * @author godfried
  * 
  */
-public class Project implements Serializable {
+public class Submission implements Serializable {
+
 	private static final long serialVersionUID = -7128594023385132073L;
-	String Id;
-	public String Name;
+	public String Id;
+	String ProjectId;
 	String User;
-	String Lang;
 	long Time;
 
 	@Override
@@ -57,7 +57,7 @@ public class Project implements Serializable {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		Project other = (Project) obj;
+		Submission other = (Submission) obj;
 		if (Id == null) {
 			if (other.Id != null) {
 				return false;
@@ -70,8 +70,6 @@ public class Project implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Name: " + Name + ", User: " + User + ", Language: " + Lang
-				+ ", Date: " + new Date(Time);
+		return "User: " + User + ", Date: " + new Date(Time);
 	}
-
 }

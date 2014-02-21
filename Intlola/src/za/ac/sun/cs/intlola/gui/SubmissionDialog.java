@@ -26,8 +26,8 @@ package za.ac.sun.cs.intlola.gui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -43,8 +43,9 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
-import za.ac.sun.cs.intlola.processing.Project;
-import za.ac.sun.cs.intlola.processing.Submission;
+import za.ac.sun.cs.intlola.processing.json.Project;
+import za.ac.sun.cs.intlola.processing.json.ProjectInfo;
+import za.ac.sun.cs.intlola.processing.json.Submission;
 
 /**
  * SubmissionDialog is used to determine whether the user wants to create a new
@@ -56,38 +57,36 @@ import za.ac.sun.cs.intlola.processing.Submission;
 public class SubmissionDialog extends Dialog {
 	private Project project;
 	private Submission submission;
-	private Map<Project, ArrayList<Submission>> history;
-	private Project[] histProjects, retProjects;
+	private Map<String, ProjectInfo> projectMap;
 	private String[] histProjectItems, retProjectItems;
 	private Map<String, String[]> subItems;
 
 	protected boolean create;
 
 	public SubmissionDialog(final Shell parentShell,
-			final Project[] retProjects,
-			Map<Project, ArrayList<Submission>> history) {
+			final ProjectInfo[] projectInfos) {
 		super(parentShell);
-		this.retProjects = retProjects;
-		retProjectItems = new String[retProjects.length];
-		int i = 0;
-		for (Project p : retProjects) {
-			retProjectItems[i++] = p.toString();
-		}
-		this.history = history;
-		histProjects = history.keySet().toArray(new Project[history.size()]);
-		histProjectItems = new String[history.size()];
+		retProjectItems = new String[projectInfos.length];
 		subItems = new HashMap<String, String[]>();
-		int j = 0;
-		for (Entry<Project, ArrayList<Submission>> e : history.entrySet()) {
-			int k = 0;
-			String[] subs = new String[e.getValue().size()];
-			for (Submission s : e.getValue()) {
-				subs[k++] = s.toString();
+		projectMap = new HashMap<String, ProjectInfo>();
+		List<String> tempHist = new ArrayList<String>();
+		int i = 0;
+		for (ProjectInfo pi : projectInfos) {
+			String disp = pi.getProject().toString();
+			retProjectItems[i++] = disp;
+			projectMap.put(disp, pi);
+			Submission[] subs = pi.getSubmissions();
+			if (subs != null && subs.length > 0) {
+				String[] subsDesc = new String[subs.length];
+				int k = 0;
+				for (Submission s : subs) {
+					subsDesc[k++] = s.toString();
+				}
+				subItems.put(disp, subsDesc);
+				tempHist.add(disp);
 			}
-			String proj = e.getKey().toString();
-			histProjectItems[j++] = proj;
-			subItems.put(proj, subs);
 		}
+		histProjectItems = tempHist.toArray(new String[tempHist.size()]);
 	}
 
 	@Override
@@ -167,11 +166,11 @@ public class SubmissionDialog extends Dialog {
 				int index = projectList.getSelectionIndex();
 				getButton(IDialogConstants.OK_ID).setEnabled(false);
 				if (index >= 0) {
+					project = projectMap.get(projectList.getText())
+							.getProject();
 					if (create) {
-						project = retProjects[index];
 						getButton(IDialogConstants.OK_ID).setEnabled(true);
 					} else {
-						project = histProjects[index];
 						submissionList.setItems(subItems.get(projectList
 								.getText()));
 					}
@@ -187,9 +186,10 @@ public class SubmissionDialog extends Dialog {
 		submissionList.addSelectionListener(new SelectionListener() {
 			@Override
 			public void widgetSelected(SelectionEvent se) {
-				if (!create) {
-					submission = history.get(project).get(
-							submissionList.getSelectionIndex());
+				int index = submissionList.getSelectionIndex();
+				if (!create && index >= 0) {
+					submission = projectMap.get(project.toString())
+							.getSubmissions()[index];
 					getButton(IDialogConstants.OK_ID).setEnabled(true);
 				}
 			}

@@ -34,10 +34,11 @@ import za.ac.sun.cs.intlola.processing.IntlolaError;
 import za.ac.sun.cs.intlola.processing.IntlolaMode;
 import za.ac.sun.cs.intlola.processing.InvalidModeException;
 import za.ac.sun.cs.intlola.processing.Processor;
-import za.ac.sun.cs.intlola.processing.Project;
+import za.ac.sun.cs.intlola.processing.json.Project;
+import za.ac.sun.cs.intlola.processing.json.ProjectInfo;
 
 public class SendTester {
-	private static final int runnerCount = 5;
+	private static final int runnerCount = 10;
 
 	public static void main(String[] args) {
 		Thread[] runners = new Thread[runnerCount];
@@ -78,9 +79,9 @@ public class SendTester {
 				return;
 			}
 			Project selected = null;
-			for (Project p : proc.getAvailableProjects()) {
-				if (p.Name.equals("Triangle")) {
-					selected = p;
+			for (ProjectInfo pi : proc.getProjects()) {
+				if (pi.getProject().Name.equals("Triangle")) {
+					selected = pi.getProject();
 					break;
 				}
 			}

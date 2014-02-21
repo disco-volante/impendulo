@@ -40,18 +40,17 @@ import com.google.gson.JsonObject;
  */
 public class IndividualFile implements IntlolaFile {
 
-	private final boolean isSrc;
 	private final char mod;
 
-	private final String path, name, pkg;
+	private final String path, name, pkg, tipe;
 
 	private final long time;
 
 	public IndividualFile(final String path, final char mod,
-			final boolean isSrc) {
+			final String tipe) {
 		this.path = path;
 		this.mod = mod;
-		this.isSrc = isSrc;
+		this.tipe = tipe;
 		time = Calendar.getInstance().getTimeInMillis();
 		final String[] spd = path.split(File.separator);
 		name = spd[spd.length - 1];
@@ -60,10 +59,10 @@ public class IndividualFile implements IntlolaFile {
 
 	public IndividualFile(final String path, final String name,
 			final String pkg, final long time, final char mod,
-			final boolean isSrc) {
+			final String tipe) {
 		this.path = path;
 		this.mod = mod;
-		this.isSrc = isSrc;
+		this.tipe = tipe;
 		this.time = time;
 		this.name = name;
 		this.pkg = pkg;
@@ -76,17 +75,13 @@ public class IndividualFile implements IntlolaFile {
 
 	@Override
 	public boolean sendContents() {
-		return isSrc;
+		return !tipe.equals(Const.LAUNCH);
 	}
 
 	@Override
 	public JsonObject toJSON() {
 		final JsonObject ret = new JsonObject();
-		if (isSrc) {
-			ret.addProperty(Const.TYPE, Const.SRC);
-		} else {
-			ret.addProperty(Const.TYPE, Const.LAUNCH);
-		}
+		ret.addProperty(Const.TYPE, tipe);
 		ret.addProperty(Const.NAME, name);
 		ret.addProperty(Const.PKG, pkg);
 		ret.addProperty(Const.TIME, time);
@@ -97,8 +92,8 @@ public class IndividualFile implements IntlolaFile {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (isSrc ? 1231 : 1237);
 		result = prime * result + mod;
+		result = prime * result + ((tipe == null) ? 0 : tipe.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result + ((path == null) ? 0 : path.hashCode());
 		result = prime * result + ((pkg == null) ? 0 : pkg.hashCode());
@@ -115,14 +110,17 @@ public class IndividualFile implements IntlolaFile {
 		if (getClass() != obj.getClass())
 			return false;
 		IndividualFile other = (IndividualFile) obj;
-		if (isSrc != other.isSrc)
-			return false;
 		if (mod != other.mod)
 			return false;
 		if (name == null) {
 			if (other.name != null)
 				return false;
 		} else if (!name.equals(other.name))
+			return false;
+		if (tipe == null) {
+			if (other.tipe != null)
+				return false;
+		} else if (!tipe.equals(other.tipe))
 			return false;
 		if (path == null) {
 			if (other.path != null)

@@ -24,7 +24,6 @@
 
 package za.ac.sun.cs.intlola;
 
-import java.io.File;
 import java.io.IOException;
 
 import javax.security.auth.login.LoginException;
@@ -133,8 +132,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	 */
 	public static void startRecord(final IProject project, final Shell shell) {
 		try {
-			String storepath = getActive().calcStorePath(project);
-			getActive().setProcessor(storepath);
+			getActive().setProcessor(project);
 			getActive().setup(shell);
 			project.setSessionProperty(RECORD_KEY, true);
 			recording = true;
@@ -174,8 +172,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private Processor proc;
 
-	private String storePath;
-
 	public Intlola() {
 		Intlola.plugin = this;
 	}
@@ -194,11 +190,16 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	 * 
 	 * @param storePath
 	 * @throws InvalidModeException
+	 * @throws IOException
 	 */
-	private void setProcessor(String storePath) throws InvalidModeException {
+	private void setProcessor(final IProject project)
+			throws InvalidModeException, IOException {
 		final IntlolaMode mode = IntlolaMode.getMode(getPreferenceStore()
 				.getString(PreferenceConstants.P_MODE));
-		proc = new Processor(mode, storePath);
+		String skeletonInfoPath = IOUtils.calcSkeletonInfoPath(project);
+		String storePath = IOUtils.calcStorePath(project);
+		proc = new Processor(mode, project.getLocation().toOSString(),
+				storePath, skeletonInfoPath);
 	}
 
 	@Override
@@ -297,9 +298,8 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	 */
 	private boolean startSubmission(final Shell shell) {
 		IntlolaError err = IntlolaError.DEFAULT;
-		proc.loadHistory();
 		SubmissionDialog subDlg = new SubmissionDialog(shell,
-				proc.getAvailableProjects(), proc.getHistory());
+				proc.getProjects());
 		final int code = subDlg.open();
 		if (code == Window.OK) {
 			if (subDlg.isCreate()) {
@@ -333,29 +333,6 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		} else if (proc.getMode().equals(IntlolaMode.ARCHIVE_LOCAL)) {
 			proc.handleLocalArchive(IOUtils.getFilename(shell));
 		}
-		try {
-			proc.saveHistory();
-		} catch (IOException e) {
-			log(e, "Could not save history.");
-		}
-	}
-
-	/**
-	 * calcStorePath determines where files should be stored temporarily for a
-	 * given project.
-	 * 
-	 * @param project
-	 * @return
-	 * @throws IOException
-	 */
-	private String calcStorePath(IProject project) throws IOException {
-		storePath = IOUtils.joinPath(project.getLocation().toOSString(),
-				".intlola");
-		File dir = new File(storePath);
-		if (!dir.exists() && !dir.mkdirs()) {
-			throw new IOException("Could not create plugin directory.");
-		}
-		return storePath;
 	}
 
 	@Override
@@ -363,7 +340,5 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 		Intlola.plugin = null;
 		super.stop(context);
 	}
-
-	
 
 }

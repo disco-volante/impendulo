@@ -3,17 +3,17 @@ package za.ac.sun.cs.intlola.processing;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
@@ -23,7 +23,10 @@ import org.eclipse.swt.widgets.Shell;
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.IndividualFile;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
+import za.ac.sun.cs.intlola.processing.json.SkeletonInfo;
+import za.ac.sun.cs.intlola.processing.json.Submission;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 /**
@@ -46,7 +49,9 @@ public class IOUtils {
 	private static final String JAVA = ".java";
 	private static final String C = ".c";
 	private static final String PY = ".py";
-	private static final String[] extensions = new String[] { JAVA, C, PY };
+	private static String extension;
+	private static final String[] ignoreRegexes = new String[] { "bin",
+			"\\..*", "lib" };
 
 	/**
 	 * read reads all available data from an InputStream.
@@ -166,10 +171,9 @@ public class IOUtils {
 		}
 		final long time = Long.parseLong(elems[elems.length - 2]);
 		String name = getFileName(elems);
-		boolean sendContents = isSrc(name);
+		String tipe = isSrc(name) ? Const.SRC : Const.LAUNCH;
 		String pkg = getPackage(elems, NAME_SEP);
-		return new IndividualFile(encodedName, name, pkg, time, mod,
-				sendContents);
+		return new IndividualFile(encodedName, name, pkg, time, mod, tipe);
 	}
 
 	public static void delete(final String filename) {
@@ -310,10 +314,8 @@ public class IOUtils {
 	 * @return <code>true</code> if it is, <code>false</code> if not.
 	 */
 	public static boolean isSrc(final String fname) {
-		for (String ext : extensions) {
-			if (fname.endsWith(ext)) {
-				return true;
-			}
+		if (fname.endsWith(extension)) {
+			return true;
 		}
 		return false;
 	}
@@ -429,39 +431,6 @@ public class IOUtils {
 	}
 
 	/**
-	 * deserialize deserialises a serialised object stored in a file and returns
-	 * it.
-	 * 
-	 * @param serilizedObject
-	 * @return
-	 * @throws IOException
-	 * @throws ClassNotFoundException
-	 */
-	public static Object deserialize(String serilizedObject)
-			throws IOException, ClassNotFoundException {
-		FileInputStream fis = new FileInputStream(serilizedObject);
-		ObjectInputStream ois = new ObjectInputStream(fis);
-		Object ret = ois.readObject();
-		fis.close();
-		return ret;
-	}
-
-	/**
-	 * serialize serialises an object and saves it to file.
-	 * 
-	 * @param fname
-	 * @param serializableObject
-	 * @throws IOException
-	 */
-	public static void serialize(String fname, Object serializableObject)
-			throws IOException {
-		FileOutputStream fos = new FileOutputStream(fname);
-		ObjectOutputStream oos = new ObjectOutputStream(fos);
-		oos.writeObject(serializableObject);
-		fos.close();
-	}
-
-	/**
 	 * joinPath joins to filepaths.
 	 * 
 	 * @param parent
@@ -476,9 +445,6 @@ public class IOUtils {
 		return file.getPath();
 	}
 
-	private static String[] ignoreRegexes = new String[] { "bin", "\\..*",
-			"test.*", "lib" };
-
 	public static boolean ignore(String path) {
 		String toMatch = path
 				.substring(path.lastIndexOf(File.separatorChar) + 1);
@@ -488,5 +454,55 @@ public class IOUtils {
 			}
 		}
 		return false;
+	}
+
+	public static void setExtension(final String lang) {
+		String l = lang.toLowerCase();
+		if (l.equals("java")) {
+			extension = JAVA;
+		} else if (l.equals("c")) {
+			extension = C;
+		} else if (l.equals("python")) {
+			extension = PY;
+		}
+	}
+
+	public static SkeletonInfo readSkeletonInfo(String filename)
+			throws IOException {
+		InputStream fin = new FileInputStream(new File(filename));
+		final String data = read(fin);
+		Gson gson = new Gson();
+		SkeletonInfo si = gson.fromJson(data, new SkeletonInfo().getClass());
+		return si;
+	}
+
+	/**
+	 * calcStorePath determines where files should be stored temporarily for a
+	 * given project.
+	 * 
+	 * @param project
+	 * @return
+	 * @throws IOException
+	 */
+	public static String calcStorePath(IProject project) throws IOException {
+		String storePath = IOUtils.joinPath(project.getLocation().toOSString(),
+				".intlola");
+		File dir = new File(storePath);
+		if (!dir.exists() && !dir.mkdirs()) {
+			throw new IOException("Could not create plugin directory.");
+		}
+		return storePath;
+	}
+
+	public static String calcSkeletonInfoPath(IProject project)
+			throws IOException {
+		String skeletonInfoPath = IOUtils.joinPath(project.getLocation()
+				.toOSString(), ".impendulo_info.json");
+		File f = new File(skeletonInfoPath);
+		if (!f.exists()) {
+			throw new IOException(
+					"Could not locate project skeleton information.");
+		}
+		return skeletonInfoPath;
 	}
 }
