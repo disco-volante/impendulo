@@ -25,7 +25,6 @@
 package za.ac.sun.cs.intlola.test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.util.Calendar;
@@ -33,11 +32,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.junit.Before;
 import org.junit.Test;
 
+import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.IndividualFile;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 import za.ac.sun.cs.intlola.processing.IOUtils;
+import za.ac.sun.cs.intlola.processing.InvalidArgumentException;
 
 /**
  * Tests for {@link IOUtils}.
@@ -66,32 +68,26 @@ public class IOTest {
 			+ FNAME_1 + IOUtils.COMPONENT_SEP + TIME_1 + IOUtils.COMPONENT_SEP
 			+ MOD_1;
 	private static final IntlolaFile IFILE_1 = new IndividualFile(ENC_NAME_1,
-			FNAME_1, PKG_1, TIME_1, MOD_1, true);
+			FNAME_1, PKG_1, TIME_1, MOD_1, Const.SRC);
 	private static final String PATH_1 = PREFIX_2 + File.separator + PKG_PATH_1
 			+ File.separator + FNAME_1;
 	private static final String PATH_2 = PKG_PATH_1 + File.separator + FNAME_1;
 	private static final String PATH_3 = PREFIX_2 + File.separator + FNAME_1;
 	private static final String EMPTY = "";
-
-	@Test
-	public void testCopy() {
-		fail("Not yet implemented");
-	}
-
-	@Test
-	public void testCreateZip() {
-		fail("Not yet implemented");
+	
+	@Before
+	public void setup(){
+		try {
+			IOUtils.setExtension("java");
+		} catch (InvalidArgumentException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Test
 	public void testDecodeName() {
 		IntlolaFile actual = IOUtils.decodeName(ENC_NAME_1);
 		assertEquals(IFILE_1, actual);
-	}
-
-	@Test
-	public void testDelete() {
-		fail("Not yet implemented");
 	}
 
 	@Test
@@ -127,16 +123,6 @@ public class IOTest {
 	}
 
 	@Test
-	public void testSaveString() {
-		fail("Not yet implemented");
-	}
-
-	@Test
-	public void testTouch() {
-		fail("Not yet implemented");
-	}
-
-	@Test
 	public void testIgnore() {
 		Map<String, Boolean> tests = new HashMap<String, Boolean>() {
 			private static final long serialVersionUID = 1L;
@@ -145,7 +131,7 @@ public class IOTest {
 				put("/src/Triangle", false);
 				put("/src/.Triangle", true);
 				put("/src/bin", true);
-				put("/src/testing", true);
+				put("/src/testing", false);
 				put("/src/lib/Triangle.java", false);
 			}
 		};

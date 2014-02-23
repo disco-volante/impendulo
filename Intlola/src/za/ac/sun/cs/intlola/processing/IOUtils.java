@@ -3,7 +3,6 @@ package za.ac.sun.cs.intlola.processing;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +23,6 @@ import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.IndividualFile;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
 import za.ac.sun.cs.intlola.processing.json.SkeletonInfo;
-import za.ac.sun.cs.intlola.processing.json.Submission;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -46,9 +44,9 @@ public class IOUtils {
 	public static final char INVALID = 'i';
 	private static final byte NOTHING = 0;
 	public static final int LAUNCHED = -6666;
-	private static final String JAVA = ".java";
-	private static final String C = ".c";
-	private static final String PY = ".py";
+	public static final String JAVA = ".java";
+	public static final String C = ".c";
+	public static final String PY = ".py";
 	private static String extension;
 	private static final String[] ignoreRegexes = new String[] { "bin",
 			"\\..*", "lib" };
@@ -456,7 +454,7 @@ public class IOUtils {
 		return false;
 	}
 
-	public static void setExtension(final String lang) {
+	public static void setExtension(final String lang) throws InvalidArgumentException {
 		String l = lang.toLowerCase();
 		if (l.equals("java")) {
 			extension = JAVA;
@@ -464,6 +462,8 @@ public class IOUtils {
 			extension = C;
 		} else if (l.equals("python")) {
 			extension = PY;
+		} else{
+			throw new InvalidArgumentException(String.format("Unknown language %s.", lang));
 		}
 	}
 

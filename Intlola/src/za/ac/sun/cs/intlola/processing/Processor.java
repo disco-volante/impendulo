@@ -31,12 +31,10 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Calendar;
-import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import za.ac.sun.cs.intlola.Intlola;
 import za.ac.sun.cs.intlola.file.ArchiveFile;
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.IndividualFile;
@@ -233,7 +231,11 @@ public class Processor {
 			Project project) {
 		currentSubmission = submission;
 		currentProject = project;
-		IOUtils.setExtension(project.Lang);
+		try {
+			IOUtils.setExtension(project.Lang);
+		} catch (InvalidArgumentException iae) {
+			return IntlolaError.FILE.specific(iae.getMessage());
+		}
 		if (!mode.isRemote()) {
 			return IntlolaError.SUCCESS;
 		}
@@ -263,7 +265,11 @@ public class Processor {
 	 */
 	public IntlolaError createSubmission(Project project) {
 		currentProject = project;
-		IOUtils.setExtension(project.Lang);
+		try {
+			IOUtils.setExtension(project.Lang);
+		} catch (InvalidArgumentException iae) {
+			return IntlolaError.FILE.specific(iae.getMessage());
+		}
 		if (!mode.isRemote()) {
 			return IntlolaError.SUCCESS;
 		}
@@ -319,11 +325,6 @@ public class Processor {
 		if(isSrc){
 			tipe = skeletonInfo.sendPaths.get(path);
 			if(tipe == null){
-				Intlola.log(null, path);
-				for(Entry<String, String> e : skeletonInfo.sendPaths.entrySet()){
-					Intlola.log(null, e.getKey());
-					Intlola.log(null, e.getKey().equals(path));
-				}
 				return;
 			}
 		}	

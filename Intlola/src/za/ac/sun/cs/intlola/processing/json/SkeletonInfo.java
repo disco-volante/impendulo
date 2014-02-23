@@ -1,5 +1,7 @@
 package za.ac.sun.cs.intlola.processing.json;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,19 +13,28 @@ public class SkeletonInfo {
 	public FileInfo[] tests, files;
 	public DataInfo[] data;
 	public Map<String, String> sendPaths;
-	public void buildSendPaths(String base){
-		sendPaths= new HashMap<String, String>();
-		for(FileInfo t : tests){
-			if(t.send){
-				String dir = IOUtils.joinPath(t.folder, t.pkg.split("\\."));
-				sendPaths.put(IOUtils.joinPath(base, dir, t.name), Const.TEST);
-			}
+
+	public void buildSendPaths(String base) throws IOException {
+		sendPaths = new HashMap<String, String>();
+		for (FileInfo t : tests) {
+			addPath(base, t, Const.TEST);
 		}
-		for(FileInfo f : files){
-			if(f.send){
-				String dir = IOUtils.joinPath(f.folder, f.pkg.split("\\."));
-				sendPaths.put(IOUtils.joinPath(base, dir, f.name), Const.SRC);
+		for (FileInfo f : files) {
+			addPath(base, f, Const.SRC);
+		}
+	}
+
+	private void addPath(final String base, FileInfo fi, String tipe) throws IOException {
+		if (fi.send) {
+			String dir = IOUtils.joinPath(fi.folder, fi.pkg.split("\\."));
+			String path = IOUtils.joinPath(base, dir, fi.name);
+			if (!new File(path).exists()) {
+				throw new IOException(
+						String.format(
+								"Could not locate file %s specified in project skeleton info file.",
+								path));
 			}
+			sendPaths.put(path, tipe);
 		}
 	}
 }

@@ -50,6 +50,8 @@ public class SendTester {
 				runners[i].start();
 			} catch (InvalidModeException e) {
 				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 		for (Thread runner : runners) {
@@ -65,14 +67,15 @@ public class SendTester {
 		private static final int sendCount = 5;
 		private Processor proc;
 
-		public FileSender(IntlolaMode mode) throws InvalidModeException {
-			proc = new Processor(mode, IOUtils.joinPath(
-					System.getProperty("java.io.tmpdir"),
-					String.valueOf(Calendar.getInstance().getTimeInMillis())));
+		public FileSender(IntlolaMode mode) throws InvalidModeException, IOException {
+			String storePath = IOUtils.joinPath(System.getProperty("java.io.tmpdir"),String.valueOf(Calendar.getInstance().getTimeInMillis()));
+			String projectLocation = "/home/godfried/dev/java/ImpenduloProjects/Triangle";
+			String skeletonInfoPath = IOUtils.joinPath(projectLocation, ".impendulo_info.json");
+			proc = new Processor(mode, projectLocation, storePath, skeletonInfoPath);
 		}
 
 		public void run() {
-			IntlolaError error = proc.login("username", "password",
+			IntlolaError error = proc.login("pjordaan", "1brandwag",
 					"localhost", 8010);
 			if (!error.equals(IntlolaError.SUCCESS)) {
 				System.err.println(error.getDescription());
