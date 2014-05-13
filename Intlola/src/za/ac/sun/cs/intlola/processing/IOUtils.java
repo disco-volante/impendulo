@@ -22,7 +22,7 @@ import org.eclipse.swt.widgets.Shell;
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.IndividualFile;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
-import za.ac.sun.cs.intlola.processing.json.SkeletonInfo;
+import za.ac.sun.cs.intlola.processing.json.Ignore;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -49,7 +49,7 @@ public class IOUtils {
 	public static final String PY = ".py";
 	private static String extension;
 	private static final String[] ignoreRegexes = new String[] { "bin",
-			"\\..*", "lib" };
+			"\\..*", "lib", "data"};
 
 	/**
 	 * read reads all available data from an InputStream.
@@ -467,12 +467,12 @@ public class IOUtils {
 		}
 	}
 
-	public static SkeletonInfo readSkeletonInfo(String filename)
+	public static Ignore readIgnore(String filename)
 			throws IOException {
 		InputStream fin = new FileInputStream(new File(filename));
 		final String data = read(fin);
 		Gson gson = new Gson();
-		SkeletonInfo si = gson.fromJson(data, new SkeletonInfo().getClass());
+		Ignore si = gson.fromJson(data, new Ignore().getClass());
 		return si;
 	}
 

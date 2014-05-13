@@ -40,7 +40,7 @@ import za.ac.sun.cs.intlola.processing.json.ProjectInfo;
 public class SendTester {
 	private static final int runnerCount = 10;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		Thread[] runners = new Thread[runnerCount];
 		for (int i = 0; i < runnerCount; i++) {
 			IntlolaMode mode = i % 2 == 0 ? IntlolaMode.FILE_REMOTE
@@ -64,7 +64,7 @@ public class SendTester {
 	}
 
 	public static class FileSender extends Thread {
-		private static final int sendCount = 5;
+		private static final int sendCount = 10;
 		private Processor proc;
 
 		public FileSender(IntlolaMode mode) throws InvalidModeException, IOException {

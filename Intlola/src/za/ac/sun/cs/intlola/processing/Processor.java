@@ -39,9 +39,9 @@ import za.ac.sun.cs.intlola.file.ArchiveFile;
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.IndividualFile;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
+import za.ac.sun.cs.intlola.processing.json.Ignore;
 import za.ac.sun.cs.intlola.processing.json.Project;
 import za.ac.sun.cs.intlola.processing.json.ProjectInfo;
-import za.ac.sun.cs.intlola.processing.json.SkeletonInfo;
 import za.ac.sun.cs.intlola.processing.json.Submission;
 
 import com.google.gson.Gson;
@@ -71,9 +71,9 @@ public class Processor {
 	private Project currentProject;
 	private ProjectInfo[] projectInfos;
 	private Submission currentSubmission;
-	private SkeletonInfo skeletonInfo;
+	private Ignore ignore;
 
-	private String projectLocation, storePath, archivePath;
+	private String storePath, archivePath;
 
 	/**
 	 * Construct processor with default values.
@@ -86,15 +86,14 @@ public class Processor {
 	 * @throws InvalidModeException
 	 * @throws IOException 
 	 */
-	public Processor(final IntlolaMode mode, final String projectLocation, final String storePath, final String skeletonInfoPath)
+	public Processor(final IntlolaMode mode, final String projectLocation, final String storePath, final String ignorePath)
 			throws InvalidModeException, IOException {
-		this.projectLocation = projectLocation;
 		this.storePath = IOUtils.joinPath(storePath, UUID.randomUUID()
 				.toString());
 		setMode(mode);
 		this.executor = Executors.newFixedThreadPool(1);
-		this.skeletonInfo = IOUtils.readSkeletonInfo(skeletonInfoPath);
-		this.skeletonInfo.buildSendPaths(projectLocation);
+		this.ignore = IOUtils.readIgnore(ignorePath);
+		this.ignore.build(projectLocation);
 	}
 
 	public String getAddress() {
@@ -323,10 +322,10 @@ public class Processor {
 		String tipe = Const.LAUNCH;
 		boolean isSrc = IOUtils.isSrc(path);
 		if(isSrc){
-			tipe = skeletonInfo.sendPaths.get(path);
-			if(tipe == null){
+			if(ignore.contains(path)){
 				return;
 			}
+			tipe = Const.SRC;
 		}	
 		if (getMode().isArchive()) {
 			final String name = IOUtils.joinPath(archivePath, IOUtils
