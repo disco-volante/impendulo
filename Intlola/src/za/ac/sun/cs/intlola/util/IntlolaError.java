@@ -22,28 +22,33 @@
 //(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package za.ac.sun.cs.intlola;
-
-import org.eclipse.core.resources.IResourceChangeEvent;
-import org.eclipse.core.resources.IResourceChangeListener;
-import org.eclipse.core.runtime.CoreException;
+package za.ac.sun.cs.intlola.util;
 
 /**
- * IntlolaListener detects changes to resources and launches an IntlolaVisitor
- * to investigate these changes.
+ * IntlolaError is used to report errors which occur during the execution of
+ * Intlola.
  * 
  * @author godfried
  * 
  */
-public class IntlolaListener implements IResourceChangeListener {
+public enum IntlolaError {
+	ARCHIVE("Archive error"), CONNECTION("Connection error"), CORE("Core error"), DEFAULT(
+			"Core error"), FILE("Core error"), LOGIN("Login error"), SERVER(
+			"Server error"), SOCKET("Socket error"), SUCCESS("Success"), USER(
+			"User created error.");
 
-	@Override
-	public void resourceChanged(final IResourceChangeEvent event) {
-		try {
-			event.getDelta().accept(new IntlolaVisitor());
-		} catch (final CoreException e) {
-			Intlola.log(e);
-		}
+	private String description;
+
+	IntlolaError(final String description) {
+		this.description = description;
 	}
 
+	public String getDescription() {
+		return description;
+	}
+
+	public IntlolaError specific(final String description) {
+		this.description = description;
+		return this;
+	}
 }

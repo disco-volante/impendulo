@@ -22,55 +22,51 @@
 //(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package za.ac.sun.cs.intlola.processing;
+package za.ac.sun.cs.intlola;
 
-import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
+import java.io.IOException;
+
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceDelta;
+import org.eclipse.core.resources.IResourceDeltaVisitor;
+import org.eclipse.core.runtime.CoreException;
+
+import za.ac.sun.cs.intlola.util.IO;
 
 /**
- * IntlolaMode represents the mode in which Intlola is run.
+ * IntlolaVisitor is used to detect when a change has occurred to a file. If the
+ * change caused a change of content, the file is sent to be processed.
  * 
  * @author godfried
  * 
  */
-public enum IntlolaMode {
-	ARCHIVE_LOCAL("Save all snapshots locally in archive."), ARCHIVE_REMOTE(
-			"Send all snapshots to server once recording has stopped."), FILE_REMOTE(
-			"Continuously send snapshots to server."), NONE("None");
-
-	public static IntlolaMode getMode(final String mpref) {
-		IntlolaMode ret = null;
-		if (mpref.equals(PreferenceConstants.FILE_REMOTE)) {
-			ret = FILE_REMOTE;
-		} else if (mpref.equals(PreferenceConstants.ARCHIVE_REMOTE)) {
-			ret = ARCHIVE_REMOTE;
-		} else if (mpref.equals(PreferenceConstants.ARCHIVE_LOCAL)) {
-			ret = ARCHIVE_LOCAL;
-		} else {
-			throw new EnumConstantNotPresentException(IntlolaMode.class, mpref);
-		}
-		return ret;
-	}
-
-	private String description;
-
-	IntlolaMode(final String description) {
-		this.description = description;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public boolean isArchive() {
-		return equals(ARCHIVE_REMOTE) || equals(ARCHIVE_LOCAL);
-	}
-
-	public boolean isRemote() {
-		return equals(ARCHIVE_REMOTE) || equals(FILE_REMOTE);
-	}
-
+public class Visitor implements IResourceDeltaVisitor {
 	@Override
-	public String toString() {
-		return super.toString().toLowerCase();
+	public boolean visit(final IResourceDelta delta) throws CoreException {
+		final IResource resource = delta.getResource();
+		final IProject project = resource.getProject();
+		if (project == null) {
+			return true;
+			// We only want to visit when Intlola is actually recording.
+		} else if (Intlola.projectRecording(project)) {
+			final String path = resource.getLocation().toString();
+			if (IO.ignore(path)) {
+				return false;
+			}
+			try {
+				// We only want to send the file if its actual content has
+				// changed.
+				if ((delta.getFlags() & IResourceDelta.CONTENT) == IResourceDelta.CONTENT) {
+					Intlola.processChanges(path, delta.getKind());
+				}
+			} catch (IOException e) {
+				Intlola.log(e, "Could not process changes");
+			}
+			return true;
+		} else {
+			return false;
+		}
 	}
+
 }

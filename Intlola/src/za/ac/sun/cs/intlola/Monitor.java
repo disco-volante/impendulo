@@ -24,35 +24,59 @@
 
 package za.ac.sun.cs.intlola;
 
-import org.eclipse.core.commands.AbstractHandler;
-import org.eclipse.core.commands.ExecutionEvent;
-import org.eclipse.core.commands.ExecutionException;
+import java.io.IOException;
+
 import org.eclipse.core.resources.IProject;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.ui.handlers.HandlerUtil;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.debug.core.ILaunchListener;
+import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
+
+import za.ac.sun.cs.intlola.util.IO;
 
 /**
- * This class is the handler which detects when the user wants to start
- * recording. It then notifies Intlola that it should begin a recording session.
+ * IntlolaMonitor is used to detect when the user runs their project. It then
+ * notifies Intola that a launch has occurred.
  * 
  * @author godfried
  * 
  */
-public class IntlolaRecord extends AbstractHandler {
+public class Monitor implements ILaunchListener {
 
 	@Override
-	public Object execute(final ExecutionEvent event) throws ExecutionException {
-		final IProject project = PluginUtils.getSelectedProject(event);
-		if (!Intlola.projectRecording(project) && !Intlola.isRecording()) {
-			Intlola.startRecord(project, HandlerUtil.getActiveShell(event));
-		} else {
-			MessageDialog
-					.openError(
-							HandlerUtil.getActiveShell(event),
-							"Recording Error",
-							"You are already recording a project. Please stop recording it before starting a new recording.");
+	public void launchAdded(final ILaunch launch) {
+	}
+
+	@Override
+	public void launchChanged(final ILaunch launch) {
+		final ILaunchConfiguration config = launch.getLaunchConfiguration();
+		String projectName = "";
+		try {
+			projectName = config.getAttribute(
+					IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, "");
+		} catch (final CoreException e) {
+			Intlola.log(e);
 		}
-		return null;
+		if (projectName != "") {
+			final IProject project = ResourcesPlugin.getWorkspace().getRoot()
+					.getProject(projectName);
+			// Only want to notify if we are recording and we found a valid
+			// project.
+			if (project != null && Intlola.projectRecording(project)) {
+				final String path = project.getLocation().toString();
+				try {
+					Intlola.processChanges(path, IO.LAUNCHED);
+				} catch (IOException e) {
+					Intlola.log(e, "Could not process launch");
+				}
+			}
+		}
+	}
+
+	@Override
+	public void launchRemoved(final ILaunch launch) {
 	}
 
 }

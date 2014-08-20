@@ -2,7 +2,7 @@
 <feature
       id="za.ac.sun.cs.IntlolaFeature"
       label="IntlolaFeature"
-      version="1.0.1.5"
+      version="1.0.1.6"
       provider-name="Computer Science, Stellenbosch University"
       plugin="Intlola">
 

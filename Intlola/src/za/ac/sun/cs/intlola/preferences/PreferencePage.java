@@ -32,7 +32,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import za.ac.sun.cs.intlola.Intlola;
-import za.ac.sun.cs.intlola.processing.IntlolaMode;
+import za.ac.sun.cs.intlola.util.IntlolaMode;
 
 /**
  * PreferencePage allows the user to configure preferences for Intlola in

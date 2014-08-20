@@ -22,65 +22,62 @@
 //(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package za.ac.sun.cs.intlola.processing.json;
+package za.ac.sun.cs.intlola.processing;
 
-import java.io.Serializable;
-import java.util.Date;
-import java.util.UUID;
+import java.io.IOException;
+
+import za.ac.sun.cs.intlola.processing.paths.IPaths;
+import za.ac.sun.cs.intlola.processing.tasks.ArchiveBuilder;
+import za.ac.sun.cs.intlola.util.IntlolaMode;
+import za.ac.sun.cs.intlola.util.InvalidModeException;
 
 /**
- * Project represents a project within Impendulo.
+ * Processor interacts with Impendulo over TCP. It logs the user in to
+ * Impendulo, retrieves available projects, sends files and logs them out.
  * 
  * @author godfried
  * 
  */
-public class Project implements Serializable {
-	private static final long serialVersionUID = -7128594023385132073L;
-	public String Id;
-	public String Name;
-	public String Lang;
-	long Time;
+public class LocalProcessor extends Processor {
 
-	public Project(String n, String l, long t) {
-		Id = UUID.randomUUID().toString();
-		Name = n;
-		Lang = l;
-		Time = t;
+	/**
+	 * Construct processor with default values.
+	 * 
+	 * @param username
+	 * @param project
+	 * @param mode
+	 * @param address
+	 * @param port
+	 * @throws InvalidModeException
+	 * @throws IOException
+	 */
+	public LocalProcessor(final IPaths paths) throws IOException {
+		super(paths);
 	}
 
-	public Project() {}
-
-	@Override
-	public int hashCode() {
-		return Id.hashCode();
+	public IntlolaMode getMode() {
+		return IntlolaMode.ARCHIVE_LOCAL;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		Project other = (Project) obj;
-		if (Id == null) {
-			if (other.Id != null) {
-				return false;
-			}
-		} else if (!Id.equals(other.Id)) {
-			return false;
-		}
-		return true;
+	/**
+	 * handleLocalArchive shuts down the processor if the snapshots are being
+	 * stored locally.
+	 * 
+	 * @param zipName
+	 */
+	public void saveArchive(final String name) {
+		executor.execute(new ArchiveBuilder(paths.archivePath(), name));
 	}
 
 	@Override
-	public String toString() {
-		return "Name: " + Name + ", Language: " + Lang + ", Date: "
-				+ new Date(Time);
+	public void stop() {
+		executor.shutdown();
+	}
+
+	@Override
+	public void processFile(String path, char kindSuffix, String tipe)
+			throws IOException {
+		ArchiveProcessor.save(paths.archivePath(), path, kindSuffix, tipe);
 	}
 
 }

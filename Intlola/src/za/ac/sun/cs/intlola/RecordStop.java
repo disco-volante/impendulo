@@ -22,65 +22,33 @@
 //(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package za.ac.sun.cs.intlola.processing.json;
+package za.ac.sun.cs.intlola;
 
-import java.io.Serializable;
-import java.util.Date;
-import java.util.UUID;
+import org.eclipse.core.commands.AbstractHandler;
+import org.eclipse.core.commands.ExecutionEvent;
+import org.eclipse.core.commands.ExecutionException;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.ui.handlers.HandlerUtil;
+
+import za.ac.sun.cs.intlola.util.Plugin;
 
 /**
- * Project represents a project within Impendulo.
+ * This class is the handler which detects when the user wants to stop
+ * recording. It then notifies Intlola that it should stop recording the user's
+ * work.
  * 
  * @author godfried
  * 
  */
-public class Project implements Serializable {
-	private static final long serialVersionUID = -7128594023385132073L;
-	public String Id;
-	public String Name;
-	public String Lang;
-	long Time;
-
-	public Project(String n, String l, long t) {
-		Id = UUID.randomUUID().toString();
-		Name = n;
-		Lang = l;
-		Time = t;
-	}
-
-	public Project() {}
+public class RecordStop extends AbstractHandler {
 
 	@Override
-	public int hashCode() {
-		return Id.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
+	public Object execute(final ExecutionEvent event) throws ExecutionException {
+		final IProject project = Plugin.getSelectedProject(event);
+		if (Intlola.projectRecording(project)) {
+			Intlola.stopRecord(project, HandlerUtil.getActiveShell(event));
 		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		Project other = (Project) obj;
-		if (Id == null) {
-			if (other.Id != null) {
-				return false;
-			}
-		} else if (!Id.equals(other.Id)) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public String toString() {
-		return "Name: " + Name + ", Language: " + Lang + ", Date: "
-				+ new Date(Time);
+		return null;
 	}
 
 }

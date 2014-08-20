@@ -22,7 +22,7 @@
 //(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package za.ac.sun.cs.intlola.processing;
+package za.ac.sun.cs.intlola.processing.tasks;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,6 +30,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 import za.ac.sun.cs.intlola.file.Const;
+import za.ac.sun.cs.intlola.util.IO;
 
 import com.google.gson.JsonObject;
 
@@ -44,7 +45,7 @@ public class SessionEnder implements Runnable {
 	private final OutputStream snd;
 	private final Socket sock;
 
-	SessionEnder(final Socket sock, final OutputStream snd,
+	public SessionEnder(final Socket sock, final OutputStream snd,
 			final InputStream rcv) {
 		this.sock = sock;
 		this.snd = snd;
@@ -67,9 +68,9 @@ public class SessionEnder implements Runnable {
 	public void run() {
 		try {
 			final JsonObject params = new JsonObject();
-			params.addProperty(Const.REQ, Const.LOGOUT);
-			IOUtils.writeJson(snd, params);
-			final String received = IOUtils.read(rcv);
+			params.addProperty(Const.REQUEST, Const.LOGOUT);
+			IO.writeJson(snd, params);
+			final String received = IO.read(rcv);
 			if (!received.startsWith(Const.OK)) {
 				System.err.println(received);
 			}

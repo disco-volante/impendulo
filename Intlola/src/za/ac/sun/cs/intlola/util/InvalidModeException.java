@@ -22,31 +22,24 @@
 //(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package za.ac.sun.cs.intlola;
+package za.ac.sun.cs.intlola.util;
 
-import org.eclipse.core.commands.AbstractHandler;
-import org.eclipse.core.commands.ExecutionEvent;
-import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.ui.handlers.HandlerUtil;
-
-/**
- * This class is the handler which detects when the user wants to stop
- * recording. It then notifies Intlola that it should stop recording the user's
- * work.
- * 
- * @author godfried
- * 
- */
-public class IntlolaRecordStop extends AbstractHandler {
-
-	@Override
-	public Object execute(final ExecutionEvent event) throws ExecutionException {
-		final IProject project = PluginUtils.getSelectedProject(event);
-		if (Intlola.projectRecording(project)) {
-			Intlola.stopRecord(project, HandlerUtil.getActiveShell(event));
-		}
-		return null;
+public class InvalidModeException extends Exception {
+private IntlolaMode mode;
+	public InvalidModeException(IntlolaMode mode) {
+		this.mode = mode;
 	}
+	@Override
+	public String getMessage(){
+		if(mode == null){
+			return "Invalid Intlola mode null";
+		}
+		return String.format("Invalid Intlola mode %s", this.mode);
+	}
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1341340151681682062L;
 
 }

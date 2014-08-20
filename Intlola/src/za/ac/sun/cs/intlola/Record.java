@@ -22,24 +22,39 @@
 //(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package za.ac.sun.cs.intlola.processing;
+package za.ac.sun.cs.intlola;
 
-public class InvalidModeException extends Exception {
-private IntlolaMode mode;
-	public InvalidModeException(IntlolaMode mode) {
-		this.mode = mode;
-	}
+import org.eclipse.core.commands.AbstractHandler;
+import org.eclipse.core.commands.ExecutionEvent;
+import org.eclipse.core.commands.ExecutionException;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.ui.handlers.HandlerUtil;
+
+import za.ac.sun.cs.intlola.util.Plugin;
+
+/**
+ * This class is the handler which detects when the user wants to start
+ * recording. It then notifies Intlola that it should begin a recording session.
+ * 
+ * @author godfried
+ * 
+ */
+public class Record extends AbstractHandler {
+
 	@Override
-	public String getMessage(){
-		if(mode == null){
-			return "Invalid Intlola mode null";
+	public Object execute(final ExecutionEvent event) throws ExecutionException {
+		final IProject project = Plugin.getSelectedProject(event);
+		if (!Intlola.projectRecording(project) && !Intlola.isRecording()) {
+			Intlola.startRecord(project, HandlerUtil.getActiveShell(event));
+		} else {
+			MessageDialog
+					.openError(
+							HandlerUtil.getActiveShell(event),
+							"Recording Error",
+							"You are already recording a project. Please stop recording it before starting a new recording.");
 		}
-		return String.format("Invalid Intlola mode %s", this.mode);
+		return null;
 	}
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1341340151681682062L;
 
 }

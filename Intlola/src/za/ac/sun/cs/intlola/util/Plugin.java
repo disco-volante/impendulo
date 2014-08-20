@@ -22,7 +22,7 @@
 //(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package za.ac.sun.cs.intlola;
+package za.ac.sun.cs.intlola.util;
 
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.resources.IContainer;
@@ -36,6 +36,8 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
+import za.ac.sun.cs.intlola.Intlola;
+
 /**
  * PluginUtils provides some utility methods associated with Eclipse plugin
  * development.
@@ -43,7 +45,7 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
  * @author godfried
  * 
  */
-public class PluginUtils {
+public class Plugin {
 	public static ImageDescriptor getImageDescriptor(final String path) {
 		return AbstractUIPlugin.imageDescriptorFromPlugin(Intlola.PLUGIN_ID,
 				path);

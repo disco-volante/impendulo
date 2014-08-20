@@ -1,16 +1,32 @@
 package za.ac.sun.cs.intlola.processing.json;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
 
-import za.ac.sun.cs.intlola.processing.IOUtils;
+import com.google.gson.Gson;
+
+import za.ac.sun.cs.intlola.util.IO;
 
 public class Ignore {
 	public String name = "";
 	public PathInfo[] paths;
 	private Set<String> ignore;
+
+	public static Ignore create(String filename) throws IOException {
+		File f = new File(filename);
+		if (!f.exists() || f.isDirectory()) {
+			return new Ignore();
+		}
+		InputStream fin = new FileInputStream(f);
+		final String data = IO.read(fin);
+		Gson gson = new Gson();
+		Ignore si = gson.fromJson(data, new Ignore().getClass());
+		return si;
+	}
 
 	public boolean contains(String path) {
 		return ignore != null && ignore.contains(path);
@@ -27,8 +43,8 @@ public class Ignore {
 	}
 
 	private void addPath(final String base, PathInfo fi) throws IOException {
-		String dir = IOUtils.joinPath(fi.folder, fi.pkg.split("\\."));
-		String path = IOUtils.joinPath(base, dir, fi.name);
+		String dir = IO.joinPath(fi.folder, fi.pkg.split("\\."));
+		String path = IO.joinPath(base, dir, fi.name);
 		if (!new File(path).exists()) {
 			throw new IOException(
 					String.format(

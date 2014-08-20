@@ -24,11 +24,6 @@
 
 package za.ac.sun.cs.intlola.gui;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
@@ -43,6 +38,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
+import za.ac.sun.cs.intlola.processing.json.Assignment;
+import za.ac.sun.cs.intlola.processing.json.AssignmentInfo;
 import za.ac.sun.cs.intlola.processing.json.Project;
 import za.ac.sun.cs.intlola.processing.json.ProjectInfo;
 import za.ac.sun.cs.intlola.processing.json.Submission;
@@ -55,38 +52,14 @@ import za.ac.sun.cs.intlola.processing.json.Submission;
  * 
  */
 public class SubmissionDialog extends Dialog {
-	private Project project;
-	private Submission submission;
-	private Map<String, ProjectInfo> projectMap;
-	private String[] histProjectItems, retProjectItems;
-	private Map<String, String[]> subItems;
+	private ProjectItems projectItems;
 
 	protected boolean create;
 
 	public SubmissionDialog(final Shell parentShell,
 			final ProjectInfo[] projectInfos) {
 		super(parentShell);
-		retProjectItems = new String[projectInfos.length];
-		subItems = new HashMap<String, String[]>();
-		projectMap = new HashMap<String, ProjectInfo>();
-		List<String> tempHist = new ArrayList<String>();
-		int i = 0;
-		for (ProjectInfo pi : projectInfos) {
-			String disp = pi.getProject().toString();
-			retProjectItems[i++] = disp;
-			projectMap.put(disp, pi);
-			Submission[] subs = pi.getSubmissions();
-			if (subs != null && subs.length > 0) {
-				String[] subsDesc = new String[subs.length];
-				int k = 0;
-				for (Submission s : subs) {
-					subsDesc[k++] = s.toString();
-				}
-				subItems.put(disp, subsDesc);
-				tempHist.add(disp);
-			}
-		}
-		histProjectItems = tempHist.toArray(new String[tempHist.size()]);
+		projectItems = new ProjectItems(projectInfos);
 	}
 
 	@Override
@@ -124,6 +97,12 @@ public class SubmissionDialog extends Dialog {
 		final Combo projectList = new Combo(comp, SWT.DROP_DOWN | SWT.READ_ONLY);
 		projectList.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
+		final Label assLabel = new Label(comp, SWT.RIGHT);
+		assLabel.setText("Assignment:");
+
+		final Combo assList = new Combo(comp, SWT.DROP_DOWN | SWT.READ_ONLY);
+		assList.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
 		final Label subLabel = new Label(comp, SWT.RIGHT);
 		subLabel.setText("Submission:");
 
@@ -145,13 +124,12 @@ public class SubmissionDialog extends Dialog {
 				create = btnNew.getSelection();
 				if (create) {
 					btnContinue.setSelection(false);
-					projectList.setItems(retProjectItems);
 					submissionList.setVisible(false);
 					subLabel.setVisible(false);
 				} else {
 					btnNew.setSelection(false);
-					projectList.setItems(histProjectItems);
 					submissionList.setVisible(true);
+					submissionList.setItems(projectItems.getSubmissionNames());
 					subLabel.setVisible(true);
 				}
 			}
@@ -163,17 +141,27 @@ public class SubmissionDialog extends Dialog {
 		projectList.addSelectionListener(new SelectionListener() {
 			@Override
 			public void widgetSelected(SelectionEvent se) {
-				int index = projectList.getSelectionIndex();
 				getButton(IDialogConstants.OK_ID).setEnabled(false);
-				if (index >= 0) {
-					project = projectMap.get(projectList.getText())
-							.getProject();
-					if (create) {
-						getButton(IDialogConstants.OK_ID).setEnabled(true);
-					} else {
-						submissionList.setItems(subItems.get(projectList
-								.getText()));
-					}
+				projectItems.setProject(projectList.getText());
+				assList.setItems(projectItems.getAssignmentNames());
+				submissionList.setItems(new String[] {});
+			}
+
+			@Override
+			public void widgetDefaultSelected(SelectionEvent se) {
+				widgetSelected(se);
+			}
+		});
+
+		assList.addSelectionListener(new SelectionListener() {
+			@Override
+			public void widgetSelected(SelectionEvent se) {
+				getButton(IDialogConstants.OK_ID).setEnabled(false);
+				projectItems.setAssignment(assList.getText());
+				if (create) {
+					getButton(IDialogConstants.OK_ID).setEnabled(true);
+				} else {
+					submissionList.setItems(projectItems.getSubmissionNames());
 				}
 			}
 
@@ -186,10 +174,8 @@ public class SubmissionDialog extends Dialog {
 		submissionList.addSelectionListener(new SelectionListener() {
 			@Override
 			public void widgetSelected(SelectionEvent se) {
-				int index = submissionList.getSelectionIndex();
-				if (!create && index >= 0) {
-					submission = projectMap.get(project.toString())
-							.getSubmissions()[index];
+				if (!create) {
+					projectItems.setSubmission(submissionList.getText());
 					getButton(IDialogConstants.OK_ID).setEnabled(true);
 				}
 			}
@@ -203,22 +189,55 @@ public class SubmissionDialog extends Dialog {
 		// Initialise
 		create = true;
 		btnNew.setSelection(true);
-		projectList.setItems(retProjectItems);
+		projectList.setItems(projectItems.getNames());
 		submissionList.setVisible(false);
 		subLabel.setVisible(false);
 
 		return comp;
 	}
 
-	public Project getProject() {
-		return project;
+	public Assignment getAssignment() {
+		return projectItems.getAssignment();
 	}
 
 	public Submission getSubmission() {
-		return submission;
+		return projectItems.getSubmission();
 	}
-
+	public Project getProject() {
+		return projectItems.getProject();
+	}
+	
 	public boolean isCreate() {
 		return create;
 	}
+
+	public static void main(String[] args) {
+		Project[] ps = new Project[] {
+				new Project("Triangle", "Java", System.currentTimeMillis()),
+				new Project("TriType", "Java", System.currentTimeMillis()),
+				new Project("KSelect", "Java", System.currentTimeMillis()) };
+		Assignment[] as = new Assignment[] {
+				new Assignment("Honours", "user", System.currentTimeMillis(),
+						System.currentTimeMillis() + 1000),
+				new Assignment("Masters", "user", System.currentTimeMillis(),
+						System.currentTimeMillis() + 2000),
+				new Assignment("RW344", "user", System.currentTimeMillis(),
+						System.currentTimeMillis() + 3000), };
+		Submission[] ss = new Submission[] {
+				new Submission("user 1", System.currentTimeMillis()),
+				new Submission("user 2", System.currentTimeMillis()),
+				new Submission("user 3", System.currentTimeMillis()) };
+		ProjectInfo[] infos = new ProjectInfo[ps.length];
+		for (int i = 0; i < infos.length; i++) {
+			AssignmentInfo[] assInfos = new AssignmentInfo[as.length];
+			for (int j = 0; j < assInfos.length; j++) {
+				assInfos[j] = new AssignmentInfo(as[j], ss);
+			}
+			infos[i] = new ProjectInfo(ps[i], assInfos);
+		}
+		Dialog d = new SubmissionDialog(new Shell(), infos);
+		d.open();
+	}
+
+
 }

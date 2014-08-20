@@ -26,6 +26,7 @@ package za.ac.sun.cs.intlola.processing.json;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * Submission represents a submission in Impendulo.
@@ -40,6 +41,15 @@ public class Submission implements Serializable {
 	String ProjectId;
 	String User;
 	long Time;
+
+	public Submission() {
+	}
+
+	public Submission(String u, long t) {
+		Id = UUID.randomUUID().toString();
+		User = u;
+		Time = t;
+	}
 
 	@Override
 	public int hashCode() {

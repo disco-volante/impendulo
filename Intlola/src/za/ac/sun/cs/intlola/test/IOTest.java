@@ -38,34 +38,34 @@ import org.junit.Test;
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.IndividualFile;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
-import za.ac.sun.cs.intlola.processing.IOUtils;
-import za.ac.sun.cs.intlola.processing.InvalidArgumentException;
+import za.ac.sun.cs.intlola.util.IO;
+import za.ac.sun.cs.intlola.util.InvalidArgumentException;
 
 /**
- * Tests for {@link IOUtils}.
+ * Tests for {@link IO}.
  * 
  * @author disco
  * 
  */
 public class IOTest {
 	private static final long TIME_1 = Calendar.getInstance().getTimeInMillis();
-	private static final char MOD_1 = IOUtils.SAVE;
+	private static final char MOD_1 = IO.SAVE;
 	private static final String FNAME_1 = "Intlola.java";
-	private static final String PKG_1 = "za" + IOUtils.NAME_SEP + "sun"
-			+ IOUtils.NAME_SEP + "cs" + IOUtils.NAME_SEP + "intlola";
+	private static final String PKG_1 = "za" + IO.NAME_SEP + "sun"
+			+ IO.NAME_SEP + "cs" + IO.NAME_SEP + "intlola";
 	private static final String PKG_PATH_1 = "za" + File.separator + "sun"
 			+ File.separator + "cs" + File.separator + "intlola";
-	private static final String ENC_PKG_1 = "za" + IOUtils.COMPONENT_SEP
-			+ "sun" + IOUtils.COMPONENT_SEP + "cs" + IOUtils.COMPONENT_SEP
+	private static final String ENC_PKG_1 = "za" + IO.COMPONENT_SEP
+			+ "sun" + IO.COMPONENT_SEP + "cs" + IO.COMPONENT_SEP
 			+ "intlola";
-	private static final String PREFIX_1 = "bla" + IOUtils.COMPONENT_SEP
+	private static final String PREFIX_1 = "bla" + IO.COMPONENT_SEP
 			+ "src";
 	private static final String PREFIX_2 = "bla" + File.separator + "src";
-	private static final String ENC_NAME_1 = PREFIX_1 + IOUtils.COMPONENT_SEP
-			+ ENC_PKG_1 + IOUtils.COMPONENT_SEP + FNAME_1
-			+ IOUtils.COMPONENT_SEP + TIME_1 + IOUtils.COMPONENT_SEP + MOD_1;
-	private static final String ENC_NAME_2 = ENC_PKG_1 + IOUtils.COMPONENT_SEP
-			+ FNAME_1 + IOUtils.COMPONENT_SEP + TIME_1 + IOUtils.COMPONENT_SEP
+	private static final String ENC_NAME_1 = PREFIX_1 + IO.COMPONENT_SEP
+			+ ENC_PKG_1 + IO.COMPONENT_SEP + FNAME_1
+			+ IO.COMPONENT_SEP + TIME_1 + IO.COMPONENT_SEP + MOD_1;
+	private static final String ENC_NAME_2 = ENC_PKG_1 + IO.COMPONENT_SEP
+			+ FNAME_1 + IO.COMPONENT_SEP + TIME_1 + IO.COMPONENT_SEP
 			+ MOD_1;
 	private static final IntlolaFile IFILE_1 = new IndividualFile(ENC_NAME_1,
 			FNAME_1, PKG_1, TIME_1, MOD_1, Const.SRC);
@@ -78,7 +78,7 @@ public class IOTest {
 	@Before
 	public void setup(){
 		try {
-			IOUtils.setExtension("java");
+			IO.setExtension("java");
 		} catch (InvalidArgumentException e) {
 			e.printStackTrace();
 		}
@@ -86,35 +86,35 @@ public class IOTest {
 
 	@Test
 	public void testDecodeName() {
-		IntlolaFile actual = IOUtils.decodeName(ENC_NAME_1);
+		IntlolaFile actual = IO.decodeName(ENC_NAME_1);
 		assertEquals(IFILE_1, actual);
 	}
 
 	@Test
 	public void testEncodeName() {
-		String actual = IOUtils.encodeName(PATH_1, TIME_1, MOD_1);
+		String actual = IO.encodeName(PATH_1, TIME_1, MOD_1);
 		assertEquals(ENC_NAME_2, actual);
 	}
 
 	@Test
 	public void testGetFileName() {
-		String res1 = IOUtils.getFileName(ENC_NAME_1
-				.split(IOUtils.COMPONENT_SEP));
-		String res2 = IOUtils.getFileName(PKG_1.split(IOUtils.NAME_SEP));
+		String res1 = IO.getFileName(ENC_NAME_1
+				.split(IO.COMPONENT_SEP));
+		String res2 = IO.getFileName(PKG_1.split(IO.NAME_SEP));
 		assertEquals(FNAME_1, res1);
 		assertEquals(EMPTY, res2);
 	}
 
 	@Test
 	public void testGetPackage() {
-		String res1 = IOUtils.getPackage(PATH_1.split(File.separator),
-				IOUtils.COMPONENT_SEP);
-		String res2 = IOUtils.getPackage(PATH_1.split(File.separator),
-				IOUtils.NAME_SEP);
-		String res3 = IOUtils.getPackage(PATH_2.split(File.separator),
-				IOUtils.NAME_SEP);
-		String res4 = IOUtils.getPackage(PATH_3.split(File.separator),
-				IOUtils.NAME_SEP);
+		String res1 = IO.getPackage(PATH_1.split(File.separator),
+				IO.COMPONENT_SEP);
+		String res2 = IO.getPackage(PATH_1.split(File.separator),
+				IO.NAME_SEP);
+		String res3 = IO.getPackage(PATH_2.split(File.separator),
+				IO.NAME_SEP);
+		String res4 = IO.getPackage(PATH_3.split(File.separator),
+				IO.NAME_SEP);
 		assertEquals(ENC_PKG_1, res1);
 		assertEquals(PKG_1, res2);
 		assertEquals(EMPTY, res3);
@@ -136,7 +136,7 @@ public class IOTest {
 			}
 		};
 		for (Entry<String, Boolean> test : tests.entrySet()) {
-			assertEquals(test.getValue(), IOUtils.ignore(test.getKey()));
+			assertEquals(test.getValue(), IO.ignore(test.getKey()));
 		}
 	}
 }

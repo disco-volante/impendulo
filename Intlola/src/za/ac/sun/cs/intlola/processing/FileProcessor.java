@@ -26,27 +26,55 @@ package za.ac.sun.cs.intlola.processing;
 
 import java.io.IOException;
 
+import za.ac.sun.cs.intlola.file.IndividualFile;
+import za.ac.sun.cs.intlola.processing.paths.IPaths;
+import za.ac.sun.cs.intlola.processing.tasks.FileSender;
+import za.ac.sun.cs.intlola.processing.tasks.SessionEnder;
+import za.ac.sun.cs.intlola.util.IntlolaMode;
+import za.ac.sun.cs.intlola.util.InvalidModeException;
+
 /**
- * ArchiveBuilder is used to create a zip archive from a directory of files.
+ * Processor interacts with Impendulo over TCP. It logs the user in to
+ * Impendulo, retrieves available projects, sends files and logs them out.
  * 
  * @author godfried
  * 
  */
-public class ArchiveBuilder implements Runnable {
-	private final String fileLocation, savePath;
+public class FileProcessor extends RemoteProcessor {
 
-	public ArchiveBuilder(final String fileLocation, final String savePath) {
-		this.fileLocation = fileLocation;
-		this.savePath = savePath;
+	/**
+	 * Construct processor with default values.
+	 * 
+	 * @param username
+	 * @param project
+	 * @param mode
+	 * @param address
+	 * @param port
+	 * @throws InvalidModeException
+	 * @throws IOException
+	 */
+	public FileProcessor(final IPaths paths)
+			throws IOException {
+		super(paths);
 	}
 
-	@Override
-	public void run() {
-		try {
-			IOUtils.createZip(fileLocation, savePath);
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-		}
+	public IntlolaMode getMode() {
+		return IntlolaMode.FILE_REMOTE;
+	}
+
+	/**
+	 * processFile sends a file asynchronously to Impendulo.
+	 * 
+	 * @param file
+	 */
+	public void processFile(String path, char kindSuffix, String tipe) {
+		executor.execute(new FileSender(new IndividualFile(path, kindSuffix,
+				tipe), sock, snd, rcv));
+	}
+	
+	public void stop() {
+		executor.execute(new SessionEnder(sock, snd, rcv));
+		executor.shutdown();
 	}
 
 }

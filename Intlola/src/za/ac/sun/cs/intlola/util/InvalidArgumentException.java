@@ -1,4 +1,4 @@
-package za.ac.sun.cs.intlola.processing;
+package za.ac.sun.cs.intlola.util;
 
 public class InvalidArgumentException extends Exception {
 

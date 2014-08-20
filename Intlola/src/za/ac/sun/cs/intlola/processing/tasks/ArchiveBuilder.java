@@ -22,52 +22,32 @@
 //(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package za.ac.sun.cs.intlola;
+package za.ac.sun.cs.intlola.processing.tasks;
 
 import java.io.IOException;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceDelta;
-import org.eclipse.core.resources.IResourceDeltaVisitor;
-import org.eclipse.core.runtime.CoreException;
-
-import za.ac.sun.cs.intlola.processing.IOUtils;
+import za.ac.sun.cs.intlola.util.IO;
 
 /**
- * IntlolaVisitor is used to detect when a change has occurred to a file. If the
- * change caused a change of content, the file is sent to be processed.
+ * ArchiveBuilder is used to create a zip archive from a directory of files.
  * 
  * @author godfried
  * 
  */
-public class IntlolaVisitor implements IResourceDeltaVisitor {
+public class ArchiveBuilder implements Runnable {
+	private final String fileLocation, savePath;
+
+	public ArchiveBuilder(final String fileLocation, final String savePath) {
+		this.fileLocation = fileLocation;
+		this.savePath = savePath;
+	}
+
 	@Override
-	public boolean visit(final IResourceDelta delta) throws CoreException {
-		final IResource resource = delta.getResource();
-		final IProject project = resource.getProject();
-		if (project == null) {
-			return true;
-			// We only want to visit when Intlola is actually recording.
-		} else if (Intlola.projectRecording(project)) {
-			final String path = resource.getLocation().toString();
-			if(IOUtils.ignore(path)){
-					return false;
-			}
-			try {
-				// We only want to send the file if its actual content has
-				// changed.
-				if ((delta.getFlags() & IResourceDelta.CONTENT) == IResourceDelta.CONTENT) {
-					Intlola.getActive()
-							.getProcessor()
-							.processChanges(path, delta.getKind());
-				}
-			} catch (IOException e) {
-				Intlola.log(e, "Could not process changes");
-			}
-			return true;
-		} else {
-			return false;
+	public void run() {
+		try {
+			IO.createZip(fileLocation, savePath);
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
 		}
 	}
 

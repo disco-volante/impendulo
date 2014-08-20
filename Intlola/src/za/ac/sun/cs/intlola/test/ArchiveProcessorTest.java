@@ -25,28 +25,32 @@
 package za.ac.sun.cs.intlola.test;
 
 import java.io.IOException;
-import java.util.Calendar;
 
 import org.eclipse.core.resources.IResourceDelta;
 
-import za.ac.sun.cs.intlola.processing.IOUtils;
-import za.ac.sun.cs.intlola.processing.IntlolaError;
-import za.ac.sun.cs.intlola.processing.IntlolaMode;
-import za.ac.sun.cs.intlola.processing.InvalidModeException;
-import za.ac.sun.cs.intlola.processing.Processor;
+import za.ac.sun.cs.intlola.file.Const;
+import za.ac.sun.cs.intlola.processing.ArchiveProcessor;
+import za.ac.sun.cs.intlola.processing.json.Assignment;
+import za.ac.sun.cs.intlola.processing.json.AssignmentInfo;
 import za.ac.sun.cs.intlola.processing.json.Project;
 import za.ac.sun.cs.intlola.processing.json.ProjectInfo;
+import za.ac.sun.cs.intlola.processing.paths.TestPaths;
+import za.ac.sun.cs.intlola.util.IntlolaError;
+import za.ac.sun.cs.intlola.util.InvalidModeException;
 
-public class SendTester {
-	private static final int runnerCount = 10;
+public class ArchiveProcessorTest extends Thread {
 
-	public static void main(String[] args) throws Exception {
-		Thread[] runners = new Thread[runnerCount];
-		for (int i = 0; i < runnerCount; i++) {
-			IntlolaMode mode = i % 2 == 0 ? IntlolaMode.FILE_REMOTE
-					: IntlolaMode.ARCHIVE_REMOTE;
+	public static void main(String[] args) throws InterruptedException {
+		Thread t = new ArchiveProcessorTest();
+		t.start();
+		t.join();
+	}
+
+	public void run() {
+		Thread[] runners = new Thread[Settings.THREAD_COUNT];
+		for (int i = 0; i < Settings.THREAD_COUNT; i++) {
 			try {
-				runners[i] = new FileSender(mode);
+				runners[i] = new ArchiveSender();
 				runners[i].start();
 			} catch (InvalidModeException e) {
 				e.printStackTrace();
@@ -63,42 +67,20 @@ public class SendTester {
 		}
 	}
 
-	public static class FileSender extends Thread {
-		private static final int sendCount = 10;
-		private Processor proc;
+	public static class ArchiveSender extends Thread {
+		private ArchiveProcessor proc;
 
-		public FileSender(IntlolaMode mode) throws InvalidModeException, IOException {
-			String storePath = IOUtils.joinPath(System.getProperty("java.io.tmpdir"),String.valueOf(Calendar.getInstance().getTimeInMillis()));
-			String projectLocation = "/home/godfried/dev/java/ImpenduloProjects/Triangle";
-			String skeletonInfoPath = IOUtils.joinPath(projectLocation, ".impendulo_info.json");
-			proc = new Processor(mode, projectLocation, storePath, skeletonInfoPath);
+		public ArchiveSender() throws InvalidModeException, IOException {
+			proc = new ArchiveProcessor(
+					new TestPaths(Settings.PROJECT_LOCATION));
 		}
 
 		public void run() {
-			IntlolaError error = proc.login("pjordaan", "1brandwag",
-					"localhost", 8010);
-			if (!error.equals(IntlolaError.SUCCESS)) {
-				System.err.println(error.getDescription());
-				return;
-			}
-			Project selected = null;
-			for (ProjectInfo pi : proc.getProjects()) {
-				if (pi.getProject().Name.equals("Triangle")) {
-					selected = pi.getProject();
-					break;
-				}
-			}
-			error = proc.createSubmission(selected);
-			if (!error.equals(IntlolaError.SUCCESS)) {
-				System.err.println(error.getDescription());
-				return;
-			}
 			int count = 0;
-			while (count < sendCount) {
+			while (count < Settings.FILE_COUNT) {
 				try {
-					sleep(10);
-					proc.processChanges(
-							"/home/godfried/dev/java/ImpenduloProjects/Triangle/src/triangle/Triangle.java",
+					sleep(Settings.SLEEP_DURATION);
+					proc.processChanges(Settings.FILE_NAME,
 							IResourceDelta.CHANGED);
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -107,9 +89,32 @@ public class SendTester {
 				}
 				count++;
 			}
-			if (proc.getMode().isRemote()) {
-				proc.logout();
+			IntlolaError error = proc.login(Const.LOGIN, Settings.USER_NAME,
+					Settings.PASSWORD, Settings.ADDRESS, Settings.PORT);
+			if (!error.equals(IntlolaError.SUCCESS)) {
+				System.err.println(error.getDescription());
 			}
+			Project p = null;
+			Assignment a = null;
+			for (ProjectInfo pi : proc.getProjects()) {
+				if (pi.getProject().Name.equals(Settings.PROJECT_NAME)) {
+					AssignmentInfo[] as = pi.getAssignments();
+					if (as.length > 0) {
+						a = as[0].getAssignment();
+						p = pi.getProject();
+					}
+					break;
+				}
+			}
+			if (p != null && a != null) {
+				error = proc.createSubmission(p, a);
+				if (!error.equals(IntlolaError.SUCCESS)) {
+					System.err.println(error.getDescription());
+				}
+			} else {
+				System.err.println("Could not load project and/or assignment");
+			}
+			proc.stop();
 		}
 	}
 }

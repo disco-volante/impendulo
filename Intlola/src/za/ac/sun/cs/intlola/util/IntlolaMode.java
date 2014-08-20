@@ -22,65 +22,55 @@
 //(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package za.ac.sun.cs.intlola.processing.json;
+package za.ac.sun.cs.intlola.util;
 
-import java.io.Serializable;
-import java.util.Date;
-import java.util.UUID;
+import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
 
 /**
- * Project represents a project within Impendulo.
+ * IntlolaMode represents the mode in which Intlola is run.
  * 
  * @author godfried
  * 
  */
-public class Project implements Serializable {
-	private static final long serialVersionUID = -7128594023385132073L;
-	public String Id;
-	public String Name;
-	public String Lang;
-	long Time;
+public enum IntlolaMode {
+	ARCHIVE_LOCAL("Save all snapshots locally in archive."), ARCHIVE_REMOTE(
+			"Send all snapshots to server once recording has stopped."), FILE_REMOTE(
+			"Continuously send snapshots to server."), NONE("None");
 
-	public Project(String n, String l, long t) {
-		Id = UUID.randomUUID().toString();
-		Name = n;
-		Lang = l;
-		Time = t;
+	public static IntlolaMode getMode(final String mpref) {
+		IntlolaMode ret = null;
+		if (mpref.equals(PreferenceConstants.FILE_REMOTE)) {
+			ret = FILE_REMOTE;
+		} else if (mpref.equals(PreferenceConstants.ARCHIVE_REMOTE)) {
+			ret = ARCHIVE_REMOTE;
+		} else if (mpref.equals(PreferenceConstants.ARCHIVE_LOCAL)) {
+			ret = ARCHIVE_LOCAL;
+		} else {
+			throw new EnumConstantNotPresentException(IntlolaMode.class, mpref);
+		}
+		return ret;
 	}
 
-	public Project() {}
+	private String description;
 
-	@Override
-	public int hashCode() {
-		return Id.hashCode();
+	IntlolaMode(final String description) {
+		this.description = description;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		Project other = (Project) obj;
-		if (Id == null) {
-			if (other.Id != null) {
-				return false;
-			}
-		} else if (!Id.equals(other.Id)) {
-			return false;
-		}
-		return true;
+	public String getDescription() {
+		return description;
+	}
+
+	public boolean isArchive() {
+		return equals(ARCHIVE_REMOTE) || equals(ARCHIVE_LOCAL);
+	}
+
+	public boolean isRemote() {
+		return equals(ARCHIVE_REMOTE) || equals(FILE_REMOTE);
 	}
 
 	@Override
 	public String toString() {
-		return "Name: " + Name + ", Language: " + Lang + ", Date: "
-				+ new Date(Time);
+		return super.toString().toLowerCase();
 	}
-
 }

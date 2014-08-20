@@ -36,22 +36,16 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugPlugin;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IStartup;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
-import za.ac.sun.cs.intlola.gui.LoginDialog;
-import za.ac.sun.cs.intlola.gui.ModeDialog;
-import za.ac.sun.cs.intlola.gui.SubmissionDialog;
-import za.ac.sun.cs.intlola.preferences.PreferenceConstants;
-import za.ac.sun.cs.intlola.processing.IOUtils;
-import za.ac.sun.cs.intlola.processing.IntlolaError;
-import za.ac.sun.cs.intlola.processing.IntlolaMode;
-import za.ac.sun.cs.intlola.processing.InvalidModeException;
-import za.ac.sun.cs.intlola.processing.Processor;
+import za.ac.sun.cs.intlola.controller.Controller;
+import za.ac.sun.cs.intlola.controller.ControllerFactory;
+import za.ac.sun.cs.intlola.processing.paths.DefaultPaths;
+import za.ac.sun.cs.intlola.util.InvalidModeException;
+import za.ac.sun.cs.intlola.util.Plugin;
 
 /**
  * Intlola is the actual plugin. It is responsible initiating a recording
@@ -63,7 +57,7 @@ import za.ac.sun.cs.intlola.processing.Processor;
  */
 public class Intlola extends AbstractUIPlugin implements IStartup {
 	private static Intlola plugin;
-	protected static final String PLUGIN_ID = "za.ac.sun.cs.intlola";
+	public static final String PLUGIN_ID = "za.ac.sun.cs.intlola";
 	private static final QualifiedName RECORD_KEY = new QualifiedName(
 			"intlola", "record");
 
@@ -132,11 +126,10 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	 */
 	public static void startRecord(final IProject project, final Shell shell) {
 		try {
-			getActive().setProcessor(project);
-			getActive().setup(shell);
+			getActive().setup(shell, project);
 			project.setSessionProperty(RECORD_KEY, true);
 			recording = true;
-			PluginUtils.touchAll(project);
+			Plugin.touchAll(project);
 			Intlola.log(null, "Intlola record started", project.getName());
 		} catch (IOException e) {
 			Intlola.log(e);
@@ -156,7 +149,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	 * @param shell
 	 */
 	public static void stopRecord(final IProject project, final Shell shell) {
-		getActive().end(shell);
+		getActive().controller.end(shell);
 		try {
 			project.setSessionProperty(Intlola.RECORD_KEY, null);
 		} catch (final CoreException e) {
@@ -170,7 +163,7 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 
 	private boolean listenersAdded = false;
 
-	private Processor proc;
+	private Controller controller;
 
 	public Intlola() {
 		Intlola.plugin = this;
@@ -180,37 +173,15 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	public void earlyStartup() {
 	}
 
-	public Processor getProcessor() {
-		return proc;
-	}
-
-	/**
-	 * setProcessor creates a new Processor for Intlola. The Processor is
-	 * responsible for interacting with Impendulo.
-	 * 
-	 * @param storePath
-	 * @throws InvalidModeException
-	 * @throws IOException
-	 */
-	private void setProcessor(final IProject project)
-			throws InvalidModeException, IOException {
-		final IntlolaMode mode = IntlolaMode.getMode(getPreferenceStore()
-				.getString(PreferenceConstants.P_MODE));
-		String skeletonInfoPath = IOUtils.calcSkeletonInfoPath(project);
-		String storePath = IOUtils.calcStorePath(project);
-		proc = new Processor(mode, project.getLocation().toOSString(),
-				storePath, skeletonInfoPath);
-	}
-
 	@Override
 	public void start(final BundleContext context) throws Exception {
 		super.start(context);
 		if (!listenersAdded) {
 			DebugPlugin.getDefault().getLaunchManager()
-					.addLaunchListener(new IntlolaMonitor());
-			changeListener = new IntlolaListener();
-			PluginUtils.getWorkspace().addResourceChangeListener(
-					changeListener, IResourceChangeEvent.POST_CHANGE);
+					.addLaunchListener(new Monitor());
+			changeListener = new Listener();
+			Plugin.getWorkspace().addResourceChangeListener(changeListener,
+					IResourceChangeEvent.POST_CHANGE);
 			listenersAdded = true;
 		}
 	}
@@ -221,124 +192,23 @@ public class Intlola extends AbstractUIPlugin implements IStartup {
 	 * @param shell
 	 * @throws LoginException
 	 * @throws InvalidModeException
+	 * @throws IOException
 	 */
-	private void setup(Shell shell) throws LoginException, InvalidModeException {
-		proc.setMode(chooseMode(shell));
-		if (proc.getMode().isRemote()) {
-			if (!login(shell)) {
-				throw new LoginException("Could not login to server.");
-			} else {
-				getPreferenceStore().setValue(PreferenceConstants.P_ADDRESS,
-						proc.getAddress());
-				getPreferenceStore().setValue(PreferenceConstants.P_MODE,
-						proc.getMode().toString());
-				getPreferenceStore().setValue(PreferenceConstants.P_PORT,
-						proc.getPort());
-				getPreferenceStore().setValue(PreferenceConstants.P_UNAME,
-						proc.getUsername());
-			}
-			if (!startSubmission(shell)) {
-				throw new LoginException("Could not start submission.");
-			}
-		}
-	}
-
-	/**
-	 * chooseMode allows the user to choose the mode to run Intlola in. The user
-	 * can choose to send each snapshot as it is recording, to send all
-	 * snapshots at the end of the session or to store the snapshots locally.
-	 * 
-	 * @param shell
-	 * @return
-	 */
-	private IntlolaMode chooseMode(Shell shell) {
-		final ModeDialog dialog = new ModeDialog(shell, proc.getMode());
-		final int code = dialog.open();
-		if (code == Window.OK) {
-			return dialog.getMode();
-		} else {
-			return IntlolaMode.NONE;
-		}
-	}
-
-	/**
-	 * login requests the user's login details and logs them into Impendulo.
-	 * 
-	 * @param shell
-	 * @return
-	 */
-	private boolean login(final Shell shell) {
-		final String uname = getPreferenceStore().getString(
-				PreferenceConstants.P_UNAME);
-		final String address = getPreferenceStore().getString(
-				PreferenceConstants.P_ADDRESS);
-		final int port = getPreferenceStore()
-				.getInt(PreferenceConstants.P_PORT);
-		final LoginDialog dialog = new LoginDialog(shell, "Intlola login",
-				uname, address, port);
-		IntlolaError err = IntlolaError.DEFAULT;
-		while (!err.equals(IntlolaError.SUCCESS)) {
-			final int code = dialog.open(err);
-			if (code == Window.OK) {
-				err = proc.login(dialog.getUserName(), dialog.getPassword(),
-						dialog.getAddress(), dialog.getPort());
-			} else {
-				break;
-			}
-		}
-		return err.equals(IntlolaError.SUCCESS);
-	}
-
-	/**
-	 * StartSubmission allows the user to create a new submission or to continue
-	 * with an old submission.
-	 * 
-	 * @param shell
-	 * @return
-	 */
-	private boolean startSubmission(final Shell shell) {
-		IntlolaError err = IntlolaError.DEFAULT;
-		SubmissionDialog subDlg = new SubmissionDialog(shell,
-				proc.getProjects());
-		final int code = subDlg.open();
-		if (code == Window.OK) {
-			if (subDlg.isCreate()) {
-				err = proc.createSubmission(subDlg.getProject());
-			} else {
-				err = proc.continueSubmission(subDlg.getSubmission(),
-						subDlg.getProject());
-			}
-		} else {
-			err = IntlolaError.USER;
-		}
-		if (err.equals(IntlolaError.SUCCESS)) {
-			return true;
-		} else {
-			if (!err.equals(IntlolaError.USER)) {
-				MessageDialog.openError(shell, err.toString(),
-						err.getDescription());
-			}
-			return false;
-		}
-	}
-
-	/**
-	 * end ends a submission. It logs the user out of Impendulo.
-	 * 
-	 * @param shell
-	 */
-	private void end(Shell shell) {
-		if (proc.getMode().isRemote()) {
-			proc.logout();
-		} else if (proc.getMode().equals(IntlolaMode.ARCHIVE_LOCAL)) {
-			proc.handleLocalArchive(IOUtils.getFilename(shell));
-		}
+	private void setup(Shell shell, IProject project) throws LoginException,
+			InvalidModeException, IOException {
+		controller = ControllerFactory.create(shell, getPreferenceStore());
+		controller.start(shell, new DefaultPaths(project));
 	}
 
 	@Override
 	public void stop(final BundleContext context) throws Exception {
 		Intlola.plugin = null;
 		super.stop(context);
+	}
+
+	public static void processChanges(String path, int launched)
+			throws IOException {
+		getActive().controller.getProcessor().processChanges(path, launched);
 	}
 
 }

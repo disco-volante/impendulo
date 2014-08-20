@@ -22,7 +22,7 @@
 //(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package za.ac.sun.cs.intlola.processing;
+package za.ac.sun.cs.intlola.processing.tasks;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -33,6 +33,7 @@ import java.net.Socket;
 
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
+import za.ac.sun.cs.intlola.util.IO;
 
 import com.google.gson.JsonObject;
 
@@ -48,7 +49,7 @@ public class FileSender implements Runnable {
 	private final OutputStream snd;
 	private final Socket sock;
 
-	FileSender(final IntlolaFile file, final Socket sock,
+	public FileSender(final IntlolaFile file, final Socket sock,
 			final OutputStream snd, final InputStream rcv) {
 		this.file = file;
 		this.sock = sock;
@@ -64,14 +65,14 @@ public class FileSender implements Runnable {
 
 	@Override
 	public void run() {
-		final byte[] writeBuffer = new byte[IOUtils.BUFFER_SIZE];
+		final byte[] writeBuffer = new byte[IO.BUFFER_SIZE];
 		FileInputStream fis = null;
 		boolean ok = true;
 		try {
 			final JsonObject fjson = file.toJSON();
-			fjson.addProperty(Const.REQ, Const.SEND);
-			IOUtils.writeJson(snd, fjson);
-			String received = IOUtils.read(rcv);
+			fjson.addProperty(Const.REQUEST, Const.SEND);
+			IO.writeJson(snd, fjson);
+			String received = IO.read(rcv);
 			if (received.startsWith(Const.OK)) {
 				if (file.sendContents()) {
 					try {
@@ -86,7 +87,7 @@ public class FileSender implements Runnable {
 				}
 				snd.write(Const.EOT_B);
 				snd.flush();
-				received = IOUtils.read(rcv);
+				received = IO.read(rcv);
 				if (!received.startsWith(Const.OK)) {
 					System.err.println("Received invalid reply: " + received);
 				}

@@ -31,15 +31,19 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-import za.ac.sun.cs.intlola.processing.IntlolaError;
+import za.ac.sun.cs.intlola.file.Const;
+import za.ac.sun.cs.intlola.util.IntlolaError;
 
 /**
  * LoginDialog is used to get login details from the user for Impendulo.
@@ -48,15 +52,13 @@ import za.ac.sun.cs.intlola.processing.IntlolaError;
  * 
  */
 public class LoginDialog extends Dialog {
-	private String address;
-
-	private String password;
+	private String address, password, username;
 
 	private int port;
 
-	private final String title;
+	private boolean login;
 
-	private String username;
+	private final String title;
 
 	private Text usernameField, passwordField, addressField, portField;
 
@@ -90,6 +92,14 @@ public class LoginDialog extends Dialog {
 		final GridLayout layout = (GridLayout) comp.getLayout();
 		layout.numColumns = 2;
 
+		final Button btnLogin = new Button(comp, SWT.RADIO);
+		btnLogin.setText("Login");
+		btnLogin.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		final Button btnRegister = new Button(comp, SWT.RADIO);
+		btnRegister.setText("Register");
+		btnRegister.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
 		final Label usernameLabel = new Label(comp, SWT.RIGHT);
 		usernameLabel.setText("Username:");
 
@@ -119,6 +129,27 @@ public class LoginDialog extends Dialog {
 		portField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		portField.setText(String.valueOf(port));
 
+		SelectionListener choiceListener = new SelectionListener() {
+			@Override
+			public void widgetDefaultSelected(final SelectionEvent event) {
+				widgetSelected(event);
+			}
+
+			@Override
+			public void widgetSelected(final SelectionEvent event) {
+				login = btnLogin.getSelection();
+				if (login) {
+					btnRegister.setSelection(false);
+				} else {
+					btnLogin.setSelection(false);
+				}
+			}
+		};
+
+		btnLogin.addSelectionListener(choiceListener);
+		btnRegister.addSelectionListener(choiceListener);
+		btnLogin.setSelection(true);
+		login = true;
 		return comp;
 	}
 
@@ -136,6 +167,10 @@ public class LoginDialog extends Dialog {
 
 	public String getUserName() {
 		return username;
+	}
+
+	public String getRequest() {
+		return login ? Const.LOGIN : Const.REGISTER;
 	}
 
 	@Override

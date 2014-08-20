@@ -1,4 +1,4 @@
-package za.ac.sun.cs.intlola.processing;
+package za.ac.sun.cs.intlola.util;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
@@ -22,9 +21,7 @@ import org.eclipse.swt.widgets.Shell;
 import za.ac.sun.cs.intlola.file.Const;
 import za.ac.sun.cs.intlola.file.IndividualFile;
 import za.ac.sun.cs.intlola.file.IntlolaFile;
-import za.ac.sun.cs.intlola.processing.json.Ignore;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 /**
@@ -33,7 +30,7 @@ import com.google.gson.JsonObject;
  * @author godfried
  * 
  */
-public class IOUtils {
+public class IO {
 	private static final String BIN = "bin";
 	public static final String COMPONENT_SEP = "_";
 	public static final String NAME_SEP = ".";
@@ -47,9 +44,9 @@ public class IOUtils {
 	public static final String JAVA = ".java";
 	public static final String C = ".c";
 	public static final String PY = ".py";
-	private static String extension;
+	private static String extension = JAVA;
 	private static final String[] ignoreRegexes = new String[] { "bin",
-			"\\..*", "lib", "data"};
+			"\\..*", "lib", "data" };
 
 	/**
 	 * read reads all available data from an InputStream.
@@ -454,7 +451,8 @@ public class IOUtils {
 		return false;
 	}
 
-	public static void setExtension(final String lang) throws InvalidArgumentException {
+	public static void setExtension(final String lang)
+			throws InvalidArgumentException {
 		String l = lang.toLowerCase();
 		if (l.equals("java")) {
 			extension = JAVA;
@@ -462,47 +460,10 @@ public class IOUtils {
 			extension = C;
 		} else if (l.equals("python")) {
 			extension = PY;
-		} else{
-			throw new InvalidArgumentException(String.format("Unknown language %s.", lang));
+		} else {
+			throw new InvalidArgumentException(String.format(
+					"Unknown language %s.", lang));
 		}
 	}
 
-	public static Ignore readIgnore(String filename)
-			throws IOException {
-		InputStream fin = new FileInputStream(new File(filename));
-		final String data = read(fin);
-		Gson gson = new Gson();
-		Ignore si = gson.fromJson(data, new Ignore().getClass());
-		return si;
-	}
-
-	/**
-	 * calcStorePath determines where files should be stored temporarily for a
-	 * given project.
-	 * 
-	 * @param project
-	 * @return
-	 * @throws IOException
-	 */
-	public static String calcStorePath(IProject project) throws IOException {
-		String storePath = IOUtils.joinPath(project.getLocation().toOSString(),
-				".intlola");
-		File dir = new File(storePath);
-		if (!dir.exists() && !dir.mkdirs()) {
-			throw new IOException("Could not create plugin directory.");
-		}
-		return storePath;
-	}
-
-	public static String calcSkeletonInfoPath(IProject project)
-			throws IOException {
-		String skeletonInfoPath = IOUtils.joinPath(project.getLocation()
-				.toOSString(), ".impendulo_info.json");
-		File f = new File(skeletonInfoPath);
-		if (!f.exists()) {
-			throw new IOException(
-					"Could not locate project skeleton information.");
-		}
-		return skeletonInfoPath;
-	}
 }

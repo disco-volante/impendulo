@@ -36,7 +36,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
-import za.ac.sun.cs.intlola.processing.IntlolaMode;
+import za.ac.sun.cs.intlola.util.IntlolaMode;
 
 /**
  * ModeDialog is used to determine which mode the user wishes to run Intlola in.
