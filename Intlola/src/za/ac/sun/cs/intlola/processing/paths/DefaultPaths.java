@@ -9,8 +9,7 @@ import org.eclipse.core.resources.IProject;
 import za.ac.sun.cs.intlola.util.IO;
 
 public class DefaultPaths implements IPaths{
-	public static final String IGNORE_NAME = ".impendulo_info.json",
-			STORE_NAME = ".intlola", ARCHIVE_NAME = "archive";
+
 	private final String ignorePath, projectPath, storePath, archivePath;
 
 	public DefaultPaths(IProject project) throws IOException {

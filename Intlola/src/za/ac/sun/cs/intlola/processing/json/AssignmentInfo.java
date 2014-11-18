@@ -17,6 +17,9 @@ public class AssignmentInfo {
 	}
 
 	public Submission[] getSubmissions() {
+		if (Submissions == null) {
+			return new Submission[0];
+		}
 		return Submissions;
 	}
 }

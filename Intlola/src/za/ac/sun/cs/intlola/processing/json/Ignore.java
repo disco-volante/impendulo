@@ -13,7 +13,7 @@ import za.ac.sun.cs.intlola.util.IO;
 
 public class Ignore {
 	public String name = "";
-	public PathInfo[] paths;
+	public String[] paths;
 	private Set<String> ignore;
 
 	public static Ignore create(String filename) throws IOException {
@@ -37,14 +37,13 @@ public class Ignore {
 		if (paths == null) {
 			return;
 		}
-		for (PathInfo p : paths) {
+		for (String p : paths) {
 			addPath(base, p);
 		}
 	}
 
-	private void addPath(final String base, PathInfo fi) throws IOException {
-		String dir = IO.joinPath(fi.folder, fi.pkg.split("\\."));
-		String path = IO.joinPath(base, dir, fi.name);
+	private void addPath(final String base, String p) throws IOException {
+		String path = IO.joinPath(base, p);
 		if (!new File(path).exists()) {
 			throw new IOException(
 					String.format(

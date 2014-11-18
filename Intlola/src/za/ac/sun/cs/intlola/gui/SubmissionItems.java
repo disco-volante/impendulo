@@ -8,7 +8,7 @@ public class SubmissionItems {
 	private String[] subStrings;
 	private HashMap<String, Submission> subMap;
 	private String submissionName;
-
+	
 	public SubmissionItems(Submission[] subs) {
 		subStrings = new String[subs.length];
 		subMap = new HashMap<String, Submission>((int) (subs.length * 1.4));

@@ -25,8 +25,9 @@
 package za.ac.sun.cs.intlola.processing.json;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.UUID;
+
+import za.ac.sun.cs.intlola.util.Misc;
 
 /**
  * Project represents a project within Impendulo.
@@ -48,7 +49,8 @@ public class Project implements Serializable {
 		Time = t;
 	}
 
-	public Project() {}
+	public Project() {
+	}
 
 	@Override
 	public int hashCode() {
@@ -79,8 +81,7 @@ public class Project implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Name: " + Name + ", Language: " + Lang + ", Date: "
-				+ new Date(Time);
+		return Name + " " + Misc.TimeString(Time);
 	}
 
 }

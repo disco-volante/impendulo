@@ -53,8 +53,7 @@ public class FileProcessor extends RemoteProcessor {
 	 * @throws InvalidModeException
 	 * @throws IOException
 	 */
-	public FileProcessor(final IPaths paths)
-			throws IOException {
+	public FileProcessor(final IPaths paths) throws IOException {
 		super(paths);
 	}
 
@@ -71,7 +70,7 @@ public class FileProcessor extends RemoteProcessor {
 		executor.execute(new FileSender(new IndividualFile(path, kindSuffix,
 				tipe), sock, snd, rcv));
 	}
-	
+
 	public void stop() {
 		executor.execute(new SessionEnder(sock, snd, rcv));
 		executor.shutdown();

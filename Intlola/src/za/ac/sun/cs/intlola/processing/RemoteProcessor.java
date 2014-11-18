@@ -63,8 +63,11 @@ public abstract class RemoteProcessor extends Processor {
 
 	private ProjectInfo[] projectInfos;
 
+	private long time;
+
 	public RemoteProcessor(final IPaths paths) throws IOException {
 		super(paths);
+		time = Calendar.getInstance().getTimeInMillis();
 	}
 
 	public String getAddress() {
@@ -202,7 +205,7 @@ public abstract class RemoteProcessor extends Processor {
 		params.addProperty(Const.REQUEST, Const.SUBMISSION_NEW);
 		params.addProperty(Const.ASSIGNMENT_ID, assignment.Id);
 		params.addProperty(Const.PROJECT_ID, project.Id);
-		params.addProperty(Const.TIME, Calendar.getInstance().getTimeInMillis());
+		params.addProperty(Const.TIME, time);
 		try {
 			IO.writeJson(snd, params);
 			final String received = IO.read(rcv);

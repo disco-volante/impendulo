@@ -3,6 +3,8 @@ package za.ac.sun.cs.intlola.processing.json;
 import java.io.Serializable;
 import java.util.UUID;
 
+import za.ac.sun.cs.intlola.util.Misc;
+
 public class Assignment implements Serializable {
 	private static final long serialVersionUID = -7128594023385132073L;
 	public String Id;
@@ -52,6 +54,7 @@ public class Assignment implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Name: " + Name;
+		return Name + " " + Misc.TimeString(Start) + " \u2192 "
+				+ Misc.TimeString(End);
 	}
 }
